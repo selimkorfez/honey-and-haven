@@ -9,11 +9,11 @@ export const SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
 
 export const HOME_QUERY = `{
   "page": *[_id == "homePage"][0]{
-    heroEyebrow, heroHeading, heroText, heroImage ${image},
+    heroHeading, heroText, heroImage ${image},
     storyHeading, storyText, storyImage ${image},
     highlights[]{ _key, title, text },
     menuHeading, menuText,
-    gallery[] ${image},
+    galleryHeading, gallery[] ${image},
     visitHeading, visitText,
     seo { title, description, image ${image}, noIndex }
   },

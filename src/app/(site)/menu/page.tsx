@@ -5,7 +5,6 @@ import type { MenuData, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice } from '@/lib/format'
 import { SanityImg } from '@/components/SanityImg'
-import { Reveal } from '@/components/Reveal'
 import { FALLBACK_MENU, FALLBACK_SETTINGS } from '@/lib/fallback'
 
 async function getMenu(): Promise<MenuData> {
@@ -39,17 +38,8 @@ export default async function MenuPage() {
     <>
       <section className="menu-hero">
         <div className="container">
-          <Reveal>
-            <span className="eyebrow">Eat &amp; drink</span>
-          </Reveal>
-          <Reveal delay={100}>
-            <h1>{page?.heading || 'Our menu'}</h1>
-          </Reveal>
-          {page?.intro ? (
-            <Reveal delay={200}>
-              <p>{page.intro}</p>
-            </Reveal>
-          ) : null}
+          <h1>{page?.heading || 'Our menu'}</h1>
+          {page?.intro ? <p>{page.intro}</p> : null}
         </div>
       </section>
 
@@ -66,17 +56,17 @@ export default async function MenuPage() {
       ) : null}
 
       <div className="container">
-        {categories.length === 0 ? <p className="empty">Our menu is being updated — pop in to see what&rsquo;s on today.</p> : null}
+        {categories.length === 0 ? <p className="empty">Our menu is being updated. Pop in to see what&rsquo;s on today.</p> : null}
 
         {categories.map((cat) => (
           <section key={cat._id} id={slug(cat.title)} className="menu-section">
-            <Reveal className="menu-section-head">
+            <div className="menu-section-head">
               <h2>{cat.title}</h2>
               {cat.description ? <p>{cat.description}</p> : null}
-            </Reveal>
-            <div className="menu-list">
-              {cat.items.map((item, i) => (
-                <Reveal key={item._id} delay={(i % 2) * 90} className={`menu-item${item.image?.asset ? '' : ' no-image'}`}>
+            </div>
+            <ul className="menu-list">
+              {cat.items.map((item) => (
+                <li key={item._id} className={`menu-item${item.image?.asset ? '' : ' no-image'}`}>
                   {item.image?.asset ? (
                     <div className="menu-thumb">
                       <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt || item.name} />
@@ -99,9 +89,9 @@ export default async function MenuPage() {
                       </div>
                     ) : null}
                   </div>
-                </Reveal>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         ))}
       </div>

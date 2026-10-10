@@ -39,7 +39,6 @@ const items = {
 
 export const FALLBACK_HOME: HomeData = {
   page: {
-    heroEyebrow: 'Coffee shop · Oadby, Leicester',
     heroHeading: 'Your little haven on The Parade',
     heroText: 'Inventive coffee, sweet treats and a warm seat waiting — from Spanish lattes to mango matcha.',
     heroImage: photo('1495474472287-4d71bcdd2085', 'Friends raising lattes over a wooden table'),
@@ -54,6 +53,7 @@ export const FALLBACK_HOME: HomeData = {
     ],
     menuHeading: 'Our favourites',
     menuText: 'A few of the drinks and treats people keep coming back for.',
+    galleryHeading: 'Slow mornings, warm cups',
     gallery: [
       photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
       photo('1509042239860-f550ce710b93', 'Lattes among green plants'),

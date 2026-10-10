@@ -9,6 +9,7 @@ import { siteUrl } from '@/lib/format'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { ScrollFX } from '@/components/ScrollFX'
+import { MotionProvider } from '@/components/MotionProvider'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
 
 const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
@@ -48,14 +49,13 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="en-GB" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
-      </head>
+    <html lang="en-GB" className={`${serif.variable} ${sans.variable}`}>
       <body>
-        <Header name={name} announcement={settings?.announcement} />
-        <main>{children}</main>
-        <Footer settings={settings} />
+        <MotionProvider>
+          <Header name={name} announcement={settings?.announcement} />
+          <main>{children}</main>
+          <Footer settings={settings} />
+        </MotionProvider>
         <ScrollFX />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </body>

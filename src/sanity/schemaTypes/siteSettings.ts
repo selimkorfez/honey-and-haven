@@ -32,7 +32,7 @@ export const siteSettings = defineType({
       title: 'Announcement bar (optional)',
       type: 'string',
       group: 'general',
-      description: 'A one-line message at the very top of every page, e.g. "Now serving pumpkin spice lattes 🍂". Leave empty to hide it.',
+      description: 'A one-line message at the very top of every page, e.g. "Pumpkin spice lattes are back". Leave empty to hide it.',
     }),
     defineField({
       name: 'address',

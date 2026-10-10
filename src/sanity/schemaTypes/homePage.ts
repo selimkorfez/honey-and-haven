@@ -35,7 +35,6 @@ export const homePage = defineType({
     { name: 'seo', title: 'Google & sharing' },
   ],
   fields: [
-    defineField({ name: 'heroEyebrow', title: 'Small text above heading', type: 'string', group: 'hero' }),
     defineField({ name: 'heroHeading', title: 'Main heading', type: 'string', group: 'hero', validation: (r) => r.required() }),
     defineField({ name: 'heroText', title: 'Text under heading', type: 'text', rows: 2, group: 'hero' }),
     imageWithAlt('heroImage', 'Banner photo', 'hero', 'A big, atmospheric photo. Landscape works best.'),
@@ -47,7 +46,7 @@ export const homePage = defineType({
       title: 'Highlights',
       type: 'array',
       group: 'highlights',
-      description: 'Three short reasons to visit.',
+      description: 'Up to three short reasons to visit, shown under Our story.',
       of: [
         defineArrayMember({
           type: 'object',
@@ -59,7 +58,7 @@ export const homePage = defineType({
           ],
         }),
       ],
-      validation: (r) => r.max(4),
+      validation: (r) => r.max(3),
     }),
     defineField({ name: 'menuHeading', title: 'Heading', type: 'string', group: 'menu' }),
     defineField({
@@ -68,8 +67,9 @@ export const homePage = defineType({
       type: 'text',
       rows: 2,
       group: 'menu',
-      description: 'Items marked as "Feature on home page" in the Menu appear here automatically.',
+      description: 'Items marked as "Feature on home page" in the Menu appear here automatically, as a menu board.',
     }),
+    defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery' }),
     defineField({
       name: 'gallery',
       title: 'Gallery photos',

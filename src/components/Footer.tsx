@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Settings } from '@/lib/types'
 import { mapsLink } from '@/lib/format'
+import { ArrowUpRight } from './Icons'
 
 export function Footer({ settings }: { settings: Settings }) {
   const name = settings?.name || 'Honey & Haven'
@@ -14,7 +15,7 @@ export function Footer({ settings }: { settings: Settings }) {
   return (
     <footer className="site-footer">
       <div className="container">
-        <div className="footer-big reveal" data-reveal="up" aria-hidden="true">
+        <p className="footer-big" aria-hidden="true">
           {rest.length ? (
             <>
               {first.trim()} <em>&amp;</em> {rest.join('&').trim()}
@@ -22,20 +23,20 @@ export function Footer({ settings }: { settings: Settings }) {
           ) : (
             name
           )}
-        </div>
+        </p>
         <div className="footer-grid">
           <div>
-            <h4>{name}</h4>
+            <h3>{name}</h3>
             <p>{settings?.tagline}</p>
           </div>
           <div>
-            <h4>Find us</h4>
+            <h3>Find us</h3>
             {settings?.address ? (
-              <p style={{ whiteSpace: 'pre-line' }}>
+              <address>
                 <a href={mapsLink(settings.mapQuery)} target="_blank" rel="noopener noreferrer">
                   {settings.address}
                 </a>
-              </p>
+              </address>
             ) : null}
             {settings?.phone ? (
               <p>
@@ -49,22 +50,22 @@ export function Footer({ settings }: { settings: Settings }) {
             ) : null}
           </div>
           <div>
-            <h4>Hours</h4>
+            <h3>Hours</h3>
             <ul>
               {settings?.hours?.map((h) => (
                 <li key={h._key}>
-                  {h.days}: {h.hours}
+                  {h.days}: <span className="price">{h.hours}</span>
                 </li>
               ))}
             </ul>
           </div>
           <div>
-            <h4>Follow</h4>
+            <h3>Follow</h3>
             <ul>
               {socials.map((s) => (
                 <li key={s.label}>
                   <a href={s.href} target="_blank" rel="noopener noreferrer">
-                    {s.label} ↗
+                    {s.label} <ArrowUpRight />
                   </a>
                 </li>
               ))}

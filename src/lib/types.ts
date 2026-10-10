@@ -37,7 +37,6 @@ export type MenuItem = {
 
 export type HomeData = {
   page: {
-    heroEyebrow?: string
     heroHeading?: string
     heroText?: string
     heroImage?: SanityImage
@@ -47,6 +46,7 @@ export type HomeData = {
     highlights?: { _key: string; title: string; text?: string }[]
     menuHeading?: string
     menuText?: string
+    galleryHeading?: string
     gallery?: SanityImage[]
     visitHeading?: string
     visitText?: string
