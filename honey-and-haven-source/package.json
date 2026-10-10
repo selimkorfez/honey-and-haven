@@ -1,0 +1,26 @@
+{
+  "name": "honey-and-haven",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@sanity/icons": "^5.2.3",
+    "@sanity/image-url": "^2.1.1",
+    "next": "16.4.0",
+    "next-sanity": "^13.3.4",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "sanity": "^6.18.0",
+    "styled-components": "^6.1.19"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  }
+}

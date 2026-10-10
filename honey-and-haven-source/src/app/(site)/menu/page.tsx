@@ -1,0 +1,123 @@
+import type { Metadata } from 'next'
+import { sanityFetch } from '@/sanity/lib/client'
+import { MENU_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
+import type { MenuData, Settings } from '@/lib/types'
+import { buildMetadata } from '@/lib/metadata'
+import { DIETARY_LABELS, formatPrice } from '@/lib/format'
+import { SanityImg } from '@/components/SanityImg'
+import { Reveal } from '@/components/Reveal'
+import { FALLBACK_MENU, FALLBACK_SETTINGS } from '@/lib/fallback'
+
+async function getMenu(): Promise<MenuData> {
+  const data = await sanityFetch<MenuData>(MENU_QUERY)
+  // Show the starter menu until the café has added its own
+  if (!data || (!data.page && !data.categories?.length)) return FALLBACK_MENU
+  return data
+}
+
+export const revalidate = 60
+
+export async function generateMetadata(): Promise<Metadata> {
+  const [settings, data] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), getMenu()])
+  return buildMetadata(settings ?? FALLBACK_SETTINGS, data.page?.seo, 'Menu')
+}
+
+const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
+export default async function MenuPage() {
+  const data = await getMenu()
+  const categories = data.categories ?? []
+  const page = data.page
+  const usedTags = new Set(categories.flatMap((c) => c.items.flatMap((i) => i.dietary ?? [])))
+
+  return (
+    <>
+      <section className="menu-hero">
+        <div className="container">
+          <Reveal>
+            <span className="eyebrow">Eat &amp; drink</span>
+          </Reveal>
+          <Reveal delay={100}>
+            <h1>{page?.heading || 'Our menu'}</h1>
+          </Reveal>
+          {page?.intro ? (
+            <Reveal delay={200}>
+              <p>{page.intro}</p>
+            </Reveal>
+          ) : null}
+        </div>
+      </section>
+
+      {categories.length > 1 ? (
+        <nav className="menu-nav" aria-label="Menu categories">
+          <ul>
+            {categories.map((c) => (
+              <li key={c._id}>
+                <a href={`#${slug(c.title)}`}>{c.title}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
+
+      <div className="container">
+        {categories.length === 0 ? <p className="empty">Our menu is being updated — pop in to see what&rsquo;s on today.</p> : null}
+
+        {categories.map((cat) => (
+          <section key={cat._id} id={slug(cat.title)} className="menu-section">
+            <Reveal className="menu-section-head">
+              <h2>{cat.title}</h2>
+              {cat.description ? <p>{cat.description}</p> : null}
+            </Reveal>
+            <div className="menu-list">
+              {cat.items.map((item, i) => (
+                <Reveal key={item._id} delay={(i % 2) * 90} className={`menu-item${item.image?.asset ? '' : ' no-image'}`}>
+                  {item.image?.asset ? (
+                    <div className="menu-thumb">
+                      <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt || item.name} />
+                    </div>
+                  ) : null}
+                  <div>
+                    <div className="menu-line">
+                      <h3>{item.name}</h3>
+                      <span className="dots" aria-hidden="true" />
+                      <span className="price">{formatPrice(item.price, item.priceNote)}</span>
+                    </div>
+                    {item.description ? <p>{item.description}</p> : null}
+                    {item.dietary?.length ? (
+                      <div className="tags">
+                        {item.dietary.map((d) => (
+                          <span key={d} className="tag" title={DIETARY_LABELS[d]?.long}>
+                            {DIETARY_LABELS[d]?.short ?? d}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div className="container menu-footer">
+        {usedTags.size ? (
+          <div className="legend">
+            {[...usedTags].map((t) => (
+              <span key={t}>
+                <strong>{DIETARY_LABELS[t]?.short ?? t}</strong> {DIETARY_LABELS[t]?.long}
+              </span>
+            ))}
+          </div>
+        ) : null}
+        {page?.footnote ? <p style={{ maxWidth: 560 }}>{page.footnote}</p> : null}
+      </div>
+    </>
+  )
+}
