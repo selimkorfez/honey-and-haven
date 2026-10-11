@@ -56,3 +56,13 @@ export function Video(props: P) {
     </svg>
   )
 }
+
+export function Camera(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" {...stroke} strokeWidth={1.75} />
+      <circle cx="12" cy="12" r="3.8" {...stroke} strokeWidth={1.75} />
+      <circle cx="17.2" cy="6.8" r="0.6" fill="currentColor" />
+    </svg>
+  )
+}

@@ -70,8 +70,12 @@ export function MenuBoard({ items }: { items: BoardItem[] }) {
               ) : null}
               <span className="board-line">
                 <span className="board-name">{item.name}</span>
-                <span className="dots" aria-hidden="true" />
-                <span className="price">{item.price}</span>
+                {item.price ? (
+                  <>
+                    <span className="dots" aria-hidden="true" />
+                    <span className="price">{item.price}</span>
+                  </>
+                ) : null}
               </span>
               {item.description ? <span className="board-desc">{item.description}</span> : null}
               {item.tags.length ? (

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { HexMark } from './Icons'
+import { LogoMark } from './LogoMark'
 
 export function Header({ name, announcement }: { name: string; announcement?: string }) {
   const [first, ...rest] = name.split('&')
@@ -8,7 +8,7 @@ export function Header({ name, announcement }: { name: string; announcement?: st
       {announcement ? <div className="announce">{announcement}</div> : null}
       <div className="container header-inner">
         <Link href="/" className="logo" aria-label={`${name} home`}>
-          <HexMark />
+          <LogoMark className="logo-mark" />
           <span>
             {rest.length ? (
               <>
@@ -21,8 +21,8 @@ export function Header({ name, announcement }: { name: string; announcement?: st
         </Link>
         <nav className="nav" aria-label="Main">
           <Link href="/menu">Menu</Link>
-          <Link href="/#story" className="hide-sm">
-            Our story
+          <Link href="/#shop" className="hide-sm">
+            Shop
           </Link>
           <Link href="/#visit" className="nav-cta">
             Visit us

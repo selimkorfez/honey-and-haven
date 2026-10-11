@@ -75,8 +75,12 @@ export default async function MenuPage() {
                   <div>
                     <div className="menu-line">
                       <h3>{item.name}</h3>
-                      <span className="dots" aria-hidden="true" />
-                      <span className="price">{formatPrice(item.price, item.priceNote)}</span>
+                      {formatPrice(item.price, item.priceNote) ? (
+                        <>
+                          <span className="dots" aria-hidden="true" />
+                          <span className="price">{formatPrice(item.price, item.priceNote)}</span>
+                        </>
+                      ) : null}
                     </div>
                     {item.description ? <p>{item.description}</p> : null}
                     {item.dietary?.length ? (

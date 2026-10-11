@@ -2,21 +2,23 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { sanityFetch } from '@/sanity/lib/client'
 import { HOME_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
-import type { HomeData, SanityImage, Settings } from '@/lib/types'
+import type { HomeData, SanityImage, Settings, ShopItem } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, mapsEmbed, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
-import { HeroMotion } from '@/components/HeroMotion'
+import { HeroScroll } from '@/components/hero/HeroScroll'
+import { LogoMark } from '@/components/LogoMark'
 import { MenuBoard, type BoardItem } from '@/components/MenuBoard'
-import { ArrowRight, Clock, HexMark, Pin, Video } from '@/components/Icons'
-import { FALLBACK_HOME, FALLBACK_SETTINGS } from '@/lib/fallback'
+import { ArrowRight, ArrowUpRight, Camera, Clock, HexMark, Pin, Video } from '@/components/Icons'
+import { FALLBACK_HOME, FALLBACK_SETTINGS, FALLBACK_SHOP } from '@/lib/fallback'
 
 async function getData() {
   const [settings, data] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), sanityFetch<HomeData>(HOME_QUERY)])
   const page = data?.page ?? FALLBACK_HOME.page
   // Until the café publishes its own home page, show the starter favourites too
   const featured = data?.featured?.length ? data.featured : data?.page ? [] : FALLBACK_HOME.featured
-  return { settings: settings ?? FALLBACK_SETTINGS, page, featured }
+  const shop = data?.shop?.length ? data.shop : data?.page ? [] : FALLBACK_SHOP
+  return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop }
 }
 
 export const revalidate = 60
@@ -27,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { settings, page, featured } = await getData()
+  const { settings, page, featured, shop } = await getData()
   const heading = page?.heroHeading || settings?.name || 'Honey & Haven'
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
   const firstHours = settings?.hours?.[0]
@@ -43,35 +45,37 @@ export default async function HomePage() {
 
   return (
     <>
-      <HeroMotion image={imgProps(page?.heroImage, 1920, 1280, '100vw')} heading={heading}>
-        <div className="hero-copy">
-          {page?.heroText ? <p className="hero-text">{page.heroText}</p> : null}
-          <ul className="hero-facts">
-            {addressLines.length ? (
-              <li>
-                <Pin />
-                <span>{addressLines.slice(0, 2).join(', ')}</span>
-              </li>
-            ) : null}
-            {firstHours ? (
-              <li>
-                <Clock />
-                <span>
-                  {firstHours.days} {firstHours.hours}
-                </span>
-              </li>
-            ) : null}
-          </ul>
-        </div>
+      <HeroScroll
+        heading={heading}
+        text={page?.heroText}
+        steps={page?.heroSteps ?? []}
+        fallbackImage={imgProps(page?.heroImage, 1440, 1200, '55vw')}
+      >
+        <ul className="hero-facts">
+          {addressLines.length ? (
+            <li>
+              <Pin />
+              <span>{addressLines.slice(0, 2).join(', ')}</span>
+            </li>
+          ) : null}
+          {firstHours ? (
+            <li>
+              <Clock />
+              <span>
+                {firstHours.days} {firstHours.hours}
+              </span>
+            </li>
+          ) : null}
+        </ul>
         <div className="hero-actions">
-          <Link href="/menu" className="btn btn-light">
+          <Link href="/menu" className="btn btn-primary">
             See the menu <ArrowRight />
           </Link>
           <a href={mapsLink(settings?.mapQuery)} className="btn btn-ghost" target="_blank" rel="noopener noreferrer">
             Get directions
           </a>
         </div>
-      </HeroMotion>
+      </HeroScroll>
 
       {/* ---------- Story ---------- */}
       <section className="section story" id="story">
@@ -123,6 +127,9 @@ export default async function HomePage() {
         </section>
       ) : null}
 
+      {/* ---------- Shop ---------- */}
+      {shop.length ? <Shop heading={page?.shopHeading} text={page?.shopText} items={shop} /> : null}
+
       {/* ---------- Gallery ---------- */}
       {page?.gallery?.length ? <Gallery heading={page.galleryHeading} images={page.gallery} /> : null}
 
@@ -155,9 +162,14 @@ export default async function HomePage() {
                   Call us
                 </a>
               ) : null}
+              {settings?.instagram ? (
+                <a className="btn btn-ghost" href={settings.instagram} target="_blank" rel="noopener noreferrer">
+                  <Camera /> Instagram
+                </a>
+              ) : null}
               {settings?.tiktok ? (
                 <a className="btn btn-ghost" href={settings.tiktok} target="_blank" rel="noopener noreferrer">
-                  <Video /> Watch on TikTok
+                  <Video /> TikTok
                 </a>
               ) : null}
             </div>
@@ -189,6 +201,49 @@ function Gallery({ heading, images }: { heading?: string; images: SanityImage[] 
             </figure>
           ))}
         </div>
+      </div>
+    </section>
+  )
+}
+
+function Shop({ heading, text, items }: { heading?: string; text?: string; items: ShopItem[] }) {
+  return (
+    <section className="section shop" id="shop">
+      <div className="container">
+        <div className="shop-head">
+          <h2>{heading || 'Take a little haven home'}</h2>
+          {text ? <p className="body-text">{text}</p> : null}
+        </div>
+        <ul className="shop-grid">
+          {items.map((item) => {
+            const price = formatPrice(item.price, item.priceNote) || 'Ask in store'
+            return (
+              <li key={item._id} className="shop-item">
+                <div className="shop-media">
+                  {item.image?.asset ? (
+                    <SanityImg image={item.image} width={720} height={720} sizes="(max-width: 760px) 100vw, 40vw" alt={item.image.alt || item.name} />
+                  ) : (
+                    <div className="shop-mark">
+                      <LogoMark />
+                    </div>
+                  )}
+                </div>
+                <div className="shop-body">
+                  <div className="shop-line">
+                    <h3>{item.name}</h3>
+                    <span className="price">{price}</span>
+                  </div>
+                  {item.description ? <p>{item.description}</p> : null}
+                  {item.link ? (
+                    <a className="text-link" href={item.link} target="_blank" rel="noopener noreferrer">
+                      Buy online <ArrowUpRight />
+                    </a>
+                  ) : null}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </section>
   )

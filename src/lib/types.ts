@@ -39,6 +39,7 @@ export type HomeData = {
   page: {
     heroHeading?: string
     heroText?: string
+    heroSteps?: { _key: string; title: string; text?: string }[]
     heroImage?: SanityImage
     storyHeading?: string
     storyText?: string
@@ -46,6 +47,8 @@ export type HomeData = {
     highlights?: { _key: string; title: string; text?: string }[]
     menuHeading?: string
     menuText?: string
+    shopHeading?: string
+    shopText?: string
     galleryHeading?: string
     gallery?: SanityImage[]
     visitHeading?: string
@@ -53,6 +56,17 @@ export type HomeData = {
     seo?: Seo
   } | null
   featured: MenuItem[]
+  shop?: ShopItem[]
+}
+
+export type ShopItem = {
+  _id: string
+  name: string
+  description?: string
+  price?: number
+  priceNote?: string
+  link?: string
+  image?: SanityImage
 }
 
 export type MenuData = {

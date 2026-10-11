@@ -30,6 +30,7 @@ export const homePage = defineType({
     { name: 'story', title: 'Our story' },
     { name: 'highlights', title: 'Highlights' },
     { name: 'menu', title: 'Featured menu' },
+    { name: 'shop', title: 'Shop' },
     { name: 'gallery', title: 'Gallery' },
     { name: 'visit', title: 'Visit us' },
     { name: 'seo', title: 'Google & sharing' },
@@ -37,7 +38,25 @@ export const homePage = defineType({
   fields: [
     defineField({ name: 'heroHeading', title: 'Main heading', type: 'string', group: 'hero', validation: (r) => r.required() }),
     defineField({ name: 'heroText', title: 'Text under heading', type: 'text', rows: 2, group: 'hero' }),
-    imageWithAlt('heroImage', 'Banner photo', 'hero', 'A big, atmospheric photo. Landscape works best.'),
+    defineField({
+      name: 'heroSteps',
+      title: 'Scroll story',
+      type: 'array',
+      group: 'hero',
+      description: 'The lines that appear one after another as visitors scroll past the 3D cups. Up to three.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'heroStep',
+          fields: [
+            defineField({ name: 'title', title: 'Heading', type: 'string', validation: (r) => r.required() }),
+            defineField({ name: 'text', title: 'Text', type: 'text', rows: 2 }),
+          ],
+        }),
+      ],
+      validation: (r) => r.max(3),
+    }),
+    imageWithAlt('heroImage', 'Banner photo (fallback)', 'hero', 'Shown instead of the 3D cups on devices that can’t display them, and when shared on social media.'),
     defineField({ name: 'storyHeading', title: 'Heading', type: 'string', group: 'story' }),
     defineField({ name: 'storyText', title: 'Text', type: 'text', rows: 6, group: 'story', description: 'Leave an empty line between paragraphs.' }),
     imageWithAlt('storyImage', 'Photo', 'story'),
@@ -69,6 +88,8 @@ export const homePage = defineType({
       group: 'menu',
       description: 'Items marked as "Feature on home page" in the Menu appear here automatically, as a menu board.',
     }),
+    defineField({ name: 'shopHeading', title: 'Heading', type: 'string', group: 'shop' }),
+    defineField({ name: 'shopText', title: 'Text', type: 'text', rows: 2, group: 'shop', description: 'Items come from "Shop items" in the menu on the left.' }),
     defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery' }),
     defineField({
       name: 'gallery',

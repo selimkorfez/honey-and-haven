@@ -1,8 +1,10 @@
 /**
  * Starter content shown until the café publishes its own content in /studio.
  * Anything published in the Studio automatically replaces the matching part below.
+ * Menu and hours are taken from the café's own Instagram/TikTok stories (Oct 2026).
+ * Photos are stock placeholders until the café uploads its own.
  */
-import type { HomeData, MenuData, MenuItem, SanityImage, Settings } from './types'
+import type { HomeData, MenuData, MenuItem, SanityImage, Settings, ShopItem } from './types'
 
 const photo = (id: string, alt: string): SanityImage => ({
   alt,
@@ -11,95 +13,124 @@ const photo = (id: string, alt: string): SanityImage => ({
 
 export const FALLBACK_SETTINGS: NonNullable<Settings> = {
   name: 'Honey & Haven',
-  tagline: 'Inventive coffee and a cosy haven on The Parade, Oadby.',
+  tagline: 'Coffee, matcha and a cosy haven on The Parade, Oadby.',
   address: '41D The Parade\nOadby, Leicester\nLE2 5BB',
   mapQuery: 'Honey & Haven, 41D The Parade, Oadby, Leicester LE2 5BB',
   hours: [
-    { _key: 'wk', days: 'Monday – Friday', hours: '8:00 – 18:00' },
-    { _key: 'sa', days: 'Saturday', hours: '9:00 – 18:00' },
-    { _key: 'su', days: 'Sunday', hours: '10:00 – 18:00' },
+    { _key: 'mt', days: 'Monday – Thursday', hours: '9am – 6pm' },
+    { _key: 'fs', days: 'Friday – Saturday', hours: '9am – 8pm' },
+    { _key: 'su', days: 'Sunday', hours: '10am – 6pm' },
   ],
+  instagram: 'https://www.instagram.com/honeyand.haven/',
   tiktok: 'https://www.tiktok.com/@honeyand.haven',
   seo: {
-    title: 'Honey & Haven | Coffee Shop in Oadby, Leicester',
+    title: 'Honey & Haven | Coffee & Matcha in Oadby, Leicester',
     description:
-      'A cosy coffee shop on The Parade, Oadby. Spanish lattes, Vietnamese coffee, mango matcha, fresh paninis and homemade cakes. Open 7 days.',
+      'A cosy coffee shop on The Parade, Oadby. Spanish lattes, Vietnamese egg coffee and matcha made nine ways, plus natural honey and merch to take home. Open 7 days.',
     image: photo('1495474472287-4d71bcdd2085', 'Friends raising lattes over a wooden table'),
   },
 }
 
 const items = {
-  spanish: { _id: 'f-spanish', name: 'Spanish latte', description: 'Espresso with sweetened condensed milk — silky, rich and lightly caramel.', price: 4.2, image: photo('1509042239860-f550ce710b93', 'Spanish latte with latte art'), category: 'Signature drinks' },
-  vietnamese: { _id: 'f-viet', name: 'Vietnamese coffee', description: 'Strong black coffee served with sweet, cloudy cream on the side to stir in.', price: 4.0, image: photo('1514432324607-a09d9b4aefdd', 'Strong black coffee in a white cup'), category: 'Signature drinks' },
-  mango: { _id: 'f-mango', name: 'Mango matcha', description: 'Earthy matcha layered over sweet mango.', price: 4.5, image: photo('1515823064-d6e0c04616a7', 'Matcha latte with latte art'), category: 'Signature drinks' },
-  banana: { _id: 'f-banana', name: 'Banana bread iced latte', description: 'Iced espresso and milk with banana bread flavour — dessert in a glass.', price: 4.5, image: photo('1461023058943-07fcbe16d735', 'Iced latte in a tall glass'), category: 'Iced drinks' },
-  panini: { _id: 'f-panini', name: 'Hummus & honey panini', description: 'Creamy hummus with a drizzle of honey, toasted until golden.', price: 6.5, dietary: ['v'], category: 'Food' },
-  tiramisu: { _id: 'f-tiramisu', name: 'Tiramisu cake', description: 'Coffee-soaked sponge layered with mascarpone cream and cocoa.', price: 4.2, dietary: ['v'], image: photo('1571877227200-a0d98ea607e9', 'Slice of tiramisu cake'), category: 'Cakes & bakes' },
+  pistachio: { _id: 'f-pistachio', name: 'Pistachio Spanish Latte', description: 'A past special from the secret menu.', image: photo('1509042239860-f550ce710b93', 'Latte with latte art'), category: 'Secret menu' },
+  rose: { _id: 'f-rose', name: 'Rose Spanish Latte', description: 'A past special from the secret menu.', image: photo('1461023058943-07fcbe16d735', 'Iced latte in a tall glass'), category: 'Secret menu' },
+  bueno: { _id: 'f-bueno', name: 'Kinder Bueno Spanish', description: 'A past special from the secret menu.', category: 'Secret menu' },
+  popcorn: { _id: 'f-popcorn', name: 'Popcorn Matcha', description: 'A past special from the secret menu.', image: photo('1515823064-d6e0c04616a7', 'Matcha latte with latte art'), category: 'Secret menu' },
+  egg: { _id: 'f-egg', name: 'Vietnamese Egg Coffee', description: 'Rich coffee topped with a silky, whipped sweet cream.', image: photo('1572442388796-11668a67e53d', 'Coffee with a thick creamy top'), category: 'Coffee' },
+  matcha: { _id: 'f-matcha', name: 'Matcha Latte', description: 'Plain, or with one of nine syrups from lychee to pistachio.', category: 'Matcha' },
 } satisfies Record<string, MenuItem>
+
+export const FALLBACK_SHOP: ShopItem[] = [
+  { _id: 's-honey', name: 'Natural honey', description: 'Pure, natural honey in a jar to take home. Ask at the counter.', image: photo('1558642452-9d2a7deb7f62', 'Honey dripping from a wooden dipper into a jar') },
+  { _id: 's-merch', name: 'Honey & Haven merch', description: 'Our bee monogram, ready to take home. Ask at the counter to see what’s in.' },
+]
 
 export const FALLBACK_HOME: HomeData = {
   page: {
     heroHeading: 'Your little haven on The Parade',
-    heroText: 'Inventive coffee, sweet treats and a warm seat waiting — from Spanish lattes to mango matcha.',
+    heroText: 'Coffee and matcha made your way, hot or iced, in a warm corner of Oadby.',
+    heroSteps: [
+      { _key: 's1', title: 'Every espresso, hot or iced', text: 'Lattes, flat whites, mochas and Spanish lattes, poured however you like them.' },
+      { _key: 's2', title: 'Matcha, nine ways', text: 'Plain, or with vanilla, white choc, caramel, hazelnut, strawberry, coconut, blueberry, lychee or pistachio.' },
+      { _key: 's3', title: 'Honey to take home', text: 'Natural honey and Honey & Haven merch, waiting at the counter.' },
+    ],
     heroImage: photo('1495474472287-4d71bcdd2085', 'Friends raising lattes over a wooden table'),
     storyHeading: 'Classic comfort, with a twist',
     storyText:
-      'Honey & Haven is a neighbourhood coffee shop on The Parade in Oadby — a calm, cosy spot to slow down, catch up with friends or get a little work done.\n\nOur menu mixes the classics you love with flavours you won’t find everywhere: Spanish lattes, banana bread iced lattes, Vietnamese coffee and mango matcha, alongside fresh paninis, croissant sandwiches and homemade cakes.',
+      'Honey & Haven is a neighbourhood coffee shop on The Parade in Oadby: a calm, cosy spot to slow down, catch up with friends or get a little work done.\n\nAlongside the classics, we’re known for Spanish lattes, Vietnamese egg coffee and matcha made nine ways. Ask about the secret menu, where past specials like the Popcorn Matcha and the Pistachio Spanish Latte live on.',
     storyImage: photo('1442512595331-e89e73853f31', 'Barista pouring a filter coffee'),
     highlights: [
-      { _key: 'h1', title: 'Inventive drinks', text: 'Spanish lattes, Vietnamese coffee, mango matcha and seasonal specials.' },
-      { _key: 'h2', title: 'Fresh food & bakes', text: 'Toasted paninis, croissant sandwiches and cakes like our tiramisu.' },
-      { _key: 'h3', title: 'Plant-based friendly', text: 'Vegetarian and vegan options on the menu.' },
+      { _key: 'h1', title: 'Hot or iced', text: 'Every espresso drink, made the way you like it.' },
+      { _key: 'h2', title: 'A secret menu', text: 'Past specials you still love, available on request.' },
+      { _key: 'h3', title: 'Local honey', text: 'Natural honey and merch to take home.' },
     ],
-    menuHeading: 'Our favourites',
-    menuText: 'A few of the drinks and treats people keep coming back for.',
+    menuHeading: 'People keep coming back for',
+    menuText: 'A few favourites, including some from the secret menu.',
+    shopHeading: 'Take a little haven home',
+    shopText: 'Natural honey and Honey & Haven merch, available in store.',
     galleryHeading: 'Slow mornings, warm cups',
     gallery: [
       photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
       photo('1509042239860-f550ce710b93', 'Lattes among green plants'),
       photo('1453614512568-c4024d13c247', 'Bright café counter'),
       photo('1517701604599-bb29b565090c', 'Iced coffee on a wooden table'),
-      photo('1555507036-ab1f4038808a', 'Fresh croissants dusted with sugar'),
+      photo('1558642452-9d2a7deb7f62', 'Honey dripping into a jar'),
       photo('1559496417-e7f25cb247f3', 'Small coffee in sunlight'),
     ].map((img, i) => ({ ...img, _key: `g${i}` })),
     visitHeading: 'Come say hello',
-    visitText: 'Find us on The Parade in Oadby. Pull up a chair — card payments welcome.',
+    visitText: 'Find us on The Parade in Oadby. Festive and bank holiday hours may differ.',
   },
-  featured: [items.spanish, items.banana, items.vietnamese, items.mango, items.panini, items.tiramisu],
+  featured: [items.pistachio, items.rose, items.popcorn, items.egg, items.bueno, items.matcha],
+  shop: FALLBACK_SHOP,
 }
-
-const strip = ({ category: _c, ...rest }: MenuItem) => rest as MenuItem
 
 export const FALLBACK_MENU: MenuData = {
   page: {
     heading: 'Our menu',
-    intro: 'Classic coffee, inventive specials and fresh food, made to order every day.',
-    footnote: 'Please let us know about any allergies before ordering. Prices and availability may change.',
+    intro: 'Coffee, matcha and a secret menu of past specials. Every espresso-based drink can be made hot or iced.',
+    footnote: 'Please let us know about any allergies before ordering. Festive and bank holiday hours may differ.',
   },
   categories: [
     {
-      _id: 'c-hot',
-      title: 'Hot coffee',
+      _id: 'c-coffee',
+      title: 'Coffee',
+      description: 'All espresso-based drinks can be hot or iced',
       items: [
-        { _id: 'f-esp', name: 'Espresso', price: 2.4 },
-        { _id: 'f-ame', name: 'Americano', price: 2.9 },
-        { _id: 'f-fw', name: 'Flat white', description: 'A double shot with silky steamed milk.', price: 3.4 },
-        { _id: 'f-cap', name: 'Cappuccino', price: 3.4 },
-        { _id: 'f-lat', name: 'Latte', price: 3.5 },
-        { _id: 'f-hc', name: 'Hot chocolate', price: 3.5 },
+        { _id: 'm-esp', name: 'Espresso' },
+        { _id: 'm-ame', name: 'Americano' },
+        { _id: 'm-lat', name: 'Latte' },
+        { _id: 'm-cap', name: 'Cappuccino' },
+        { _id: 'm-fw', name: 'Flat White' },
+        { _id: 'm-mac', name: 'Macchiato' },
+        { _id: 'm-moc', name: 'Mocha' },
+        { _id: 'm-hc', name: 'Hot Chocolate' },
+        { _id: 'm-chai', name: 'Chai Latte' },
+        { _id: 'm-egg', name: 'Vietnamese Egg Coffee', description: 'Rich coffee topped with a silky, whipped sweet cream.' },
       ],
     },
-    { _id: 'c-sig', title: 'Signature drinks', description: 'House favourites', items: [items.spanish, items.vietnamese, items.mango].map(strip) },
     {
-      _id: 'c-iced',
-      title: 'Iced drinks',
-      items: [items.banana, { _id: 'f-il', name: 'Iced latte', price: 3.8 }, { _id: 'f-im', name: 'Iced matcha latte', price: 4.2 }].map(strip),
+      _id: 'c-matcha',
+      title: 'Matcha',
+      items: [
+        { _id: 'm-matcha', name: 'Plain Matcha Latte' },
+        {
+          _id: 'm-syrups',
+          name: 'Add a syrup',
+          priceNote: '+50p',
+          description: 'Vanilla, White Choc, Caramel, Hazelnut, Strawberry, Coconut, Blueberry, Lychee, Pistachio',
+        },
+      ],
     },
     {
-      _id: 'c-food',
-      title: 'Food',
-      items: [items.panini, { _id: 'f-croi', name: 'Cheese & tomato croissant', description: 'A buttery croissant filled with melted cheese and tomato.', price: 5.5, dietary: ['v'], image: photo('1555507036-ab1f4038808a', 'Croissants') }].map(strip),
+      _id: 'c-secret',
+      title: 'Secret menu',
+      description: 'Previous specials that you still love',
+      items: [
+        { _id: 'm-popcorn', name: 'Popcorn Matcha' },
+        { _id: 'm-bueno', name: 'Kinder Bueno Spanish' },
+        { _id: 'm-rose', name: 'Rose Spanish Latte' },
+        { _id: 'm-pist', name: 'Pistachio Spanish Latte' },
+      ],
     },
-    { _id: 'c-cake', title: 'Cakes & bakes', items: [items.tiramisu].map(strip) },
   ],
 }

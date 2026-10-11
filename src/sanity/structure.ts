@@ -5,6 +5,7 @@ import { DocumentTextIcon } from '@sanity/icons/DocumentText'
 import { BillIcon } from '@sanity/icons/Bill'
 import { TagIcon } from '@sanity/icons/Tag'
 import { StarIcon } from '@sanity/icons/Star'
+import { BasketIcon } from '@sanity/icons/Basket'
 
 export const structure: StructureResolver = (S) =>
   S.list()
@@ -56,6 +57,10 @@ export const structure: StructureResolver = (S) =>
         .title('Menu categories')
         .icon(TagIcon)
         .child(S.documentTypeList('menuCategory').title('Menu categories').defaultOrdering([{ field: 'order', direction: 'asc' }])),
+      S.listItem()
+        .title('Shop items')
+        .icon(BasketIcon)
+        .child(S.documentTypeList('shopItem').title('Shop items').defaultOrdering([{ field: 'order', direction: 'asc' }])),
       S.divider(),
       S.listItem()
         .title('Site settings')
