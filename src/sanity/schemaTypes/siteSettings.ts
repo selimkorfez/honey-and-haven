@@ -58,6 +58,21 @@ export const siteSettings = defineType({
       of: [defineArrayMember({ type: 'openingHours' })],
     }),
     defineField({
+      name: 'hoursNote',
+      title: 'Note under opening hours',
+      type: 'string',
+      group: 'visit',
+      initialValue: 'Festive and bank holiday hours may differ.',
+    }),
+    defineField({
+      name: 'specialHours',
+      title: 'Holiday & special hours',
+      type: 'array',
+      group: 'visit',
+      description: 'Add bank holidays, Christmas or days you’re closed. They show on the website automatically in the weeks before, and disappear once the day has passed.',
+      of: [defineArrayMember({ type: 'specialHours' })],
+    }),
+    defineField({
       name: 'instagram',
       title: 'Instagram link',
       type: 'url',

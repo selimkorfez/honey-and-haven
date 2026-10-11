@@ -30,7 +30,7 @@ export const homePage = defineType({
     { name: 'story', title: 'Our story' },
     { name: 'highlights', title: 'Highlights' },
     { name: 'menu', title: 'Featured menu' },
-    { name: 'shop', title: 'Shop' },
+    { name: 'shop', title: 'Pinned products' },
     { name: 'gallery', title: 'Gallery' },
     { name: 'visit', title: 'Visit us' },
     { name: 'seo', title: 'Google & sharing' },
@@ -89,7 +89,7 @@ export const homePage = defineType({
       description: 'Items marked as "Feature on home page" in the Menu appear here automatically, as a menu board.',
     }),
     defineField({ name: 'shopHeading', title: 'Heading', type: 'string', group: 'shop' }),
-    defineField({ name: 'shopText', title: 'Text', type: 'text', rows: 2, group: 'shop', description: 'Items come from "Shop items" in the menu on the left.' }),
+    defineField({ name: 'shopText', title: 'Text', type: 'text', rows: 2, group: 'shop', description: 'Shows products marked “Pin to home page” (up to 4). Edit them under Shop → Products.' }),
     defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery' }),
     defineField({
       name: 'gallery',

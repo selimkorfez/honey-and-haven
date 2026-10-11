@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { sanityFetch } from '@/sanity/lib/client'
 import { HOME_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
-import type { HomeData, SanityImage, Settings, ShopItem } from '@/lib/types'
+import type { HomeData, Product, SanityImage, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, mapsEmbed, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
@@ -10,14 +10,22 @@ import { HeroScroll } from '@/components/hero/HeroScroll'
 import { LogoMark } from '@/components/LogoMark'
 import { MenuBoard, type BoardItem } from '@/components/MenuBoard'
 import { ArrowRight, ArrowUpRight, Camera, Clock, HexMark, Pin, Video } from '@/components/Icons'
-import { FALLBACK_HOME, FALLBACK_SETTINGS, FALLBACK_SHOP } from '@/lib/fallback'
+import { FALLBACK_HOME, FALLBACK_PRODUCTS, FALLBACK_SETTINGS } from '@/lib/fallback'
+import { isConfigured } from '@/sanity/env'
+import { getShopSettings } from '@/lib/shop'
+import { toCard, type ProductCardView } from '@/lib/productView'
+import { formatDays, specialText, specialToday, upcomingSpecialHours } from '@/lib/hours'
+import { Img } from '@/components/Img'
+import { QuickAdd } from '@/components/shop/QuickAdd'
 
 async function getData() {
-  const [settings, data] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), sanityFetch<HomeData>(HOME_QUERY)])
+  const [settings, data, shopSettings] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), sanityFetch<HomeData>(HOME_QUERY), getShopSettings()])
   const page = data?.page ?? FALLBACK_HOME.page
   // Until the café publishes its own home page, show the starter favourites too
   const featured = data?.featured?.length ? data.featured : data?.page ? [] : FALLBACK_HOME.featured
-  const shop = data?.shop?.length ? data.shop : data?.page ? [] : FALLBACK_SHOP
+  // Pinned products (example products only before the Studio is connected)
+  const pinned: Product[] = isConfigured ? (data?.shop ?? []) : FALLBACK_PRODUCTS.filter((p) => p.featured)
+  const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 520px) 100vw, 22vw'))
   return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop }
 }
 
@@ -33,6 +41,8 @@ export default async function HomePage() {
   const heading = page?.heroHeading || settings?.name || 'Honey & Haven'
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
   const firstHours = settings?.hours?.[0]
+  const today = specialToday(settings?.specialHours)
+  const upcoming = upcomingSpecialHours(settings?.specialHours)
 
   const board: BoardItem[] = featured.map((item) => ({
     id: item._id,
@@ -58,7 +68,14 @@ export default async function HomePage() {
               <span>{addressLines.slice(0, 2).join(', ')}</span>
             </li>
           ) : null}
-          {firstHours ? (
+          {today ? (
+            <li className="hero-fact-special">
+              <Clock />
+              <span>
+                Today ({today.label}): {specialText(today)}
+              </span>
+            </li>
+          ) : firstHours ? (
             <li>
               <Clock />
               <span>
@@ -152,6 +169,26 @@ export default async function HomePage() {
                 </tbody>
               </table>
             ) : null}
+            {upcoming.length ? (
+              <div className="special-hours">
+                <h3>Holiday hours</h3>
+                <table className="hours">
+                  <caption className="sr-only">Holiday and special opening hours</caption>
+                  <tbody>
+                    {upcoming.map((h) => (
+                      <tr key={h._key}>
+                        <th scope="row">
+                          {h.label}
+                          <small>{formatDays(h)}</small>
+                        </th>
+                        <td>{specialText(h)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+            {settings?.hoursNote ? <p className="hours-note">{settings.hoursNote}</p> : null}
             {settings?.address ? <address className="address">{settings.address}</address> : null}
             <div className="visit-actions">
               <a className="btn btn-primary" href={mapsLink(settings?.mapQuery)} target="_blank" rel="noopener noreferrer">
@@ -206,43 +243,59 @@ function Gallery({ heading, images }: { heading?: string; images: SanityImage[] 
   )
 }
 
-function Shop({ heading, text, items }: { heading?: string; text?: string; items: ShopItem[] }) {
+function Shop({ heading, text, items }: { heading?: string; text?: string; items: ProductCardView[] }) {
   return (
     <section className="section shop" id="shop">
       <div className="container">
         <div className="shop-head">
-          <h2>{heading || 'Take a little haven home'}</h2>
-          {text ? <p className="body-text">{text}</p> : null}
+          <div className="shop-head-copy">
+            <h2>{heading || 'Take a little haven home'}</h2>
+            {text ? <p className="body-text">{text}</p> : null}
+          </div>
+          <Link href="/shop" className="btn btn-ghost">
+            Visit the shop <ArrowRight />
+          </Link>
         </div>
         <ul className="shop-grid">
-          {items.map((item) => {
-            const price = formatPrice(item.price, item.priceNote) || 'Ask in store'
-            return (
-              <li key={item._id} className="shop-item">
-                <div className="shop-media">
-                  {item.image?.asset ? (
-                    <SanityImg image={item.image} width={720} height={720} sizes="(max-width: 760px) 100vw, 40vw" alt={item.image.alt || item.name} />
-                  ) : (
-                    <div className="shop-mark">
-                      <LogoMark />
-                    </div>
-                  )}
-                </div>
-                <div className="shop-body">
-                  <div className="shop-line">
-                    <h3>{item.name}</h3>
-                    <span className="price">{price}</span>
+          {items.map((item) => (
+            <li key={item.id} className="shop-item" data-soldout={item.soldOut || undefined}>
+              <div className="shop-media" data-tone={item.tone}>
+                {item.image ? (
+                  <Img img={item.image} />
+                ) : (
+                  <div className="shop-mark">
+                    <LogoMark />
                   </div>
-                  {item.description ? <p>{item.description}</p> : null}
-                  {item.link ? (
-                    <a className="text-link" href={item.link} target="_blank" rel="noopener noreferrer">
-                      Buy online <ArrowUpRight />
-                    </a>
-                  ) : null}
+                )}
+                {item.badge ? <span className="pcard-badge" data-kind={item.soldOut ? 'out' : item.badge === 'Sale' ? 'sale' : 'low'}>{item.badge}</span> : null}
+              </div>
+              <div className="shop-body">
+                <div className="shop-line">
+                  <h3>
+                    <Link href={`/shop/${item.slug}`} className="pcard-link">
+                      {item.name}
+                    </Link>
+                  </h3>
+                  <span className="price">
+                    {item.price}
+                    {item.was ? (
+                      <s>
+                        <span className="sr-only">was </span>
+                        {item.was}
+                      </s>
+                    ) : null}
+                  </span>
                 </div>
-              </li>
-            )
-          })}
+                {item.summary ? <p>{item.summary}</p> : null}
+                <div className="shop-actions">
+                  {item.quickAdd ? <QuickAdd item={item.quickAdd} label="Add to basket" /> : null}
+                  <span className="shop-more" aria-hidden="true">
+                    {item.soldOut ? 'Sold out' : item.quickAdd ? 'Details' : 'Choose options'} <ArrowUpRight />
+                  </span>
+                </div>
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

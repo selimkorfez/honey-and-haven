@@ -1,3 +1,5 @@
+import type { PortableTextBlock } from 'next-sanity'
+
 export type SanityImage = {
   _type?: 'image'
   alt?: string
@@ -18,6 +20,9 @@ export type Settings = {
   phone?: string
   email?: string
   hours?: { _key: string; days: string; hours: string }[]
+  hoursNote?: string
+  specialHours?: SpecialHours[]
+  infoPages?: { title: string; slug: string }[]
   instagram?: string
   tiktok?: string
   facebook?: string
@@ -56,18 +61,54 @@ export type HomeData = {
     seo?: Seo
   } | null
   featured: MenuItem[]
-  shop?: ShopItem[]
+  shop?: Product[]
 }
 
-export type ShopItem = {
+export type SpecialHours = { _key: string; label: string; date: string; endDate?: string; closed?: boolean; hours?: string }
+
+export type ProductVariant = { _key: string; name: string; price?: number | null; stock?: number | null }
+
+export type Product = {
   _id: string
   name: string
-  description?: string
-  price?: number
-  priceNote?: string
-  link?: string
-  image?: SanityImage
+  slug: string
+  category?: string | null
+  images?: SanityImage[] | null
+  summary?: string | null
+  description?: PortableTextBlock[] | null
+  price: number
+  compareAtPrice?: number | null
+  stock?: number | null
+  collectionOnly?: boolean | null
+  optionName?: string | null
+  variants?: ProductVariant[] | null
+  featured?: boolean | null
 }
+
+export type ShopSettings = {
+  heading?: string
+  intro?: string
+  bannerImage?: SanityImage
+  ordersOpen: boolean
+  closedMessage?: string
+  lowStockAt: number
+  thankYouMessage?: string
+  collectionEnabled: boolean
+  collectionNote?: string
+  deliveryEnabled: boolean
+  deliveryFee: number
+  freeDeliveryOver?: number | null
+  deliveryNote?: string
+  seo?: Seo
+}
+
+/** What the browser needs to know about the shop (no secrets). */
+export type CheckoutConfig = Pick<
+  ShopSettings,
+  'ordersOpen' | 'closedMessage' | 'collectionEnabled' | 'collectionNote' | 'deliveryEnabled' | 'deliveryFee' | 'freeDeliveryOver' | 'deliveryNote'
+> & { live: boolean }
+
+export type InfoPage = { title: string; slug: string; body?: PortableTextBlock[] | null }
 
 export type MenuData = {
   page: { heading?: string; intro?: string; footnote?: string; seo?: Seo } | null

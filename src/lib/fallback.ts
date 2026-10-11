@@ -4,7 +4,8 @@
  * Menu and hours are taken from the café's own Instagram/TikTok stories (Oct 2026).
  * Photos are stock placeholders until the café uploads its own.
  */
-import type { HomeData, MenuData, MenuItem, SanityImage, Settings, ShopItem } from './types'
+import type { PortableTextBlock } from 'next-sanity'
+import type { HomeData, InfoPage, MenuData, MenuItem, Product, SanityImage, Settings, ShopSettings } from './types'
 
 const photo = (id: string, alt: string): SanityImage => ({
   alt,
@@ -20,6 +21,11 @@ export const FALLBACK_SETTINGS: NonNullable<Settings> = {
     { _key: 'mt', days: 'Monday – Thursday', hours: '9am – 6pm' },
     { _key: 'fs', days: 'Friday – Saturday', hours: '9am – 8pm' },
     { _key: 'su', days: 'Sunday', hours: '10am – 6pm' },
+  ],
+  hoursNote: 'Festive and bank holiday hours may differ.',
+  infoPages: [
+    { title: 'Delivery & returns', slug: 'delivery-and-returns' },
+    { title: 'Privacy', slug: 'privacy' },
   ],
   instagram: 'https://www.instagram.com/honeyand.haven/',
   tiktok: 'https://www.tiktok.com/@honeyand.haven',
@@ -40,9 +46,103 @@ const items = {
   matcha: { _id: 'f-matcha', name: 'Matcha Latte', description: 'Plain, or with one of nine syrups from lychee to pistachio.', category: 'Matcha' },
 } satisfies Record<string, MenuItem>
 
-export const FALLBACK_SHOP: ShopItem[] = [
-  { _id: 's-honey', name: 'Natural honey', description: 'Pure, natural honey in a jar to take home. Ask at the counter.', image: photo('1558642452-9d2a7deb7f62', 'Honey dripping from a wooden dipper into a jar') },
-  { _id: 's-merch', name: 'Honey & Haven merch', description: 'Our bee monogram, ready to take home. Ask at the counter to see what’s in.' },
+/** Turns plain paragraphs into rich text (the format the Studio's text editor saves). */
+function blocks(...paras: (string | { h: string })[]): PortableTextBlock[] {
+  return paras.map((p, i) => ({
+    _type: 'block',
+    _key: `b${i}`,
+    style: typeof p === 'string' ? 'normal' : 'h2',
+    markDefs: [],
+    children: [{ _type: 'span', _key: `s${i}`, text: typeof p === 'string' ? p : p.h, marks: [] }],
+  }))
+}
+
+/**
+ * Example products so the owners can see how the shop works.
+ * Prices are placeholders, and these can't be bought: checkout only sells products saved in the Studio.
+ */
+export const FALLBACK_PRODUCTS: Product[] = [
+  {
+    _id: 'p-honey',
+    name: 'Natural honey',
+    slug: 'natural-honey',
+    category: 'Honey',
+    images: [photo('1558642452-9d2a7deb7f62', 'Honey dripping from a wooden dipper into a jar')],
+    summary: 'Pure, natural honey, jarred and ready to take home.',
+    description: blocks('Pure, natural honey. Lovely in tea, on toast, or straight from the spoon.', 'Glass jar. Store at room temperature.'),
+    price: 8,
+    featured: true,
+  },
+  {
+    _id: 'p-cup',
+    name: 'Honey & Haven reusable cup',
+    slug: 'reusable-cup',
+    category: 'Merch',
+    summary: 'Our bee monogram on a cup made for many refills.',
+    description: blocks('Bring it back to the counter for your next latte.'),
+    price: 15,
+    featured: true,
+  },
+  {
+    _id: 'p-tote',
+    name: 'Honey & Haven tote bag',
+    slug: 'tote-bag',
+    category: 'Merch',
+    summary: 'A sturdy cotton tote with the bee monogram.',
+    description: blocks('Heavy cotton, long handles, roomy enough for your laptop and a pastry or two.'),
+    price: 12,
+    featured: true,
+  },
+]
+
+export const FALLBACK_SHOP_SETTINGS: ShopSettings = {
+  heading: 'The Honey & Haven shop',
+  intro: 'Natural honey and Honey & Haven merch. Order online for collection on The Parade, or have it posted anywhere in the UK.',
+  ordersOpen: true,
+  closedMessage: 'Online orders are paused for now. Everything is still available in store.',
+  lowStockAt: 3,
+  thankYouMessage: 'Thank you for supporting a little local café. We’ll be in touch by email about your order.',
+  collectionEnabled: true,
+  collectionNote: 'Collect from 41D The Parade, Oadby during opening hours. We’ll email you when it’s ready.',
+  deliveryEnabled: true,
+  deliveryFee: 3.95,
+  freeDeliveryOver: 30,
+  deliveryNote: 'Posted within 2 working days by Royal Mail.',
+}
+
+export const FALLBACK_INFO_PAGES: InfoPage[] = [
+  {
+    title: 'Delivery & returns',
+    slug: 'delivery-and-returns',
+    body: blocks(
+      { h: 'Collect in store' },
+      'Choose “Collect in store” in your basket and pick your order up from Honey & Haven, 41D The Parade, Oadby, during opening hours. We’ll email you when it’s ready.',
+      { h: 'UK delivery' },
+      'We post to UK addresses. The delivery cost is shown in your basket before you pay, and orders over the free-delivery amount are posted free.',
+      { h: 'Changed your mind?' },
+      'You can cancel an online order up to 14 days after it arrives. Let us know, send or bring the item back unused and in its original condition, and we’ll refund you within 14 days of receiving it. Return postage is paid by you unless the item was faulty. For hygiene reasons, opened food such as honey can’t be returned unless it’s faulty.',
+      { h: 'Something wrong?' },
+      'If anything arrives damaged or isn’t right, tell us within 30 days and we’ll replace it or refund you.',
+      { h: 'Get in touch' },
+      'Pop into the café or message us on Instagram, and we’ll sort it out.',
+    ),
+  },
+  {
+    title: 'Privacy',
+    slug: 'privacy',
+    body: blocks(
+      { h: 'What we collect' },
+      'When you order online we collect your name, email address, phone number and, for deliveries, your address. We use these only to prepare, deliver and contact you about your order.',
+      { h: 'Payments' },
+      'Payments are handled securely by Stripe. We never see or store your card details.',
+      { h: 'How long we keep it' },
+      'We keep order records for as long as we need them for our accounts, and we never sell your details or use them for marketing without asking.',
+      { h: 'Cookies' },
+      'This website doesn’t use advertising or tracking cookies. Your basket is saved in your own browser so it’s still there when you come back.',
+      { h: 'Your rights' },
+      'To see, correct or delete the information we hold about you, get in touch in the café or on Instagram.',
+    ),
+  },
 ]
 
 export const FALLBACK_HOME: HomeData = {
@@ -67,7 +167,7 @@ export const FALLBACK_HOME: HomeData = {
     menuHeading: 'People keep coming back for',
     menuText: 'A few favourites, including some from the secret menu.',
     shopHeading: 'Take a little haven home',
-    shopText: 'Natural honey and Honey & Haven merch, available in store.',
+    shopText: 'Natural honey and Honey & Haven merch. Order online for collection or UK delivery.',
     galleryHeading: 'Slow mornings, warm cups',
     gallery: [
       photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
@@ -78,10 +178,10 @@ export const FALLBACK_HOME: HomeData = {
       photo('1559496417-e7f25cb247f3', 'Small coffee in sunlight'),
     ].map((img, i) => ({ ...img, _key: `g${i}` })),
     visitHeading: 'Come say hello',
-    visitText: 'Find us on The Parade in Oadby. Festive and bank holiday hours may differ.',
+    visitText: 'Find us on The Parade in Oadby. Pull up a chair, we’d love to see you.',
   },
   featured: [items.pistachio, items.rose, items.popcorn, items.egg, items.bueno, items.matcha],
-  shop: FALLBACK_SHOP,
+  shop: FALLBACK_PRODUCTS,
 }
 
 export const FALLBACK_MENU: MenuData = {

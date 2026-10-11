@@ -4,7 +4,7 @@ import type { Seo, Settings } from './types'
 
 export function buildMetadata(settings: Settings, pageSeo: Seo | undefined, fallbackTitle?: string): Metadata {
   const name = settings?.name || 'Honey & Haven'
-  const title = pageSeo?.title || settings?.seo?.title || (fallbackTitle ? `${fallbackTitle} · ${name}` : name)
+  const title = pageSeo?.title || (fallbackTitle ? `${fallbackTitle} · ${name}` : settings?.seo?.title || name)
   const description = pageSeo?.description || settings?.seo?.description || undefined
   const image = pageSeo?.image?.asset ? pageSeo.image : settings?.seo?.image
   const ogImage = image?.asset

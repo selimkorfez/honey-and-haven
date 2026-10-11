@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LogoMark } from './LogoMark'
+import { BasketButton } from './shop/BasketButton'
 
 export function Header({ name, announcement }: { name: string; announcement?: string }) {
   const [first, ...rest] = name.split('&')
@@ -21,12 +22,11 @@ export function Header({ name, announcement }: { name: string; announcement?: st
         </Link>
         <nav className="nav" aria-label="Main">
           <Link href="/menu">Menu</Link>
-          <Link href="/#shop" className="hide-sm">
-            Shop
-          </Link>
-          <Link href="/#visit" className="nav-cta">
+          <Link href="/shop">Shop</Link>
+          <Link href="/#visit" className="nav-cta hide-sm">
             Visit us
           </Link>
+          <BasketButton />
         </nav>
       </div>
     </header>

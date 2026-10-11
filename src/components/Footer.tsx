@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Settings } from '@/lib/types'
 import { mapsLink } from '@/lib/format'
 import { ArrowUpRight } from './Icons'
+import { FALLBACK_SETTINGS } from '@/lib/fallback'
 
 export function Footer({ settings }: { settings: Settings }) {
   const name = settings?.name || 'Honey & Haven'
@@ -58,6 +59,7 @@ export function Footer({ settings }: { settings: Settings }) {
                 </li>
               ))}
             </ul>
+            {settings?.hoursNote ? <p className="footer-note">{settings.hoursNote}</p> : null}
           </div>
           <div>
             <h3>Follow</h3>
@@ -72,6 +74,9 @@ export function Footer({ settings }: { settings: Settings }) {
               <li>
                 <Link href="/menu">Our menu</Link>
               </li>
+              <li>
+                <Link href="/shop">Shop</Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -79,7 +84,14 @@ export function Footer({ settings }: { settings: Settings }) {
           <span>
             © {new Date().getFullYear()} {name}
           </span>
-          <Link href="/studio">Staff login</Link>
+          <nav className="footer-links" aria-label="Information">
+            {(settings?.infoPages?.length ? settings.infoPages : FALLBACK_SETTINGS.infoPages)?.map((p) => (
+              <Link key={p.slug} href={`/info/${p.slug}`}>
+                {p.title}
+              </Link>
+            ))}
+            <Link href="/studio">Staff login</Link>
+          </nav>
         </div>
       </div>
     </footer>

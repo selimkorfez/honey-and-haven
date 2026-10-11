@@ -11,6 +11,8 @@ import { Footer } from '@/components/Footer'
 import { ScrollFX } from '@/components/ScrollFX'
 import { MotionProvider } from '@/components/MotionProvider'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
+import { getShopSettings, toCheckoutConfig } from '@/lib/shop'
+import { BasketProvider } from '@/components/shop/BasketProvider'
 
 const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
 const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
@@ -28,8 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const settings = (await sanityFetch<Settings>(SETTINGS_QUERY)) ?? FALLBACK_SETTINGS
+  const [settingsData, shopSettings] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), getShopSettings()])
+  const settings = settingsData ?? FALLBACK_SETTINGS
   const name = settings?.name || 'Honey & Haven'
+  const checkout = toCheckoutConfig(shopSettings)
 
   // Tells Google this is a local café (helps with Maps & local search)
   const jsonLd = {
@@ -46,15 +50,21 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
     servesCuisine: ['Coffee', 'Cafe'],
     hasMenu: `${siteUrl()}/menu`,
     sameAs: [settings?.instagram, settings?.tiktok, settings?.facebook].filter(Boolean),
+    // Holiday closures, so Google shows the right hours
+    specialOpeningHoursSpecification: (settings?.specialHours ?? [])
+      .filter((s) => s.closed && s.date)
+      .map((s) => ({ '@type': 'OpeningHoursSpecification', validFrom: s.date, validThrough: s.endDate || s.date, opens: '00:00', closes: '00:00' })),
   }
 
   return (
     <html lang="en-GB" className={`${serif.variable} ${sans.variable}`}>
       <body>
         <MotionProvider>
-          <Header name={name} announcement={settings?.announcement} />
-          <main>{children}</main>
-          <Footer settings={settings} />
+          <BasketProvider config={checkout}>
+            <Header name={name} announcement={settings?.announcement} />
+            <main>{children}</main>
+            <Footer settings={settings} />
+          </BasketProvider>
         </MotionProvider>
         <ScrollFX />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
