@@ -2,11 +2,11 @@ import Link from 'next/link'
 import type { Settings } from '@/lib/types'
 import { mapsLink } from '@/lib/format'
 import { ArrowUpRight } from './Icons'
+import { Wordmark } from './Wordmark'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
 
 export function Footer({ settings }: { settings: Settings }) {
   const name = settings?.name || 'Honey & Haven'
-  const [first, ...rest] = name.split('&')
   const socials = [
     { label: 'Instagram', href: settings?.instagram },
     { label: 'TikTok', href: settings?.tiktok },
@@ -16,15 +16,9 @@ export function Footer({ settings }: { settings: Settings }) {
   return (
     <footer className="site-footer">
       <div className="container">
-        <p className="footer-big" aria-hidden="true">
-          {rest.length ? (
-            <>
-              {first.trim()} <em>&amp;</em> {rest.join('&').trim()}
-            </>
-          ) : (
-            name
-          )}
-        </p>
+        <div className="footer-big" aria-hidden="true">
+          <Wordmark className="footer-wordmark" />
+        </div>
         <div className="footer-grid">
           <div>
             <h3>{name}</h3>

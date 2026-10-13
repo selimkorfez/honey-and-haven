@@ -298,42 +298,48 @@ html[data-scrolled='true'] body:has(.hero3d) .site-header {
   min-height: 76px;
 }
 
-/* Logo: "Honey & Haven" folds into "H&H", then becomes the bee monogram on scroll */
+/* Logo: "HONEY & HAVEN" folds into "HH", then becomes the bee monogram on scroll */
 .logo {
   position: relative;
   display: inline-flex;
   align-items: center;
   min-width: 34px;
   min-height: 44px;
-  color: inherit;
+  color: var(--brown);
   text-decoration: none;
-  font-family: var(--serif);
-  font-size: 30px;
-  letter-spacing: -0.015em;
-  white-space: nowrap;
 }
 
 .logo:hover {
-  color: inherit;
+  color: var(--brown);
 }
 
 .logo-word {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
+  height: 27px;
   transform-origin: left center;
   transition:
     opacity 0.3s 0.15s,
     transform 0.6s var(--ease);
 }
 
-.lw-amp {
-  color: var(--oak);
-  padding: 0 0.04em;
+.lw-keep,
+.lw-fold > span {
+  display: flex;
+  height: 100%;
+}
+
+.wm-svg {
+  display: block;
+  flex: none;
+  height: 100%;
+  width: auto;
 }
 
 .lw-fold {
   display: inline-grid;
   grid-template-columns: 1fr;
+  height: 100%;
   transition:
     grid-template-columns 0.6s var(--ease) 0.2s,
     opacity 0.45s 0.25s;
@@ -431,8 +437,8 @@ html[data-scrolled='true'] .logo .logo-mark {
     min-height: 64px;
   }
 
-  .logo {
-    font-size: 23px;
+  .logo-word {
+    height: 19px;
   }
 
   .logo .logo-mark {
@@ -867,15 +873,14 @@ html[data-scrolled='true'] .logo .logo-mark {
 }
 
 .footer-big {
-  font-family: var(--serif);
-  font-size: clamp(48px, 9vw, 96px);
-  line-height: 0.95;
-  letter-spacing: -0.03em;
   color: var(--cream);
 }
 
-.footer-big em {
-  color: var(--honey);
+.footer-wordmark {
+  display: block;
+  width: 100%;
+  max-width: 980px;
+  height: auto;
 }
 
 .footer-grid {

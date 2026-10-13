@@ -12,6 +12,12 @@ const photo = (id: string, alt: string): SanityImage => ({
   asset: { _id: 'fallback', url: `https://images.unsplash.com/photo-${id}`, metadata: { dimensions: { width: 1600, height: 1067, aspectRatio: 1.5 } } },
 })
 
+/** The café's own photos, stored in /public. */
+const ownPhoto = (path: string, alt: string, w: number, h: number): SanityImage => ({
+  alt,
+  asset: { _id: 'fallback', url: path, metadata: { dimensions: { width: w, height: h, aspectRatio: w / h } } },
+})
+
 export const FALLBACK_SETTINGS: NonNullable<Settings> = {
   name: 'Honey & Haven',
   tagline: 'Coffee, matcha and a cosy haven on The Parade, Oadby.',
@@ -64,12 +70,15 @@ function blocks(...paras: (string | { h: string })[]): PortableTextBlock[] {
 export const FALLBACK_PRODUCTS: Product[] = [
   {
     _id: 'p-honey',
-    name: 'Natural honey',
-    slug: 'natural-honey',
+    name: 'Pure Honey 340g',
+    slug: 'pure-honey',
     category: 'Honey',
-    images: [photo('1558642452-9d2a7deb7f62', 'Honey dripping from a wooden dipper into a jar')],
-    summary: 'Pure, natural honey, jarred and ready to take home.',
-    description: blocks('Pure, natural honey. Lovely in tea, on toast, or straight from the spoon.', 'Glass jar. Store at room temperature.'),
+    images: [ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey with its cream label and gold lid', 1200, 1200)],
+    summary: 'Produced as a collaboration with Tythe Bees in England’s Vale of Belvoir.',
+    description: blocks(
+      'Our own Pure Honey, produced as a collaboration with Tythe Bees in England’s Vale of Belvoir. Lovely in tea, on toast, or straight from the spoon.',
+      '340g glass jar with a gold twist-off lid. Store at room temperature. Not suitable for babies under 12 months.',
+    ),
     price: 8,
     featured: true,
   },
@@ -78,8 +87,9 @@ export const FALLBACK_PRODUCTS: Product[] = [
     name: 'Honey & Haven reusable cup',
     slug: 'reusable-cup',
     category: 'Merch',
-    summary: 'Our bee monogram on a cup made for many refills.',
-    description: blocks('Bring it back to the counter for your next latte.'),
+    images: [ownPhoto('/products/reusable-cup.jpg', 'Blush reusable cup with the Honey & Haven bee monogram', 800, 1000)],
+    summary: 'Our bee monogram on a blush reusable cup with a sliding lid.',
+    description: blocks('A blush reusable cup with a sliding drink-through lid and our bee monogram. Bring it back to the counter for your next latte.'),
     price: 15,
     featured: true,
   },
@@ -88,8 +98,15 @@ export const FALLBACK_PRODUCTS: Product[] = [
     name: 'Honey & Haven tote bag',
     slug: 'tote-bag',
     category: 'Merch',
-    summary: 'A sturdy cotton tote with the bee monogram.',
-    description: blocks('Heavy cotton, long handles, roomy enough for your laptop and a pastry or two.'),
+    images: [
+      ownPhoto('/products/tote-front.jpg', 'Brown canvas tote bag with the cream Honey & Haven bee monogram', 960, 1200),
+      ownPhoto('/products/tote-back.jpg', 'Back of the tote bag reading “If lost, return to Honey & Haven”', 960, 1200),
+    ],
+    summary: 'Brown canvas tote: bee monogram on the front, “If lost, return to Honey & Haven” on the back.',
+    description: blocks(
+      'A sturdy brown canvas tote with long handles. Our cream bee monogram is on the front, and the back reads “If lost, return to Honey & Haven”.',
+      'Roomy enough for a laptop, a jar of honey and a pastry or two.',
+    ),
     price: 12,
     featured: true,
   },
@@ -152,7 +169,7 @@ export const FALLBACK_HOME: HomeData = {
     heroSteps: [
       { _key: 's1', title: 'Every espresso, hot or iced', text: 'Lattes, flat whites, mochas and Spanish lattes, poured however you like them.' },
       { _key: 's2', title: 'Matcha, nine ways', text: 'Plain, or with vanilla, white choc, caramel, hazelnut, strawberry, coconut, blueberry, lychee or pistachio.' },
-      { _key: 's3', title: 'Honey to take home', text: 'Natural honey and Honey & Haven merch, waiting at the counter.' },
+      { _key: 's3', title: 'Honey to take home', text: 'Our Pure Honey, made with Tythe Bees in the Vale of Belvoir, plus Honey & Haven cups and merch.' },
     ],
     heroImage: photo('1495474472287-4d71bcdd2085', 'Friends raising lattes over a wooden table'),
     storyHeading: 'Classic comfort, with a twist',
@@ -162,7 +179,7 @@ export const FALLBACK_HOME: HomeData = {
     highlights: [
       { _key: 'h1', title: 'Hot or iced', text: 'Every espresso drink, made the way you like it.' },
       { _key: 'h2', title: 'A secret menu', text: 'Past specials you still love, available on request.' },
-      { _key: 'h3', title: 'Local honey', text: 'Natural honey and merch to take home.' },
+      { _key: 'h3', title: 'Our own honey', text: 'Pure Honey made with Tythe Bees in the Vale of Belvoir.' },
     ],
     menuHeading: 'People keep coming back for',
     menuText: 'A few favourites, including some from the secret menu.',

@@ -7,12 +7,13 @@ import * as THREE from 'three'
 import { LOGO_PATH, LOGO_TRANSFORM } from '../LogoMark'
 
 /* ------------------------------------------------------------------ */
-/* Brand colours (sampled from the café's logo)                        */
+/* Colours (sampled from the café's logo, cups and honey jar)                        */
 /* ------------------------------------------------------------------ */
 const BROWN = '#4a2e2b'
-const KRAFT = '#c79c6c'
-const CREAM = '#f3eadf'
-const PAPER = '#fbf7f0'
+const BLUSH = '#cfa294' // reusable cup body
+const SLEEVE = '#d4aa9c' // reusable cup sleeve
+const LID = '#ddbaa9' // reusable cup lid
+const GOLD = '#caa24c' // honey jar lid
 
 type Progress = { current: number }
 
@@ -58,27 +59,45 @@ function useCanvasTexture(draw: (ctx: CanvasRenderingContext2D, w: number, h: nu
   }, [])
 }
 
-/** A label that wraps around a cylinder: logo + wordmark, repeated. */
-function drawLabel(bg: string, ink: string, repeats: number) {
-  return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
-    ctx.fillStyle = bg
-    ctx.fillRect(0, 0, w, h)
-    // fine paper grain
-    for (let i = 0; i < 1400; i++) {
-      ctx.fillStyle = `rgba(74,46,43,${Math.random() * 0.05})`
-      ctx.fillRect(Math.random() * w, Math.random() * h, 1.5, 1.5)
-    }
-    const seg = w / repeats
-    for (let r = 0; r < repeats; r++) {
-      const cx = seg * r + seg / 2
-      drawMark(ctx, cx, h * 0.42, h * 0.56, ink)
-      ctx.fillStyle = ink
-      ctx.font = `600 ${Math.round(h * 0.085)}px Georgia, serif`
-      ctx.textAlign = 'center'
-      ;(ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = `${Math.round(h * 0.02)}px`
-      ctx.fillText('HONEY & HAVEN', cx, h * 0.86)
-    }
+/** Fine fibre speckle, like the café's bamboo-fibre reusable cups. */
+function speckle(ctx: CanvasRenderingContext2D, w: number, h: number, n: number, rgb: string, max = 0.08) {
+  for (let i = 0; i < n; i++) {
+    ctx.fillStyle = `rgba(${rgb},${Math.random() * max})`
+    ctx.fillRect(Math.random() * w, Math.random() * h, 1.6, 1.6)
   }
+}
+
+/** Monogram printed on a cup: `marks` copies spread around the cup. */
+function drawPrint(bg: string | null, ink: string, marks: number, size = 0.5) {
+  return (ctx: CanvasRenderingContext2D, w: number, h: number) => {
+    ctx.clearRect(0, 0, w, h)
+    if (bg) {
+      ctx.fillStyle = bg
+      ctx.fillRect(0, 0, w, h)
+      speckle(ctx, w, h, 2600, '120,80,60', 0.07)
+      speckle(ctx, w, h, 900, '255,250,240', 0.12)
+    }
+    for (let i = 0; i < marks; i++) drawMark(ctx, (w / marks) * (i + 0.5), h * 0.5, h * size, ink)
+  }
+}
+
+/** The honey jar label: "Pure Honey", monogram, collaboration line and weight. */
+function drawHoneyLabel(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  ctx.fillStyle = '#f4ebdd'
+  ctx.fillRect(0, 0, w, h)
+  speckle(ctx, w, h, 1800, '120,90,60', 0.05)
+  const cx = w / 2
+  ctx.fillStyle = BROWN
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.font = `${Math.round(h * 0.17)}px "Times New Roman", Times, Georgia, serif`
+  ctx.fillText('Pure Honey', cx, h * 0.23)
+  drawMark(ctx, cx, h * 0.47, h * 0.33, BROWN)
+  ctx.font = `${Math.round(h * 0.062)}px "Times New Roman", Times, Georgia, serif`
+  ctx.fillText('Produced as a collaboration with', cx, h * 0.73)
+  ctx.fillText('Tythe Bees in England\u2019s Vale of Belvoir', cx, h * 0.81)
+  ctx.font = `${Math.round(h * 0.095)}px "Times New Roman", Times, Georgia, serif`
+  ctx.fillText('340g', cx, h * 0.95)
 }
 
 function drawGradient(stops: [number, string][]) {
@@ -97,54 +116,89 @@ const lathe = (pts: [number, number][], segments = 72) =>
   )
 
 /* ------------------------------------------------------------------ */
-/* Objects                                                             */
+/* Objects (modelled on the café's own cups and honey jar)             */
 /* ------------------------------------------------------------------ */
-function TakeawayCup() {
-  const body = useMemo(() => lathe([[0, -1.1], [0.52, -1.1], [0.535, -1.07], [0.72, 1.0], [0.745, 1.03], [0.75, 1.06]]), [])
+
+/** The blush bamboo-fibre reusable cup: wide sleeve, narrow base, lipped lid with a sliding cover. */
+function HotCup() {
+  // inner cup wall radius at height y
+  const r = (y: number) => 0.53 + ((0.66 - 0.53) * (y + 1.0)) / 1.92
+  const body = useMemo(() => lathe([[0, -1.08], [0.5, -1.08], [0.525, -1.05], [0.53, -1.0], [0.66, 0.92], [0.67, 0.95]]), [])
+  const sleeve = useMemo(() => new THREE.CylinderGeometry(r(0.84) + 0.032, r(-0.78) + 0.032, 1.62, 96, 1, true), [])
+  const step = useMemo(() => new THREE.RingGeometry(r(-0.78) - 0.002, r(-0.78) + 0.032, 96), [])
   const lid = useMemo(
-    () => lathe([[0, 1.24], [0.3, 1.235], [0.48, 1.2], [0.6, 1.17], [0.7, 1.13], [0.785, 1.09], [0.795, 1.04], [0.77, 1.01]]),
+    () =>
+      lathe([[0.66, 0.86], [0.72, 0.87], [0.745, 0.9], [0.75, 0.95], [0.735, 0.99], [0.68, 1.01], [0.67, 1.13], [0.645, 1.165], [0.6, 1.17], [0, 1.17]]),
     [],
   )
-  const sleeveTex = useCanvasTexture(drawLabel(KRAFT, BROWN, 2), 1024, 280)
-  // radius of the cup wall at height y (for the sleeve)
-  const r = (y: number) => 0.535 + ((0.72 - 0.535) * (y + 1.07)) / 2.07
-  const sleeve = useMemo(() => new THREE.CylinderGeometry(r(0.42) + 0.014, r(-0.42) + 0.014, 0.84, 72, 1, true), [])
+  const sleeveTex = useCanvasTexture(drawPrint(SLEEVE, BROWN, 2, 0.38), 1024, 420)
 
   return (
     <group>
-      <mesh geometry={body} castShadow>
-        <meshStandardMaterial color={PAPER} roughness={0.72} side={THREE.DoubleSide} />
+      <mesh geometry={body}>
+        <meshStandardMaterial color={BLUSH} roughness={0.85} side={THREE.DoubleSide} />
       </mesh>
-      <mesh geometry={sleeve} position={[0, 0, 0]}>
+      <mesh geometry={sleeve} position={[0, 0.03, 0]} rotation={[0, Math.PI / 2, 0]}>
         <meshStandardMaterial map={sleeveTex} roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
-      <mesh geometry={lid}>
-        <meshStandardMaterial color={BROWN} roughness={0.42} metalness={0.05} side={THREE.DoubleSide} />
+      <mesh geometry={step} position={[0, -0.78, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <meshStandardMaterial color={BLUSH} roughness={0.9} side={THREE.DoubleSide} />
       </mesh>
-      {/* sip hole */}
-      <mesh position={[0.46, 1.215, 0]} rotation={[0, 0, -0.22]}>
-        <capsuleGeometry args={[0.035, 0.12, 6, 12]} />
-        <meshStandardMaterial color="#1c110f" roughness={0.6} />
+      <mesh geometry={lid}>
+        <meshStandardMaterial color={LID} roughness={0.72} side={THREE.DoubleSide} />
+      </mesh>
+      {/* sliding drink-through cover and its OPEN tab */}
+      <mesh position={[0, 1.19, 0]}>
+        <boxGeometry args={[0.26, 0.045, 1.2]} />
+        <meshStandardMaterial color={LID} roughness={0.65} />
+      </mesh>
+      <mesh position={[0, 1.13, 0.61]}>
+        <boxGeometry args={[0.26, 0.13, 0.05]} />
+        <meshStandardMaterial color={LID} roughness={0.65} />
       </mesh>
     </group>
   )
 }
 
-function IcedBottle({ matcha }: { matcha: { current: number } }) {
-  const glass = useMemo(
-    () =>
-      lathe([[0, -1.2], [0.46, -1.2], [0.52, -1.16], [0.535, -1.08], [0.535, 0.42], [0.5, 0.6], [0.38, 0.78], [0.27, 0.9], [0.25, 0.95], [0.25, 1.06]]),
-    [],
-  )
-  const liquid = useMemo(() => lathe([[0, -1.16], [0.48, -1.16], [0.505, -1.1], [0.505, 0.36], [0, 0.36]]), [])
-  // Iced Spanish latte (espresso floating on milk) that turns into an iced matcha
-  const coffee = useMemo(() => ['#5e3520', '#7b4a2b', '#b98352', '#e2c9a6', '#f2e6d4'].map((c) => new THREE.Color(c)), [])
-  const green = useMemo(() => ['#5f7f3a', '#78984c', '#a9bf7d', '#e5e4c8', '#f2e8d6'].map((c) => new THREE.Color(c)), [])
-  const stops = [0, 0.18, 0.42, 0.62, 1]
+/** Clear iced-drink cup with flat lid, straw, ice and the monogram printed in brown. */
+function IcedCup({ matcha }: { matcha: { current: number } }) {
+  const r = (y: number) => 0.45 + ((0.62 - 0.45) * (y + 1.05)) / 2.05
+  // Rounded base like the café's PET cups: a soft curve from the flat bottom into the wall
+  const roundedBase = (inset: number, top: number): [number, number][] => {
+    const R = 0.2
+    const cx = r(-1.05 + R) - R - inset
+    const pts: [number, number][] = [[0, -1.05 + inset]]
+    for (let i = 0; i <= 10; i++) {
+      const a = -Math.PI / 2 + (i / 10) * (Math.PI / 2)
+      pts.push([cx + Math.cos(a) * R, -1.05 + inset + R + Math.sin(a) * R])
+    }
+    pts.push([r(top) - inset, top])
+    return pts
+  }
+  const cup = useMemo(() => lathe([...roundedBase(0, 1.0), [0.64, 1.02]]), [])
+  const lid = useMemo(() => lathe([[0.6, 0.97], [0.665, 1.0], [0.67, 1.05], [0.62, 1.07], [0, 1.07]]), [])
+  const liquid = useMemo(() => lathe([...roundedBase(0.025, 0.4), [0, 0.4]]), [])
+  const logoBand = useMemo(() => new THREE.CylinderGeometry(r(0.42) + 0.008, r(-0.42) + 0.008, 0.84, 96, 1, true), [])
+
+  // Iced latte (coffee swirls on top, caramel milk below) that turns into an iced matcha
+  const coffee = useMemo(() => ['#5a331e', '#86522f', '#b37d4f', '#c4935f', '#c99a68'].map((c) => new THREE.Color(c)), [])
+  const green = useMemo(() => ['#57763a', '#6f8f45', '#9db46f', '#bccb93', '#c7d2a0'].map((c) => new THREE.Color(c)), [])
+  const stops = [0, 0.12, 0.3, 0.55, 1]
   const liquidTex = useCanvasTexture(drawGradient(stops.map((o, i) => [o, `#${coffee[i].getHexString()}`])), 8, 256)
+  const logoTex = useCanvasTexture(drawPrint(null, BROWN, 2, 0.62), 1024, 256)
   const lastMix = useRef(0)
   const tmp = useMemo(() => new THREE.Color(), [])
-  const labelTex = useCanvasTexture(drawLabel(CREAM, BROWN, 2), 1024, 280)
+  const ice = useMemo(
+    () =>
+      [
+        [0.18, 0.42, 0.12, 0.4],
+        [-0.2, 0.47, 0.05, 1.1],
+        [0.02, 0.5, -0.24, 2.0],
+        [-0.12, 0.33, 0.26, 0.7],
+        [0.26, 0.3, -0.1, 1.6],
+      ] as const,
+    [],
+  )
 
   useFrame(() => {
     const m = matcha.current
@@ -162,59 +216,86 @@ function IcedBottle({ matcha }: { matcha: { current: number } }) {
   return (
     <group>
       <mesh geometry={liquid}>
-        <meshStandardMaterial map={liquidTex} roughness={0.22} />
+        <meshStandardMaterial map={liquidTex} roughness={0.25} />
       </mesh>
-      <mesh geometry={glass}>
+      {ice.map(([x, y, z, rot], i) => (
+        <mesh key={i} position={[x, y, z]} rotation={[rot, rot * 1.3, rot * 0.6]}>
+          <boxGeometry args={[0.2, 0.18, 0.2]} />
+          <meshStandardMaterial color="#efe7dc" roughness={0.12} metalness={0.05} />
+        </mesh>
+      ))}
+      {/* straw */}
+      <mesh position={[0.12, 1.05, 0.02]} rotation={[0.05, 0, -0.16]}>
+        <cylinderGeometry args={[0.05, 0.05, 2.5, 20, 1, true]} />
+        <meshStandardMaterial color="#f5f1ea" roughness={0.35} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh geometry={cup}>
         <meshPhysicalMaterial
           color="#ffffff"
-          roughness={0.06}
+          roughness={0.1}
           transmission={1}
-          thickness={0.35}
-          ior={1.45}
+          thickness={0.12}
+          ior={1.4}
           clearcoat={1}
-          clearcoatRoughness={0.05}
+          clearcoatRoughness={0.08}
           transparent
-          opacity={0.9}
+          opacity={0.92}
           side={THREE.DoubleSide}
         />
       </mesh>
-      {/* label band */}
-      <mesh position={[0, -0.42, 0]}>
-        <cylinderGeometry args={[0.542, 0.542, 0.62, 72, 1, true]} />
-        <meshStandardMaterial map={labelTex} roughness={0.8} side={THREE.DoubleSide} />
+      <mesh geometry={lid}>
+        <meshPhysicalMaterial color="#ffffff" roughness={0.08} transmission={1} thickness={0.05} transparent opacity={0.85} side={THREE.DoubleSide} />
       </mesh>
-      {/* cap */}
-      <mesh position={[0, 1.16, 0]}>
-        <cylinderGeometry args={[0.285, 0.285, 0.24, 48]} />
-        <meshStandardMaterial color={BROWN} roughness={0.5} />
+      {/* monogram printed on the plastic */}
+      <mesh geometry={logoBand} position={[0, 0.02, 0]} rotation={[0, Math.PI / 2, 0]}>
+        <meshStandardMaterial map={logoTex} transparent alphaTest={0.4} roughness={0.5} side={THREE.FrontSide} />
       </mesh>
     </group>
   )
 }
 
+/** The café's 340g Pure Honey jar: gold lid, brown seal strip, cream label. */
 function HoneyJar() {
-  const labelTex = useCanvasTexture(drawLabel(CREAM, BROWN, 1), 512, 280)
+  const glass = useMemo(
+    () => lathe([[0, -0.78], [0.5, -0.78], [0.535, -0.74], [0.545, -0.6], [0.545, 0.42], [0.52, 0.52], [0.45, 0.58], [0.44, 0.64], [0.44, 0.7]]),
+    [],
+  )
+  const honey = useMemo(() => lathe([[0, -0.76], [0.52, -0.76], [0.525, -0.6], [0.525, 0.44], [0.47, 0.52], [0, 0.52]]), [])
+  const labelTex = useCanvasTexture(drawHoneyLabel, 1024, 470)
   return (
     <group>
-      {/* honey */}
-      <mesh position={[0, -0.08, 0]}>
-        <cylinderGeometry args={[0.47, 0.47, 0.86, 64]} />
-        <meshPhysicalMaterial color="#d8942a" roughness={0.15} transmission={0.6} thickness={0.8} emissive="#7a4208" emissiveIntensity={0.18} />
+      <mesh geometry={honey}>
+        <meshStandardMaterial color="#e6b443" roughness={0.12} emissive="#9a6a10" emissiveIntensity={0.32} />
       </mesh>
-      {/* glass */}
-      <mesh>
-        <cylinderGeometry args={[0.5, 0.5, 1.04, 64, 1, true]} />
-        <meshPhysicalMaterial color="#ffffff" roughness={0.05} transmission={1} thickness={0.2} transparent opacity={0.5} side={THREE.DoubleSide} />
+      <mesh geometry={glass}>
+        <meshPhysicalMaterial color="#ffffff" roughness={0.04} transmission={1} thickness={0.2} transparent opacity={0.6} side={THREE.DoubleSide} />
       </mesh>
-      {/* label */}
-      <mesh position={[0, -0.05, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <cylinderGeometry args={[0.505, 0.505, 0.48, 64, 1, true, -0.9, 1.8]} />
-        <meshStandardMaterial map={labelTex} roughness={0.8} side={THREE.DoubleSide} />
+      {/* label wraps the front of the jar */}
+      <mesh position={[0, -0.12, 0]}>
+        <cylinderGeometry args={[0.553, 0.553, 0.78, 72, 1, true, -1.6, 3.2]} />
+        <meshStandardMaterial map={labelTex} roughness={0.85} side={THREE.DoubleSide} />
       </mesh>
-      {/* lid */}
-      <mesh position={[0, 0.6, 0]}>
-        <cylinderGeometry args={[0.54, 0.54, 0.18, 64]} />
-        <meshStandardMaterial color={BROWN} roughness={0.45} />
+      {/* gold twist-off lid */}
+      <mesh position={[0, 0.8, 0]}>
+        <cylinderGeometry args={[0.49, 0.49, 0.2, 72]} />
+        <meshStandardMaterial color={GOLD} metalness={0.9} roughness={0.28} />
+      </mesh>
+      <mesh position={[0, 0.905, 0]}>
+        <cylinderGeometry args={[0.47, 0.49, 0.02, 72]} />
+        <meshStandardMaterial color={GOLD} metalness={0.9} roughness={0.22} />
+      </mesh>
+      {/* brown seal strip over the lid */}
+      <mesh position={[0, 0.8, 0.496]}>
+        <boxGeometry args={[0.1, 0.22, 0.012]} />
+        <meshStandardMaterial color={BROWN} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.918, 0.25]}>
+        <boxGeometry args={[0.1, 0.012, 0.5]} />
+        <meshStandardMaterial color={BROWN} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 0.5, 0.505]} rotation={[-0.35, 0, 0]}>
+        <boxGeometry args={[0.1, 0.24, 0.012]} />
+        <meshStandardMaterial color={BROWN} roughness={0.7} />
       </mesh>
     </group>
   )
@@ -334,12 +415,12 @@ function Rig({ progress, still, beanCount }: { progress: Progress; still: boolea
   return (
     <group ref={rig}>
       <group ref={cup}>
-        <TakeawayCup />
+        <HotCup />
       </group>
       <group ref={bottle} visible={false}>
-        <IcedBottle matcha={matcha} />
+        <IcedCup matcha={matcha} />
       </group>
-      <group ref={jar} visible={false} scale={0.85}>
+      <group ref={jar} visible={false} scale={0.8}>
         <HoneyJar />
       </group>
       <Beans count={beanCount} progress={smooth} still={still} />
@@ -354,7 +435,7 @@ function Stage({ children }: { children: React.ReactNode }) {
   const { size } = useThree()
   const aspect = size.width / size.height
   // Wide screens: shift everything right so the headline on the left stays clear
-  const x = aspect > 1.15 ? Math.min(1.75, 0.8 + (aspect - 1.15) * 2) : 0
+  const x = aspect > 1.15 ? Math.min(1.45, 0.7 + (aspect - 1.15) * 1.8) : 0
   return <group position={[x, 0, 0]}>{children}</group>
 }
 
