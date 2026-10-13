@@ -2318,7 +2318,8 @@ html[data-scrolled='true'] .logo .logo-mark {
 
 .pgallery-main {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
+  width: 100%;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--oak-wash);

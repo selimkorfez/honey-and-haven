@@ -73,7 +73,7 @@ export const FALLBACK_PRODUCTS: Product[] = [
     name: 'Pure Honey 340g',
     slug: 'pure-honey',
     category: 'Honey',
-    images: [ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey with its cream label and gold lid', 1200, 1200)],
+    images: [ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey with its cream label and gold lid', 960, 1200)],
     summary: 'Produced as a collaboration with Tythe Bees in England’s Vale of Belvoir.',
     description: blocks(
       'Our own Pure Honey, produced as a collaboration with Tythe Bees in England’s Vale of Belvoir. Lovely in tea, on toast, or straight from the spoon.',
@@ -87,7 +87,7 @@ export const FALLBACK_PRODUCTS: Product[] = [
     name: 'Honey & Haven reusable cup',
     slug: 'reusable-cup',
     category: 'Merch',
-    images: [ownPhoto('/products/reusable-cup.jpg', 'Blush reusable cup with the Honey & Haven bee monogram', 800, 1000)],
+    images: [ownPhoto('/products/reusable-cup.jpg', 'Blush reusable cup with the Honey & Haven bee monogram', 960, 1200)],
     summary: 'Our bee monogram on a blush reusable cup with a sliding lid.',
     description: blocks('A blush reusable cup with a sliding drink-through lid and our bee monogram. Bring it back to the counter for your next latte.'),
     price: 15,
