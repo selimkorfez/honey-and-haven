@@ -22,16 +22,19 @@ export const SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   specialHours[]{ _key, label, date, endDate, closed, hours },
   "infoPages": *[_type == "policyPage" && showInFooter != false && defined(slug.current)] | order(order asc){ title, "slug": slug.current },
   instagram, tiktok, facebook,
+  beeEnabled, beeGreeting, beePicks[]{ _key, title, text, link },
+  googlePlaceId, reviewLink,
   seo { title, description, image ${image}, noIndex }
 }`
 
 export const HOME_QUERY = `{
   "page": *[_id == "homePage"][0]{
-    heroHeading, heroText, heroSteps[]{ _key, title, text }, heroImage ${image},
+    heroHeading, heroText, heroSteps[]{ _key, title, text }, heroImage ${image}, heroTone,
     storyHeading, storyText, storyImage ${image},
     highlights[]{ _key, title, text },
     menuHeading, menuText, shopHeading, shopText,
-    galleryHeading, gallery[] ${image},
+    galleryHeading, galleryText, gallery[] ${image},
+    reviewsHeading, reviewsText, handpickedReviews[]{ _key, quote, name, rating, source, link },
     visitHeading, visitText,
     seo { title, description, image ${image}, noIndex }
   },
@@ -78,3 +81,12 @@ export const CHECKOUT_PRODUCTS_QUERY = `*[_type == "product" && _id in $ids]{
 export const INFO_PAGE_QUERY = `*[_type == "policyPage" && slug.current == $slug][0]{ title, "slug": slug.current, body }`
 
 export const INFO_SLUGS_QUERY = `*[_type == "policyPage" && defined(slug.current)].slug.current`
+
+export const ABOUT_QUERY = `*[_id == "aboutPage"][0]{
+  heading, intro, heroImage ${image},
+  storyHeading, story, storyImage ${image},
+  values[]{ _key, title, text },
+  teamHeading, teamIntro,
+  team[]{ _key, name, role, photo ${image}, bio, favourite },
+  seo { title, description, image ${image}, noIndex }
+}`

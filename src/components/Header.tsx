@@ -16,6 +16,7 @@ export function Header({ name, announcement }: { name: string; announcement?: st
         <nav className="nav" aria-label="Main">
           <Link href="/menu">Menu</Link>
           <Link href="/shop">Shop</Link>
+          <Link href="/about">About</Link>
           <Link href="/#visit" className="nav-cta hide-sm">
             Visit us
           </Link>

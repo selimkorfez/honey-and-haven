@@ -31,7 +31,8 @@ export const homePage = defineType({
     { name: 'highlights', title: 'Highlights' },
     { name: 'menu', title: 'Featured menu' },
     { name: 'shop', title: 'Pinned products' },
-    { name: 'gallery', title: 'Gallery' },
+    { name: 'gallery', title: 'Instagram' },
+    { name: 'reviews', title: 'Reviews' },
     { name: 'visit', title: 'Visit us' },
     { name: 'seo', title: 'Google & sharing' },
   ],
@@ -55,6 +56,20 @@ export const homePage = defineType({
         }),
       ],
       validation: (r) => r.max(3),
+    }),
+    defineField({
+      name: 'heroTone',
+      title: 'Backdrop',
+      type: 'string',
+      group: 'hero',
+      options: {
+        list: [
+          { title: 'Studio brown (like the product photos)', value: 'studio' },
+          { title: 'Cream', value: 'cream' },
+        ],
+        layout: 'radio',
+      },
+      initialValue: 'studio',
     }),
     imageWithAlt('heroImage', 'Banner photo (fallback)', 'hero', 'Shown instead of the 3D cups on devices that can’t display them, and when shared on social media.'),
     defineField({ name: 'storyHeading', title: 'Heading', type: 'string', group: 'story' }),
@@ -90,21 +105,57 @@ export const homePage = defineType({
     }),
     defineField({ name: 'shopHeading', title: 'Heading', type: 'string', group: 'shop' }),
     defineField({ name: 'shopText', title: 'Text', type: 'text', rows: 2, group: 'shop', description: 'Shows products marked “Pin to home page” (up to 4). Edit them under Shop → All products.' }),
-    defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery' }),
+    defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery', initialValue: 'Slow mornings, warm cups' }),
+    defineField({
+      name: 'galleryText',
+      title: 'Text',
+      type: 'text',
+      rows: 2,
+      group: 'gallery',
+      description: 'Your latest Instagram posts show here automatically once Instagram is connected (see the setup guide).',
+    }),
     defineField({
       name: 'gallery',
-      title: 'Gallery photos',
+      title: 'Backup posts',
       type: 'array',
       group: 'gallery',
-      description: 'Drag photos in. 4–6 works best. Drag to reorder.',
+      description:
+        'Shown only while Instagram isn’t connected (or can’t be reached). Add photos from your Instagram and paste each post’s link. 4–8 works best. Drag to reorder.',
       of: [
         defineArrayMember({
           type: 'image',
           options: { hotspot: true },
-          fields: [defineField({ name: 'alt', title: 'Describe the photo', type: 'string' })],
+          fields: [
+            defineField({ name: 'alt', title: 'Describe the photo', type: 'string' }),
+            defineField({ name: 'link', title: 'Instagram post link', type: 'url', description: 'e.g. https://www.instagram.com/p/…' }),
+          ],
         }),
       ],
       options: { layout: 'grid' },
+    }),
+    defineField({ name: 'reviewsHeading', title: 'Heading', type: 'string', group: 'reviews', initialValue: 'Kind words from our regulars' }),
+    defineField({ name: 'reviewsText', title: 'Text', type: 'text', rows: 2, group: 'reviews' }),
+    defineField({
+      name: 'handpickedReviews',
+      title: 'Hand-picked reviews',
+      type: 'array',
+      group: 'reviews',
+      description:
+        'Optional. Google reviews show automatically once Google is connected. You can also add real reviews here, copied word for word from Google, TripAdvisor or Instagram, with the reviewer’s first name and a link to the original.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'handpickedReview',
+          fields: [
+            defineField({ name: 'quote', title: 'Review (word for word)', type: 'text', rows: 4, validation: (r) => r.required().max(600) }),
+            defineField({ name: 'name', title: 'Reviewer’s name', type: 'string', validation: (r) => r.required() }),
+            defineField({ name: 'rating', title: 'Stars', type: 'number', options: { list: [5, 4, 3, 2, 1] }, initialValue: 5 }),
+            defineField({ name: 'source', title: 'Where it was posted', type: 'string', options: { list: ['Google', 'TripAdvisor', 'Instagram', 'TikTok', 'Facebook'] } }),
+            defineField({ name: 'link', title: 'Link to the original review', type: 'url' }),
+          ],
+          preview: { select: { title: 'quote', subtitle: 'name' } },
+        }),
+      ],
     }),
     defineField({ name: 'visitHeading', title: 'Heading', type: 'string', group: 'visit' }),
     defineField({

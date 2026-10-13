@@ -11,6 +11,8 @@ import { productCategory } from './productCategory'
 import { product } from './product'
 import { order } from './order'
 import { policyPage } from './policyPage'
+import { aboutPage } from './aboutPage'
+import { feedback } from './feedback'
 
 export const schemaTypes = [
   seo,
@@ -26,9 +28,11 @@ export const schemaTypes = [
   product,
   order,
   policyPage,
+  aboutPage,
+  feedback,
 ]
 
-export const singletonTypes = new Set(['siteSettings', 'homePage', 'menuPage', 'shopPage'])
+export const singletonTypes = new Set(['siteSettings', 'homePage', 'menuPage', 'shopPage', 'aboutPage'])
 
 /** Created automatically by the website; staff can't add these by hand. */
-export const systemTypes = new Set(['order'])
+export const systemTypes = new Set(['order', 'feedback'])

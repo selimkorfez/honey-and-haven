@@ -134,3 +134,49 @@ export function Lock(props: P) {
     </svg>
   )
 }
+
+export function Instagram(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="5" {...stroke} />
+      <circle cx="12" cy="12" r="4" {...stroke} />
+      <circle cx="17.2" cy="6.8" r="1.1" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function Star(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <path
+        d="m12 3.2 2.65 5.6 6.1.75-4.5 4.2 1.17 6.05L12 16.8l-5.42 3 1.17-6.05-4.5-4.2 6.1-.75L12 3.2Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+export function Play(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor" />
+    </svg>
+  )
+}
+
+export function Layers(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="7.5" y="3.5" width="13" height="13" rx="2.5" {...stroke} />
+      <path d="M16.5 20.5h-10a3 3 0 0 1-3-3v-10" {...stroke} />
+    </svg>
+  )
+}
+
+export function ArrowLeft(props: P) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M19 12H6M11 6.5 5.5 12 11 17.5" {...stroke} />
+    </svg>
+  )
+}

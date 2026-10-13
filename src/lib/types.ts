@@ -7,6 +7,8 @@ export type SanityImage = {
   hotspot?: unknown
   crop?: unknown
   _key?: string
+  /** Gallery photos: link to the Instagram post */
+  link?: string
 }
 
 export type Seo = { title?: string; description?: string; image?: SanityImage; noIndex?: boolean } | null
@@ -26,6 +28,31 @@ export type Settings = {
   instagram?: string
   tiktok?: string
   facebook?: string
+  beeEnabled?: boolean
+  beeGreeting?: string
+  beePicks?: BeePick[]
+  googlePlaceId?: string
+  reviewLink?: string
+  seo?: Seo
+} | null
+
+export type BeePick = { _key: string; title: string; text?: string; link?: string }
+
+export type HandpickedReview = { _key: string; quote: string; name: string; rating?: number; source?: string; link?: string }
+
+export type TeamMember = { _key: string; name: string; role?: string; photo?: SanityImage; bio?: string; favourite?: string }
+
+export type AboutData = {
+  heading?: string
+  intro?: string
+  heroImage?: SanityImage
+  storyHeading?: string
+  story?: PortableTextBlock[]
+  storyImage?: SanityImage
+  values?: { _key: string; title: string; text?: string }[]
+  teamHeading?: string
+  teamIntro?: string
+  team?: TeamMember[]
   seo?: Seo
 } | null
 
@@ -46,6 +73,7 @@ export type HomeData = {
     heroText?: string
     heroSteps?: { _key: string; title: string; text?: string }[]
     heroImage?: SanityImage
+    heroTone?: 'studio' | 'cream'
     storyHeading?: string
     storyText?: string
     storyImage?: SanityImage
@@ -55,7 +83,11 @@ export type HomeData = {
     shopHeading?: string
     shopText?: string
     galleryHeading?: string
+    galleryText?: string
     gallery?: SanityImage[]
+    reviewsHeading?: string
+    reviewsText?: string
+    handpickedReviews?: HandpickedReview[]
     visitHeading?: string
     visitText?: string
     seo?: Seo

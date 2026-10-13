@@ -71,6 +71,9 @@ export function Footer({ settings }: { settings: Settings }) {
               <li>
                 <Link href="/shop">Shop</Link>
               </li>
+              <li>
+                <Link href="/about">About us</Link>
+              </li>
             </ul>
           </div>
         </div>

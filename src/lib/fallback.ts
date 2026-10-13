@@ -5,7 +5,7 @@
  * Photos are stock placeholders until the café uploads its own.
  */
 import type { PortableTextBlock } from 'next-sanity'
-import type { HomeData, InfoPage, MenuData, MenuItem, Product, SanityImage, Settings, ShopSettings } from './types'
+import type { AboutData, HomeData, InfoPage, MenuData, MenuItem, Product, SanityImage, Settings, ShopSettings } from './types'
 
 const photo = (id: string, alt: string): SanityImage => ({
   alt,
@@ -35,6 +35,14 @@ export const FALLBACK_SETTINGS: NonNullable<Settings> = {
   ],
   instagram: 'https://www.instagram.com/honeyand.haven/',
   tiktok: 'https://www.tiktok.com/@honeyand.haven',
+  beeEnabled: true,
+  beeGreeting: 'Got an idea, a wish or a kind word? Tell the bee.',
+  beePicks: [
+    { _key: 'b1', title: 'Spanish latte', text: 'Our signature: smooth, sweet and lovely iced.', link: '/menu' },
+    { _key: 'b2', title: 'Vietnamese egg coffee', text: 'Rich coffee under a silky whipped cream.', link: '/menu' },
+    { _key: 'b3', title: 'Pistachio matcha', text: 'Matcha with one of nine syrups. Pistachio is a favourite.', link: '/menu' },
+    { _key: 'b4', title: 'Pure Honey 340g', text: 'Made with Tythe Bees in the Vale of Belvoir.', link: '/shop/pure-honey' },
+  ],
   seo: {
     title: 'Honey & Haven | Coffee & Matcha in Oadby, Leicester',
     description:
@@ -154,6 +162,8 @@ export const FALLBACK_INFO_PAGES: InfoPage[] = [
       'Payments are handled securely by Stripe. We never see or store your card details.',
       { h: 'How long we keep it' },
       'We keep order records for as long as we need them for our accounts, and we never sell your details or use them for marketing without asking.',
+      { h: 'Notes sent through the bee' },
+      'If you send us feedback or an idea using the bee, we keep your message, and your name and email only if you choose to give them so we can reply. We delete notes once we no longer need them. Ask us any time and we’ll remove yours.',
       { h: 'Cookies' },
       'This website doesn’t use advertising or tracking cookies. Your basket is saved in your own browser so it’s still there when you come back.',
       { h: 'Your rights' },
@@ -186,14 +196,19 @@ export const FALLBACK_HOME: HomeData = {
     shopHeading: 'Take a little haven home',
     shopText: 'Natural honey and Honey & Haven merch. Order online for collection or UK delivery.',
     galleryHeading: 'Slow mornings, warm cups',
+    galleryText: 'New drinks, specials and everyday moments from the café. Follow along on Instagram.',
     gallery: [
-      photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
+      ownPhoto('/feed/iced-latte.jpg', 'Iced latte in a Honey & Haven cup with a straw', 960, 1200),
+      ownPhoto('/products/reusable-cup.jpg', 'Blush Honey & Haven reusable cup', 960, 1200),
       photo('1509042239860-f550ce710b93', 'Lattes among green plants'),
-      photo('1453614512568-c4024d13c247', 'Bright café counter'),
+      ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey', 960, 1200),
+      photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
+      ownPhoto('/products/tote-front.jpg', 'Honey & Haven tote bag', 960, 1200),
       photo('1517701604599-bb29b565090c', 'Iced coffee on a wooden table'),
       photo('1558642452-9d2a7deb7f62', 'Honey dripping into a jar'),
-      photo('1559496417-e7f25cb247f3', 'Small coffee in sunlight'),
     ].map((img, i) => ({ ...img, _key: `g${i}` })),
+    reviewsHeading: 'Kind words from our regulars',
+    reviewsText: 'Our best-rated reviews from Google, updated automatically.',
     visitHeading: 'Come say hello',
     visitText: 'Find us on The Parade in Oadby. Pull up a chair, we’d love to see you.',
   },
@@ -250,4 +265,24 @@ export const FALLBACK_MENU: MenuData = {
       ],
     },
   ],
+}
+
+export const FALLBACK_ABOUT: NonNullable<AboutData> = {
+  heading: 'A little haven on The Parade',
+  intro: 'Honey & Haven is a neighbourhood coffee shop in Oadby: somewhere warm to slow down, meet a friend or just enjoy a really good cup.',
+  heroImage: ownPhoto('/about/shopfront.jpg', 'Illustration of Honey & Haven’s shopfront on The Parade in Oadby, with tables outside and a mural on the wall', 1672, 941),
+  storyHeading: 'Coffee, honey and a place to stay a while',
+  story: blocks(
+    'We wanted Oadby to have the kind of café you look forward to: calm, cosy and a little bit different. Every espresso drink can be made hot or iced, our matcha comes nine ways, and our secret menu keeps past specials alive for the people who loved them.',
+    'Honey is part of our name and part of what we do. Our Pure Honey is made with Tythe Bees in England’s Vale of Belvoir, and you can take a jar home from the counter or the online shop.',
+    'Most of all, Honey & Haven is about the people who come through the door. Pull up a chair, we’d love to see you.',
+  ),
+  values: [
+    { _key: 'v1', title: 'Made your way', text: 'Hot or iced, with the milk and syrup you like.' },
+    { _key: 'v2', title: 'Local at heart', text: 'Honey from the Vale of Belvoir, regulars from all over Oadby.' },
+    { _key: 'v3', title: 'Always something new', text: 'Seasonal specials, and a secret menu for the favourites.' },
+  ],
+  teamHeading: 'The faces behind the counter',
+  teamIntro: 'Say hello next time you’re in. Here’s who’ll be making your drink.',
+  team: [],
 }

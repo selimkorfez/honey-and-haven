@@ -10,6 +10,8 @@ export const siteSettings = defineType({
     { name: 'general', title: 'General', default: true },
     { name: 'visit', title: 'Address & hours' },
     { name: 'social', title: 'Social media' },
+    { name: 'bee', title: 'The bee' },
+    { name: 'reviews', title: 'Reviews' },
     { name: 'seo', title: 'Google & sharing' },
   ],
   fields: [
@@ -81,6 +83,55 @@ export const siteSettings = defineType({
     }),
     defineField({ name: 'tiktok', title: 'TikTok link', type: 'url', group: 'social' }),
     defineField({ name: 'facebook', title: 'Facebook link', type: 'url', group: 'social' }),
+    defineField({
+      name: 'beeEnabled',
+      title: 'Show the bee',
+      type: 'boolean',
+      group: 'bee',
+      initialValue: true,
+      description: 'The little bee in the corner of every page. Visitors tap it to send you feedback and ideas (they arrive in Inbox), and to see your recommendations.',
+    }),
+    defineField({
+      name: 'beeGreeting',
+      title: 'What the bee says',
+      type: 'string',
+      group: 'bee',
+      initialValue: 'Got an idea, a wish or a kind word? Tell the bee.',
+    }),
+    defineField({
+      name: 'beePicks',
+      title: 'The bee recommends',
+      type: 'array',
+      group: 'bee',
+      description: 'Up to four things to try. Change them whenever you like, e.g. this month’s special.',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          name: 'beePick',
+          fields: [
+            defineField({ name: 'title', title: 'Name', type: 'string', validation: (r) => r.required() }),
+            defineField({ name: 'text', title: 'Why it’s good', type: 'string' }),
+            defineField({ name: 'link', title: 'Link (optional)', type: 'string', description: 'A page on this site like /menu or /shop/pure-honey, or a full web address.' }),
+          ],
+        }),
+      ],
+      validation: (r) => r.max(4),
+    }),
+    defineField({
+      name: 'googlePlaceId',
+      title: 'Google Place ID',
+      type: 'string',
+      group: 'reviews',
+      description:
+        'Lets the website show your Google rating and best reviews, and link straight to “Write a review”. Find it by searching for the café at developers.google.com/maps/documentation/places/web-service/place-id (it starts with ChIJ…).',
+    }),
+    defineField({
+      name: 'reviewLink',
+      title: '“Leave a review” link (optional)',
+      type: 'url',
+      group: 'reviews',
+      description: 'Only if you want the button to go somewhere other than Google, e.g. TripAdvisor.',
+    }),
     defineField({
       name: 'seo',
       title: 'Default Google & sharing settings',

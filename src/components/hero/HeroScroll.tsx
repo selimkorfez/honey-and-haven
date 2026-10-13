@@ -7,6 +7,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { useGSAP } from '@gsap/react'
 import type { ImgProps } from '../SanityImg'
 import { LogoMark } from '../LogoMark'
+import type { HeroTone } from './CupScene'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
 
@@ -33,8 +34,10 @@ export function HeroScroll({
   text,
   steps,
   fallbackImage,
+  tone = 'studio',
   children,
 }: {
+  tone?: HeroTone
   heading: string
   text?: string
   steps: Step[]
@@ -104,6 +107,7 @@ export function HeroScroll({
       ref={root}
       className="hero3d"
       data-mode={mode}
+      data-tone={tone}
       style={{ ['--steps' as string]: steps.length }}
       aria-label="Welcome"
     >
@@ -111,7 +115,7 @@ export function HeroScroll({
         <div className="hero3d-glow" aria-hidden="true" />
         <div className="hero3d-canvas" aria-hidden="true">
           {mode === '3d' || mode === 'still' ? (
-            <CupScene progress={progress} still={mode === 'still'} />
+            <CupScene progress={progress} still={mode === 'still'} tone={tone} />
           ) : mode === 'flat' ? (
             fallbackImage ? (
               // eslint-disable-next-line @next/next/no-img-element

@@ -13,6 +13,7 @@ import { MotionProvider } from '@/components/MotionProvider'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
 import { getShopSettings, toCheckoutConfig } from '@/lib/shop'
 import { BasketProvider } from '@/components/shop/BasketProvider'
+import { BeeWidget } from '@/components/bee/BeeWidget'
 
 const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
 const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
@@ -64,6 +65,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             <Header name={name} announcement={settings?.announcement} />
             <main>{children}</main>
             <Footer settings={settings} />
+            {settings?.beeEnabled !== false ? <BeeWidget greeting={settings?.beeGreeting} picks={settings?.beePicks ?? []} /> : null}
           </BasketProvider>
         </MotionProvider>
         <ScrollFX />

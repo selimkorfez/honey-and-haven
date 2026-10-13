@@ -2,7 +2,7 @@
 
 Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid through Stripe Checkout, hosted on Vercel.
 
-- **Everything on the site** (text, photos, menu, products, prices, stock, opening hours, holiday hours, delivery fees, info pages, Google/sharing settings) is edited at `/studio`. No code needed.
+- **Everything on the site** (text, photos, About page and team, the bee, menu, products, prices, stock, opening hours, holiday hours, delivery fees, info pages, Google/sharing settings) is edited at `/studio`. No code needed.
 - **Orders** appear in `/studio → Orders` the moment someone pays. Stock goes down automatically.
 - **Payments, refunds and discount codes** are handled in the Stripe dashboard.
 - Until Sanity is connected, the site shows built-in starter content (`src/lib/fallback.ts`), and the example products can't be bought.
@@ -37,6 +37,23 @@ Test card while using the test key: `4242 4242 4242 4242`, any future date, any 
 ### Discount codes
 Stripe → Product catalogue → Coupons → create a coupon, then add a **promotion code** (e.g. `WELCOME10`). Customers enter it on the checkout page.
 
+## 3. Instagram feed (optional)
+The "Slow mornings, warm cups" section shows the café's latest Instagram posts. Until it's connected, it shows the backup photos from **Home page → Instagram**.
+1. developers.facebook.com → My Apps → Create app → add the **Instagram** product → "API setup with Instagram login".
+2. Add the café's Instagram account (it must be a Business or Creator account) and click **Generate token**.
+3. Vercel → Environment Variables: `INSTAGRAM_ACCESS_TOKEN` = that token, and `CRON_SECRET` = any long random text.
+4. Redeploy. Tokens last 60 days; Vercel Cron calls `/api/instagram/refresh` every Monday to renew it (the fresh token is kept privately in Sanity, so `SANITY_API_WRITE_TOKEN` must be set).
+
+## 4. Google reviews (optional)
+The reviews section shows the café's Google rating and its best reviews (Google shares up to 5, ordered by relevance; only 4★ and 5★ reviews with text are shown, and the overall rating always links to all of them).
+1. console.cloud.google.com → create a project → enable **Places API (New)** → Credentials → Create API key. Restrict it to "Places API (New)".
+2. Find the café's Place ID at developers.google.com/maps/documentation/places/web-service/place-id and paste it into **Site settings → Reviews**.
+3. Vercel → Environment Variables: `GOOGLE_PLACES_API_KEY`. Redeploy.
+Reviews refresh hourly (about 750 requests a month). Google bills reviews data per request after a free monthly allowance, so check the Google Maps Platform pricing page and set a budget alert in the Cloud console. The "Leave a review" button goes straight to Google's review form once the Place ID is set. Staff can also add real reviews by hand under **Home page → Reviews**.
+
+## The bee
+The bee in the corner of every page lets visitors send feedback, ideas and recommendations. Notes arrive in **Studio → Inbox (customer notes)** and are private. Its greeting and "The bee recommends" list are in **Site settings → The bee**. Needs `SANITY_API_WRITE_TOKEN`.
+
 ## How the shop works
 - Prices, stock and delivery fees are always read fresh from the Studio when a customer checks out. The browser basket is never trusted.
 - Collection vs delivery is chosen in the basket. Delivery collects a UK address on Stripe's page. Products marked **Collection in store only** force collection.
@@ -53,6 +70,10 @@ Stripe → Product catalogue → Coupons → create a coupon, then add a **promo
 | `STRIPE_SECRET_KEY` | Creating checkouts (server only) |
 | `STRIPE_WEBHOOK_SECRET` | Verifying Stripe's order notifications (server only) |
 | `NEXT_PUBLIC_SITE_URL` | Optional: the final domain, for Google and share links |
+| `INSTAGRAM_ACCESS_TOKEN` | Optional: Instagram feed (server only) |
+| `CRON_SECRET` | Optional: protects the weekly Instagram token refresh |
+| `GOOGLE_PLACES_API_KEY` | Optional: Google rating and reviews (server only) |
+| `GOOGLE_PLACE_ID` | Optional: alternative to the Place ID in Site settings |
 
 ## Local development
 ```

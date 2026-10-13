@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { sanityFetch } from '@/sanity/lib/client'
 import { HOME_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
-import type { HomeData, Product, SanityImage, Settings } from '@/lib/types'
+import type { HomeData, Product, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, mapsEmbed, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
@@ -17,6 +17,10 @@ import { toCard, type ProductCardView } from '@/lib/productView'
 import { formatDays, specialText, specialToday, upcomingSpecialHours } from '@/lib/hours'
 import { Img } from '@/components/Img'
 import { QuickAdd } from '@/components/shop/QuickAdd'
+import { InstaFeed, type FeedTile } from '@/components/home/InstaFeed'
+import { Reviews } from '@/components/home/Reviews'
+import { getInstagramPosts, instagramHandle } from '@/lib/instagram'
+import { getGoogleReviews, topReviews, writeReviewUrl, type Review } from '@/lib/reviews'
 
 async function getData() {
   const [settings, data, shopSettings] = await Promise.all([sanityFetch<Settings>(SETTINGS_QUERY), sanityFetch<HomeData>(HOME_QUERY), getShopSettings()])
@@ -29,6 +33,38 @@ async function getData() {
   return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop }
 }
 
+/** Instagram posts when connected, otherwise the backup photos from the Studio. */
+async function getFeed(page: HomeData['page'], profile?: string) {
+  const live = await getInstagramPosts(8)
+  if (live) return { live: true, posts: live as FeedTile[] }
+  const posts: FeedTile[] = (page?.gallery ?? []).slice(0, 8).flatMap((img, i) => {
+    const p = imgProps(img, 600, 750, '(max-width: 700px) 50vw, 25vw')
+    return p ? [{ id: img._key || `g${i}`, image: p.src, srcSet: p.srcSet, href: img.link || profile || '#', caption: img.alt || undefined, kind: 'image' as const }] : []
+  })
+  return { live: false, posts }
+}
+
+/** Google reviews (when connected) after any hand-picked ones. */
+async function getReviewData(page: HomeData['page'], settings: NonNullable<Settings>) {
+  const google = await getGoogleReviews(settings.googlePlaceId)
+  const picked: Review[] = (page?.handpickedReviews ?? []).map((r) => ({
+    id: r._key,
+    author: r.name,
+    rating: r.rating ?? 5,
+    text: r.quote,
+    link: r.link,
+    source: r.source || '',
+  }))
+  const placeId = settings.googlePlaceId || process.env.GOOGLE_PLACE_ID
+  return {
+    reviews: [...picked, ...topReviews(google?.reviews ?? [])],
+    rating: google?.rating,
+    count: google?.count,
+    allUrl: google?.mapsUri,
+    writeUrl: settings.reviewLink || writeReviewUrl(placeId) || google?.mapsUri || mapsLink(settings.mapQuery),
+  }
+}
+
 export const revalidate = 60
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -38,6 +74,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const { settings, page, featured, shop } = await getData()
+  const [feed, review] = await Promise.all([getFeed(page, settings?.instagram), getReviewData(page, settings)])
   const heading = page?.heroHeading || settings?.name || 'Honey & Haven'
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
   const firstHours = settings?.hours?.[0]
@@ -60,6 +97,7 @@ export default async function HomePage() {
         text={page?.heroText}
         steps={page?.heroSteps ?? []}
         fallbackImage={imgProps(page?.heroImage, 1440, 1200, '55vw')}
+        tone={page?.heroTone === 'cream' ? 'cream' : 'studio'}
       >
         <ul className="hero-facts">
           {addressLines.length ? (
@@ -147,8 +185,20 @@ export default async function HomePage() {
       {/* ---------- Shop ---------- */}
       {shop.length ? <Shop heading={page?.shopHeading} text={page?.shopText} items={shop} /> : null}
 
-      {/* ---------- Gallery ---------- */}
-      {page?.gallery?.length ? <Gallery heading={page.galleryHeading} images={page.gallery} /> : null}
+      {/* ---------- Instagram ---------- */}
+      {feed.posts.length ? (
+        <InstaFeed
+          heading={page?.galleryHeading}
+          text={page?.galleryText}
+          posts={feed.posts}
+          profile={settings?.instagram}
+          handle={instagramHandle(settings?.instagram)}
+          live={feed.live}
+        />
+      ) : null}
+
+      {/* ---------- Reviews ---------- */}
+      <Reviews heading={page?.reviewsHeading} text={page?.reviewsText} starter={!isConfigured} {...review} />
 
       {/* ---------- Visit ---------- */}
       <section className="section visit" id="visit">
@@ -222,24 +272,6 @@ export default async function HomePage() {
         </div>
       </section>
     </>
-  )
-}
-
-function Gallery({ heading, images }: { heading?: string; images: SanityImage[] }) {
-  const ratios = ['4 / 5', '1 / 1', '3 / 4', '5 / 6']
-  return (
-    <section className="section gallery">
-      <div className="container">
-        <h2 className="section-title">{heading || 'Slow mornings, warm cups'}</h2>
-        <div className="gallery-grid">
-          {images.map((img, i) => (
-            <figure key={img._key || i} className="gallery-item" style={{ ['--ar' as string]: ratios[i % ratios.length] }}>
-              <SanityImg image={img} width={720} sizes="(max-width: 640px) 50vw, 33vw" />
-            </figure>
-          ))}
-        </div>
-      </div>
-    </section>
   )
 }
 

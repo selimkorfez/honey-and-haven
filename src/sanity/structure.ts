@@ -14,12 +14,17 @@ import { WarningOutlineIcon } from '@sanity/icons/WarningOutline'
 import { PinIcon } from '@sanity/icons/Pin'
 import { ArchiveIcon } from '@sanity/icons/Archive'
 import { DocumentsIcon } from '@sanity/icons/Documents'
+import { CommentIcon } from '@sanity/icons/Comment'
+import { UsersIcon } from '@sanity/icons/Users'
 
 const newestFirst = [{ field: 'placedAt', direction: 'desc' as const }]
 
 export const structure: StructureResolver = (S) => {
   const orderList = (title: string, filter: string) =>
     S.documentList().title(title).schemaType('order').filter(filter).defaultOrdering(newestFirst).initialValueTemplates([])
+
+  const noteList = (title: string, filter: string) =>
+    S.documentList().title(title).schemaType('feedback').filter(filter).defaultOrdering([{ field: 'sentAt', direction: 'desc' }]).initialValueTemplates([])
 
   return S.list()
     .title('Honey & Haven')
@@ -38,6 +43,22 @@ export const structure: StructureResolver = (S) => {
               S.listItem().title('Done').icon(CheckmarkCircleIcon).child(orderList('Done', '_type == "order" && status in ["done", "cancelled"]')),
               S.divider(),
               S.listItem().title('All orders').icon(ArchiveIcon).child(orderList('All orders', '_type == "order"')),
+            ]),
+        ),
+
+      // ---------- Notes sent through the bee ----------
+      S.listItem()
+        .title('Inbox (customer notes)')
+        .icon(CommentIcon)
+        .child(
+          S.list()
+            .title('Customer notes')
+            .items([
+              S.listItem().title('New').icon(InboxIcon).child(noteList('New notes', '_type == "feedback" && (!defined(status) || status == "new")')),
+              S.listItem().title('Read').icon(CommentIcon).child(noteList('Read', '_type == "feedback" && status == "read"')),
+              S.listItem().title('Done').icon(CheckmarkCircleIcon).child(noteList('Done', '_type == "feedback" && status == "done"')),
+              S.divider(),
+              S.listItem().title('All notes').icon(ArchiveIcon).child(noteList('All notes', '_type == "feedback"')),
             ]),
         ),
 
@@ -87,6 +108,10 @@ export const structure: StructureResolver = (S) => {
         .title('Home page')
         .icon(HomeIcon)
         .child(S.document().schemaType('homePage').documentId('homePage').title('Home page')),
+      S.listItem()
+        .title('About us page')
+        .icon(UsersIcon)
+        .child(S.document().schemaType('aboutPage').documentId('aboutPage').title('About us page')),
       S.listItem()
         .title('Menu page')
         .icon(DocumentTextIcon)
