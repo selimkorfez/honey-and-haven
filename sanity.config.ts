@@ -8,19 +8,10 @@ import { ownerOnlyTypes, schemaTypes, singletonTypes, systemTypes } from './src/
 import { isOwner, structure } from './src/sanity/structure'
 import { resolve } from './src/sanity/presentation/resolve'
 
-/**
- * The same Studio runs in two places:
- * - inside the website at /studio (the main one)
- * - on Sanity's own hosting at honey-and-haven.sanity.studio (built with SANITY_STUDIO_HOSTED=true)
- * The hosted copy lives at the root of its domain and previews the live website.
- */
-const hosted = process.env.SANITY_STUDIO_HOSTED === 'true'
-const SITE = 'https://honey-and-haven.vercel.app'
-
 export default defineConfig({
-  name: hosted ? 'hosted' : 'default',
+  name: 'default',
   title: 'Honey & Haven',
-  basePath: hosted ? '/' : '/studio',
+  basePath: '/studio',
   projectId,
   dataset,
   schema: {
@@ -46,7 +37,7 @@ export default defineConfig({
     presentationTool({
       title: 'Preview',
       resolve,
-      previewUrl: { ...(hosted ? { origin: SITE } : {}), previewMode: { enable: '/api/draft-mode/enable' } },
+      previewUrl: { previewMode: { enable: '/api/draft-mode/enable' } },
     }),
   ],
   apiVersion,

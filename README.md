@@ -10,10 +10,8 @@ Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid th
 ## 1. Sanity (already connected)
 Sanity project **honey-and-haven** (ID `1lpzx719`, dataset `production`, public) was created through the Vercel Marketplace, so its environment variables are added to Vercel automatically and billing/plan is managed from Vercel → Integrations → Sanity. CORS origins for the live site and localhost are set.
 
-- **Studios (both deployed, same content):**
-  - `https://honey-and-haven.vercel.app/studio` — inside the website (also the "Staff login" link in the footer). Offers "Log in with Vercel".
-  - `https://honey-and-haven.sanity.studio` — hosted by Sanity. Needs a Google, GitHub or email login on the Sanity account.
-- **Redeploy after changing schemas or Studio code:** the website copy updates with every Vercel deploy; for the hosted copy run `SANITY_AUTH_TOKEN=<deploy token> npm run deploy-studio` (also deploys the schema). Schema only: `npm run deploy-schema`.
+- **Studio:** `https://honey-and-haven.vercel.app/studio` (also the "Staff login" link in the footer), registered with Sanity. Offers "Log in with Vercel". It updates with every Vercel deploy.
+- **After changing schemas:** `SANITY_AUTH_TOKEN=<deploy token> npm run deploy-schema` so Sanity knows the latest fields.
 - **Invite people:** Vercel → Integrations → Sanity → Open in Sanity → Members → Invite.
   - **Administrator** = Owner: everything, including Site settings, Shop settings and inviting people.
   - **Editor** (needs the Growth plan) = staff: blog, menu, shop, gallery, homepage and pages. Site settings and Shop settings are hidden from them in the Studio.
