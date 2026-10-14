@@ -4,7 +4,7 @@ import { FoldingWordmark } from './Wordmark'
 import { BasketButton } from './shop/BasketButton'
 
 /** "HONEY & HAVEN" folds into "HH" on scroll, then becomes the bee monogram. */
-export function Header({ name, announcement }: { name: string; announcement?: string }) {
+export function Header({ name, announcement, hasBlog = false }: { name: string; announcement?: string; hasBlog?: boolean }) {
   return (
     <header className="site-header">
       {announcement ? <div className="announce">{announcement}</div> : null}
@@ -17,6 +17,11 @@ export function Header({ name, announcement }: { name: string; announcement?: st
           <Link href="/menu">Menu</Link>
           <Link href="/shop">Shop</Link>
           <Link href="/about">About</Link>
+          {hasBlog ? (
+            <Link href="/blog" className="hide-sm">
+              Blog
+            </Link>
+          ) : null}
           <Link href="/#visit" className="nav-cta hide-sm">
             Visit us
           </Link>

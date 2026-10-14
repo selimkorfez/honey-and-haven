@@ -1,3 +1,4 @@
+import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list'
 import { defineField, defineType, defineArrayMember } from 'sanity'
 import { BillIcon } from '@sanity/icons/Bill'
 
@@ -65,15 +66,9 @@ export const menuItem = defineType({
       description: 'Shows this item in the "Featured" section on the home page. Pick 3–6 favourites.',
       initialValue: false,
     }),
-    defineField({
-      name: 'order',
-      title: 'Position within category',
-      type: 'number',
-      description: 'Lower numbers show first.',
-      initialValue: 10,
-    }),
+    orderRankField({ type: 'menuItem', hidden: true }),
   ],
-  orderings: [{ title: 'Menu position', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] }],
+  orderings: [orderRankOrdering],
   preview: {
     select: { title: 'name', price: 'price', category: 'category.title', media: 'image', available: 'available', featured: 'featured' },
     prepare: ({ title, price, category, media, available, featured }) => ({

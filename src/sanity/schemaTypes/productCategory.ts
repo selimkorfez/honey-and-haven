@@ -1,3 +1,4 @@
+import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list'
 import { defineField, defineType } from 'sanity'
 import { TagsIcon } from '@sanity/icons/Tags'
 
@@ -8,7 +9,7 @@ export const productCategory = defineType({
   icon: TagsIcon,
   fields: [
     defineField({ name: 'title', title: 'Name', type: 'string', description: 'e.g. "Honey", "Merch", "Gifts"', validation: (r) => r.required() }),
-    defineField({ name: 'order', title: 'Position', type: 'number', description: 'Lower numbers show first.', initialValue: 10 }),
+    orderRankField({ type: 'productCategory', hidden: true }),
   ],
-  orderings: [{ title: 'Position', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] }],
+  orderings: [orderRankOrdering],
 })

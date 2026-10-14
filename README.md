@@ -7,15 +7,16 @@ Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid th
 - **Payments and refunds** are in SumUp (the same account as the café's card reader). **Discount codes** are made in the Studio.
 - Until Sanity is connected, the site shows built-in starter content (`src/lib/fallback.ts`), and the example products can't be bought.
 
-## 1. Connect Sanity (one-time)
-1. Create a free project at sanity.io/manage (dataset `production`, **public**).
-2. In Vercel → Project **honey-and-haven** → Settings → Environment Variables, add:
-   - `NEXT_PUBLIC_SANITY_PROJECT_ID` = your Sanity project ID
-   - `NEXT_PUBLIC_SANITY_DATASET` = `production`
-   - `SANITY_API_WRITE_TOKEN` = sanity.io/manage → API → Tokens → Add API token → permission **Editor** (used only on the server to save orders and update stock)
-3. sanity.io/manage → API → CORS origins: add the site URL (e.g. `https://honey-and-haven.vercel.app`) with **Allow credentials** ticked.
-4. Redeploy. Visit `/studio` and log in.
-5. Invite the café staff: sanity.io/manage → Members → Invite.
+## 1. Sanity (already connected)
+Sanity project **honey-and-haven** (ID `1lpzx719`, dataset `production`, public) was created through the Vercel Marketplace, so its environment variables are added to Vercel automatically and billing/plan is managed from Vercel → Integrations → Sanity. CORS origins for the live site and localhost are set.
+
+- **Log in:** `/studio` (or the "Staff login" link in the footer).
+- **Invite people:** Vercel → Integrations → Sanity → Open in Sanity → Members → Invite.
+  - **Administrator** = Owner: everything, including Site settings, Shop settings and inviting people.
+  - **Editor** (needs the Growth plan) = staff: blog, menu, shop, gallery, homepage and pages. Site settings and Shop settings are hidden from them in the Studio.
+- **Preview:** open the **Preview** tab at the top of the Studio to see unpublished changes on the real site before publishing (uses `SANITY_API_READ_TOKEN` and `/api/draft-mode/enable`).
+- **Studio sections:** Orders · Inbox · Blog · Menu · Shop / Merchandise · Gallery · Homepage · Other pages · Site settings.
+- **Images:** upload any size; Sanity's image CDN resizes, crops (to the hotspot) and converts to WebP/AVIF automatically.
 
 Orders are saved with IDs starting `orders.`, which Sanity keeps private: only signed-in staff can read them, even though the dataset is public.
 
@@ -63,6 +64,7 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Content |
 | `NEXT_PUBLIC_SANITY_DATASET` | Content (`production`) |
 | `SANITY_API_WRITE_TOKEN` | Saving orders, updating stock (server only) |
+| `SANITY_API_READ_TOKEN` | Preview of unpublished changes (server only) |
 | `SUMUP_API_KEY` | Online payments (server only) |
 | `SUMUP_MERCHANT_CODE` | Optional: SumUp merchant code (looked up automatically) |
 | `NEXT_PUBLIC_SITE_URL` | Optional: the final domain, for Google and share links |

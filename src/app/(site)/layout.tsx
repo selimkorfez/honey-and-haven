@@ -11,9 +11,12 @@ import { Footer } from '@/components/Footer'
 import { ScrollFX } from '@/components/ScrollFX'
 import { MotionProvider } from '@/components/MotionProvider'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
+import { isConfigured } from '@/sanity/env'
 import { getShopSettings, toCheckoutConfig } from '@/lib/shop'
 import { BasketProvider } from '@/components/shop/BasketProvider'
 import { BeeWidget } from '@/components/bee/BeeWidget'
+import { draftMode } from 'next/headers'
+import { PreviewBridge } from '@/components/preview/PreviewBridge'
 
 const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
 const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
@@ -41,6 +44,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const settings = settingsData ?? FALLBACK_SETTINGS
   const name = settings?.name || 'Honey & Haven'
   const checkout = toCheckoutConfig(shopSettings)
+  const preview = (await draftMode()).isEnabled
+  // The blog shows in the menu once there's at least one published post (the example post before the Studio is connected)
+  const hasBlog = isConfigured ? Boolean(settingsData?.hasBlog) : true
 
   // Tells Google this is a local café (helps with Maps & local search)
   const jsonLd = {
@@ -68,13 +74,14 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <body>
         <MotionProvider>
           <BasketProvider config={checkout}>
-            <Header name={name} announcement={settings?.announcement} />
+            <Header name={name} announcement={settings?.announcement} hasBlog={hasBlog} />
             <main>{children}</main>
             <Footer settings={settings} />
             {settings?.beeEnabled !== false ? <BeeWidget greeting={settings?.beeGreeting} picks={settings?.beePicks ?? []} /> : null}
           </BasketProvider>
         </MotionProvider>
         <ScrollFX />
+        {preview ? <PreviewBridge /> : null}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </body>
     </html>

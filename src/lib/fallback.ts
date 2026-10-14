@@ -5,7 +5,7 @@
  * Photos are stock placeholders until the café uploads its own.
  */
 import type { PortableTextBlock } from 'next-sanity'
-import type { AboutData, HomeData, InfoPage, MenuData, MenuItem, Product, SanityImage, Settings, ShopSettings } from './types'
+import type { AboutData, GalleryData, HomeData, Post, InfoPage, MenuData, MenuItem, Product, SanityImage, Settings, ShopSettings } from './types'
 
 const photo = (id: string, alt: string): SanityImage => ({
   alt,
@@ -195,18 +195,6 @@ export const FALLBACK_HOME: HomeData = {
     menuText: 'A few favourites, including some from the secret menu.',
     shopHeading: 'Take a little haven home',
     shopText: 'Natural honey and Honey & Haven merch. Order online for collection or UK delivery.',
-    galleryHeading: 'Slow mornings, warm cups',
-    galleryText: 'New drinks, specials and everyday moments from the café. Follow along on Instagram.',
-    gallery: [
-      ownPhoto('/feed/iced-latte.jpg', 'Iced latte in a Honey & Haven cup with a straw', 960, 1200),
-      ownPhoto('/products/reusable-cup.jpg', 'Blush Honey & Haven reusable cup', 960, 1200),
-      photo('1509042239860-f550ce710b93', 'Lattes among green plants'),
-      ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey', 960, 1200),
-      photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
-      ownPhoto('/products/tote-front.jpg', 'Honey & Haven tote bag', 960, 1200),
-      photo('1517701604599-bb29b565090c', 'Iced coffee on a wooden table'),
-      photo('1558642452-9d2a7deb7f62', 'Honey dripping into a jar'),
-    ].map((img, i) => ({ ...img, _key: `g${i}` })),
     reviewsHeading: 'Kind words from our regulars',
     reviewsText: 'Our best-rated reviews from Google, updated automatically.',
     visitHeading: 'Come say hello',
@@ -286,3 +274,37 @@ export const FALLBACK_ABOUT: NonNullable<AboutData> = {
   teamIntro: 'Say hello next time you’re in. Here’s who’ll be making your drink.',
   team: [],
 }
+
+export const FALLBACK_GALLERY: NonNullable<GalleryData> = {
+  heading: 'Slow mornings, warm cups',
+  text: 'New drinks, specials and everyday moments from the café. Follow along on Instagram.',
+  show: 'instagram',
+  photos: [
+      ownPhoto('/feed/iced-latte.jpg', 'Iced latte in a Honey & Haven cup with a straw', 960, 1200),
+      ownPhoto('/products/reusable-cup.jpg', 'Blush Honey & Haven reusable cup', 960, 1200),
+      photo('1509042239860-f550ce710b93', 'Lattes among green plants'),
+      ownPhoto('/products/pure-honey.jpg', 'A jar of Honey & Haven Pure Honey', 960, 1200),
+      photo('1497935586351-b67a49e012bf', 'Espresso tools and coffee on a wooden board'),
+      ownPhoto('/products/tote-front.jpg', 'Honey & Haven tote bag', 960, 1200),
+      photo('1517701604599-bb29b565090c', 'Iced coffee on a wooden table'),
+      photo('1558642452-9d2a7deb7f62', 'Honey dripping into a jar'),
+  ].map((img, i) => ({ ...img, _key: `g${i}` })),
+}
+
+/** One example post so the blog's design can be seen before the Studio is connected. */
+export const FALLBACK_POSTS: Post[] = [
+  {
+    _id: 'p-welcome',
+    title: 'Welcome to our new website',
+    slug: 'welcome',
+    publishedAt: '2026-10-14T09:00:00Z',
+    category: 'News',
+    excerpt: 'News, new drinks and life behind the counter at Honey & Haven will live here.',
+    coverImage: ownPhoto('/feed/iced-latte.jpg', 'Iced latte in a Honey & Haven cup', 960, 1200),
+    body: blocks(
+      'This is an example post, so you can see how the blog looks. Once the café starts posting, it will be replaced by real news.',
+      { h: 'What you’ll find here' },
+      'New drinks and seasonal specials, events at the café, a look behind the counter, and the story of our honey.',
+    ),
+  },
+]

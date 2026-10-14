@@ -1,3 +1,4 @@
+import { orderRankField, orderRankOrdering } from '@sanity/orderable-document-list'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { BasketIcon } from '@sanity/icons/Basket'
 import { photoFields, richText } from './fields'
@@ -110,10 +111,10 @@ export const product = defineType({
 
     defineField({ name: 'available', title: 'Show in shop', type: 'boolean', group: 'display', initialValue: true, description: 'Turn off to hide the product without deleting it.' }),
     defineField({ name: 'featured', title: 'Pin to home page', type: 'boolean', group: 'display', initialValue: false, description: 'Pinned products appear in the shop section of the home page (up to 4).' }),
-    defineField({ name: 'order', title: 'Position', type: 'number', group: 'display', description: 'Lower numbers show first.', initialValue: 10 }),
+    orderRankField({ type: 'product', newItemPosition: 'before', hidden: true }),
   ],
   orderings: [
-    { title: 'Position', name: 'orderAsc', by: [{ field: 'order', direction: 'asc' }] },
+    orderRankOrdering,
     { title: 'Stock (lowest first)', name: 'stockAsc', by: [{ field: 'stock', direction: 'asc' }] },
   ],
   preview: {

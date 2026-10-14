@@ -31,7 +31,6 @@ export const homePage = defineType({
     { name: 'highlights', title: 'Highlights' },
     { name: 'menu', title: 'Featured menu' },
     { name: 'shop', title: 'Pinned products' },
-    { name: 'gallery', title: 'Instagram' },
     { name: 'reviews', title: 'Reviews' },
     { name: 'visit', title: 'Visit us' },
     { name: 'seo', title: 'Google & sharing' },
@@ -105,34 +104,6 @@ export const homePage = defineType({
     }),
     defineField({ name: 'shopHeading', title: 'Heading', type: 'string', group: 'shop' }),
     defineField({ name: 'shopText', title: 'Text', type: 'text', rows: 2, group: 'shop', description: 'Shows products marked “Pin to home page” (up to 4). Edit them under Shop → All products.' }),
-    defineField({ name: 'galleryHeading', title: 'Heading', type: 'string', group: 'gallery', initialValue: 'Slow mornings, warm cups' }),
-    defineField({
-      name: 'galleryText',
-      title: 'Text',
-      type: 'text',
-      rows: 2,
-      group: 'gallery',
-      description: 'Your latest Instagram posts show here automatically once Instagram is connected (see the setup guide).',
-    }),
-    defineField({
-      name: 'gallery',
-      title: 'Backup posts',
-      type: 'array',
-      group: 'gallery',
-      description:
-        'Shown only while Instagram isn’t connected (or can’t be reached). Add photos from your Instagram and paste each post’s link. 4–8 works best. Drag to reorder.',
-      of: [
-        defineArrayMember({
-          type: 'image',
-          options: { hotspot: true },
-          fields: [
-            defineField({ name: 'alt', title: 'Describe the photo', type: 'string' }),
-            defineField({ name: 'link', title: 'Instagram post link', type: 'url', description: 'e.g. https://www.instagram.com/p/…' }),
-          ],
-        }),
-      ],
-      options: { layout: 'grid' },
-    }),
     defineField({ name: 'reviewsHeading', title: 'Heading', type: 'string', group: 'reviews', initialValue: 'Kind words from our regulars' }),
     defineField({ name: 'reviewsText', title: 'Text', type: 'text', rows: 2, group: 'reviews' }),
     defineField({

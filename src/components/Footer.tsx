@@ -4,6 +4,7 @@ import { mapsLink } from '@/lib/format'
 import { ArrowUpRight } from './Icons'
 import { Wordmark } from './Wordmark'
 import { FALLBACK_SETTINGS } from '@/lib/fallback'
+import { isConfigured } from '@/sanity/env'
 
 export function Footer({ settings }: { settings: Settings }) {
   const name = settings?.name || 'Honey & Haven'
@@ -74,6 +75,11 @@ export function Footer({ settings }: { settings: Settings }) {
               <li>
                 <Link href="/about">About us</Link>
               </li>
+              {settings?.hasBlog || !isConfigured ? (
+                <li>
+                  <Link href="/blog">Blog</Link>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>

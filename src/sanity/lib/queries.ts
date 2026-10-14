@@ -22,6 +22,7 @@ export const SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   specialHours[]{ _key, label, date, endDate, closed, hours },
   "infoPages": *[_type == "policyPage" && showInFooter != false && defined(slug.current)] | order(order asc){ title, "slug": slug.current },
   instagram, tiktok, facebook,
+  "hasBlog": count(*[_type == "post" && defined(slug.current) && publishedAt <= now()]) > 0,
   beeEnabled, beeGreeting, beePicks[]{ _key, title, text, link },
   googlePlaceId, reviewLink,
   seo { title, description, image ${image}, noIndex }
@@ -33,22 +34,22 @@ export const HOME_QUERY = `{
     storyHeading, storyText, storyImage ${image},
     highlights[]{ _key, title, text },
     menuHeading, menuText, shopHeading, shopText,
-    galleryHeading, galleryText, gallery[] ${image},
     reviewsHeading, reviewsText, handpickedReviews[]{ _key, quote, name, rating, source, link },
     visitHeading, visitText,
     seo { title, description, image ${image}, noIndex }
   },
-  "featured": *[_type == "menuItem" && featured == true && available != false] | order(order asc)[0...6]{
+  "gallery": *[_id == "galleryPage"][0]{ heading, text, show, photos[] ${image} },
+  "featured": *[_type == "menuItem" && featured == true && available != false] | order(orderRank asc)[0...6]{
     _id, name, description, price, priceNote, dietary, image ${image}, "category": category->title
   },
-  "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(order asc)[0...4]{ ${PRODUCT_CARD} }
+  "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(orderRank asc)[0...4]{ ${PRODUCT_CARD} }
 }`
 
 export const MENU_QUERY = `{
   "page": *[_id == "menuPage"][0]{ heading, intro, footnote, seo { title, description, image ${image}, noIndex } },
-  "categories": *[_type == "menuCategory"] | order(order asc){
+  "categories": *[_type == "menuCategory"] | order(orderRank asc){
     _id, title, description,
-    "items": *[_type == "menuItem" && references(^._id) && available != false] | order(order asc){
+    "items": *[_type == "menuItem" && references(^._id) && available != false] | order(orderRank asc){
       _id, name, description, price, priceNote, dietary, image ${image}
     }
   }[count(items) > 0]
@@ -58,15 +59,15 @@ export const SHOP_SETTINGS_QUERY = `*[_id == "shopPage"][0]{ ${SHOP_SETTINGS_FIE
 
 export const SHOP_QUERY = `{
   "settings": *[_id == "shopPage"][0]{ ${SHOP_SETTINGS_FIELDS} },
-  "categories": *[_type == "productCategory" && count(*[_type == "product" && references(^._id) && available != false]) > 0] | order(order asc).title,
-  "products": *[_type == "product" && available != false && defined(slug.current)] | order(order asc){ ${PRODUCT_CARD} }
+  "categories": *[_type == "productCategory" && count(*[_type == "product" && references(^._id) && available != false]) > 0] | order(orderRank asc).title,
+  "products": *[_type == "product" && available != false && defined(slug.current)] | order(orderRank asc){ ${PRODUCT_CARD} }
 }`
 
 export const PRODUCT_QUERY = `{
   "product": *[_type == "product" && slug.current == $slug && available != false][0]{
     ${PRODUCT_BASE}, "images": images[] ${image}, description
   },
-  "related": *[_type == "product" && slug.current != $slug && available != false && defined(slug.current)] | order(featured desc, order asc)[0...3]{ ${PRODUCT_CARD} }
+  "related": *[_type == "product" && slug.current != $slug && available != false && defined(slug.current)] | order(featured desc, orderRank asc)[0...3]{ ${PRODUCT_CARD} }
 }`
 
 export const PRODUCT_SLUGS_QUERY = `*[_type == "product" && available != false && defined(slug.current)].slug.current`
@@ -90,3 +91,18 @@ export const ABOUT_QUERY = `*[_id == "aboutPage"][0]{
   team[]{ _key, name, role, photo ${image}, bio, favourite },
   seo { title, description, image ${image}, noIndex }
 }`
+
+const POST_CARD = `_id, title, "slug": slug.current, publishedAt, category, excerpt, coverImage ${image}`
+
+export const POSTS_QUERY = `*[_type == "post" && defined(slug.current) && publishedAt <= now()] | order(publishedAt desc)[0...48]{ ${POST_CARD} }`
+
+export const POST_QUERY = `{
+  "post": *[_type == "post" && slug.current == $slug][0]{
+    ${POST_CARD}, author,
+    body[]{ ..., _type == "inlineImage" => { ..., "alt": coalesce(alt, ""), asset->{ _id, url, metadata { lqip, dimensions } } } },
+    seo { title, description, image ${image}, noIndex }
+  },
+  "more": *[_type == "post" && defined(slug.current) && slug.current != $slug && publishedAt <= now()] | order(publishedAt desc)[0...3]{ ${POST_CARD} }
+}`
+
+export const POST_SLUGS_QUERY = `*[_type == "post" && defined(slug.current) && publishedAt <= now()].slug.current`

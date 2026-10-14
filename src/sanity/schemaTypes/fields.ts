@@ -10,14 +10,35 @@ export const photoFields = [
   }),
 ]
 
-/** Simple rich text: paragraphs, small headings, bullet lists, bold/italic and links. */
-export const richText = (name: string, title: string, extra: Record<string, unknown> = {}) =>
+/** Simple rich text: paragraphs, small headings, bullet lists, bold/italic and links (and photos, if asked for). */
+export const richText = (name: string, title: string, extra: Record<string, unknown> = {}, opts: { images?: boolean } = {}) =>
   defineField({
     name,
     title,
     type: 'array',
     ...extra,
     of: [
+      ...(opts.images
+        ? [
+            defineArrayMember({
+              type: 'image',
+              name: 'inlineImage',
+              title: 'Photo',
+              options: { hotspot: true },
+              fields: [
+                ...photoFields,
+                defineField({ name: 'caption', title: 'Caption (optional)', type: 'string' }),
+                defineField({
+                  name: 'size',
+                  title: 'Size',
+                  type: 'string',
+                  options: { list: [{ title: 'Text width', value: 'normal' }, { title: 'Wide', value: 'wide' }], layout: 'radio', direction: 'horizontal' },
+                  initialValue: 'normal',
+                }),
+              ],
+            }),
+          ]
+        : []),
       defineArrayMember({
         type: 'block',
         styles: [

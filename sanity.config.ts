@@ -2,9 +2,11 @@
 
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
+import { presentationTool } from 'sanity/presentation'
 import { apiVersion, dataset, projectId } from './src/sanity/env'
-import { schemaTypes, singletonTypes, systemTypes } from './src/sanity/schemaTypes'
-import { structure } from './src/sanity/structure'
+import { ownerOnlyTypes, schemaTypes, singletonTypes, systemTypes } from './src/sanity/schemaTypes'
+import { isOwner, structure } from './src/sanity/structure'
+import { resolve } from './src/sanity/presentation/resolve'
 
 export default defineConfig({
   name: 'default',
@@ -14,18 +16,29 @@ export default defineConfig({
   dataset,
   schema: {
     types: schemaTypes,
-    // Hide singletons and orders from the "create new document" menu
+    // Hide singletons, orders and notes from the "create new" menu
     templates: (templates) => templates.filter(({ schemaType }) => !singletonTypes.has(schemaType) && !systemTypes.has(schemaType)),
   },
   document: {
-    // Singletons can't be duplicated or deleted, only edited & published
-    actions: (input, context) =>
-      singletonTypes.has(context.schemaType)
-        ? input.filter(({ action }) => action && ['publish', 'discardChanges', 'restore'].includes(action))
-        : systemTypes.has(context.schemaType)
-          ? input.filter(({ action }) => action !== 'duplicate')
-          : input,
+    actions: (input, context) => {
+      // Site settings and shop settings: Owner only (staff can't change them)
+      if (ownerOnlyTypes.has(context.schemaType) && !isOwner(context.currentUser)) return []
+      // Singletons can't be duplicated or deleted, only edited & published
+      if (singletonTypes.has(context.schemaType)) return input.filter(({ action }) => action && ['publish', 'discardChanges', 'restore'].includes(action))
+      if (systemTypes.has(context.schemaType)) return input.filter(({ action }) => action !== 'duplicate')
+      return input
+    },
+    newDocumentOptions: (prev, { creationContext }) =>
+      creationContext.type === 'global' ? prev.filter((t) => !singletonTypes.has(t.templateId) && !systemTypes.has(t.templateId)) : prev,
   },
-  plugins: [structureTool({ structure, title: 'Website' })],
+  plugins: [
+    structureTool({ structure, title: 'Website' }),
+    // "Preview" tab: the real website, showing unpublished changes, side by side with the editor
+    presentationTool({
+      title: 'Preview',
+      resolve,
+      previewUrl: { previewMode: { enable: '/api/draft-mode/enable' } },
+    }),
+  ],
   apiVersion,
 })

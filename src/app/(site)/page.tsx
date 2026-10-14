@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { sanityFetch } from '@/sanity/lib/client'
 import { HOME_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
-import type { HomeData, Product, Settings } from '@/lib/types'
+import type { GalleryData, HomeData, Product, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, mapsEmbed, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
@@ -10,7 +10,7 @@ import { HeroScroll } from '@/components/hero/HeroScroll'
 import { LogoMark } from '@/components/LogoMark'
 import { MenuBoard, type BoardItem } from '@/components/MenuBoard'
 import { ArrowRight, ArrowUpRight, Camera, Clock, HexMark, Pin, Video } from '@/components/Icons'
-import { FALLBACK_HOME, FALLBACK_PRODUCTS, FALLBACK_SETTINGS } from '@/lib/fallback'
+import { FALLBACK_GALLERY, FALLBACK_HOME, FALLBACK_PRODUCTS, FALLBACK_SETTINGS } from '@/lib/fallback'
 import { isConfigured } from '@/sanity/env'
 import { getShopSettings } from '@/lib/shop'
 import { toCard, type ProductCardView } from '@/lib/productView'
@@ -30,14 +30,16 @@ async function getData() {
   // Pinned products (example products only before the Studio is connected)
   const pinned: Product[] = isConfigured ? (data?.shop ?? []) : FALLBACK_PRODUCTS.filter((p) => p.featured)
   const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 520px) 100vw, 22vw'))
-  return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop }
+  // The Gallery section (starter photos until the café publishes its own)
+  const gallery = data?.gallery ?? FALLBACK_GALLERY
+  return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop, gallery }
 }
 
-/** Instagram posts when connected, otherwise the backup photos from the Studio. */
-async function getFeed(page: HomeData['page'], profile?: string) {
-  const live = await getInstagramPosts(8)
+/** Instagram posts when connected (and chosen in Gallery), otherwise the Gallery photos. */
+async function getFeed(gallery: NonNullable<GalleryData>, profile?: string) {
+  const live = gallery.show === 'photos' ? null : await getInstagramPosts(8)
   if (live) return { live: true, posts: live as FeedTile[] }
-  const posts: FeedTile[] = (page?.gallery ?? []).slice(0, 8).flatMap((img, i) => {
+  const posts: FeedTile[] = (gallery.photos ?? []).slice(0, 8).flatMap((img, i) => {
     const p = imgProps(img, 600, 750, '(max-width: 700px) 50vw, 25vw')
     return p ? [{ id: img._key || `g${i}`, image: p.src, srcSet: p.srcSet, href: img.link || profile || '#', caption: img.alt || undefined, kind: 'image' as const }] : []
   })
@@ -73,8 +75,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const { settings, page, featured, shop } = await getData()
-  const [feed, review] = await Promise.all([getFeed(page, settings?.instagram), getReviewData(page, settings)])
+  const { settings, page, featured, shop, gallery } = await getData()
+  const [feed, review] = await Promise.all([getFeed(gallery, settings?.instagram), getReviewData(page, settings)])
   const heading = page?.heroHeading || settings?.name || 'Honey & Haven'
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
   const firstHours = settings?.hours?.[0]
@@ -188,8 +190,8 @@ export default async function HomePage() {
       {/* ---------- Instagram ---------- */}
       {feed.posts.length ? (
         <InstaFeed
-          heading={page?.galleryHeading}
-          text={page?.galleryText}
+          heading={gallery.heading}
+          text={gallery.text}
           posts={feed.posts}
           profile={settings?.instagram}
           handle={instagramHandle(settings?.instagram)}

@@ -28,12 +28,20 @@ export type Settings = {
   instagram?: string
   tiktok?: string
   facebook?: string
+  hasBlog?: boolean
   beeEnabled?: boolean
   beeGreeting?: string
   beePicks?: BeePick[]
   googlePlaceId?: string
   reviewLink?: string
   seo?: Seo
+} | null
+
+export type GalleryData = {
+  heading?: string
+  text?: string
+  show?: 'instagram' | 'photos'
+  photos?: SanityImage[]
 } | null
 
 export type BeePick = { _key: string; title: string; text?: string; link?: string }
@@ -82,9 +90,6 @@ export type HomeData = {
     menuText?: string
     shopHeading?: string
     shopText?: string
-    galleryHeading?: string
-    galleryText?: string
-    gallery?: SanityImage[]
     reviewsHeading?: string
     reviewsText?: string
     handpickedReviews?: HandpickedReview[]
@@ -94,6 +99,7 @@ export type HomeData = {
   } | null
   featured: MenuItem[]
   shop?: Product[]
+  gallery?: GalleryData
 }
 
 export type SpecialHours = { _key: string; label: string; date: string; endDate?: string; closed?: boolean; hours?: string }
@@ -146,3 +152,15 @@ export type MenuData = {
   page: { heading?: string; intro?: string; footnote?: string; seo?: Seo } | null
   categories: { _id: string; title: string; description?: string; items: MenuItem[] }[]
 }
+
+export type PostCard = {
+  _id: string
+  title: string
+  slug: string
+  publishedAt: string
+  category?: string
+  excerpt?: string
+  coverImage?: SanityImage
+}
+
+export type Post = PostCard & { author?: string; body?: PortableTextBlock[]; seo?: Seo }
