@@ -1211,6 +1211,17 @@ html[data-scrolled='true'] .logo .logo-mark {
 .hero3d-canvas {
   position: absolute;
   inset: 0;
+  pointer-events: none; /* never get in the way of scrolling */
+}
+
+/* the 3D scene fades in once everything is ready, so it never stutters into view */
+.cup-scene canvas {
+  opacity: 0;
+  transition: opacity 0.9s var(--ease);
+}
+
+.cup-scene[data-ready] canvas {
+  opacity: 1;
 }
 
 .hero3d-fallback {
@@ -4198,5 +4209,167 @@ html:not([data-scrolled='true']) body:has(.hero3d[data-tone='studio']) .basket-b
 
   .logo-word {
     height: 17px;
+  }
+}
+
+/* ======================================================================
+   Night version: follows the device's light / dark setting automatically
+   ====================================================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cream: #17110f; /* page */
+    --cream-2: #261c18;
+    --white: #211815; /* cards and panels */
+    --espresso: #f3e9dd; /* main text */
+    --espresso-2: #e2d3c3;
+    --brown: #ecd2ae; /* logo and accents: warm cream-gold at night */
+    --oak: #b88a5c;
+    --oak-light: #8a6a4d;
+    --oak-wash: #2a1f1a;
+    --oak-text: #e5bd78; /* links */
+    --honey: #d9a24a;
+    --honey-light: #e8bf78;
+    --muted: #c2ae9b;
+    --muted-dark: #d9c7b2;
+    --line: rgba(243, 233, 221, 0.13);
+    color-scheme: dark;
+    scrollbar-color: var(--oak) var(--cream);
+  }
+
+  /* These panels are espresso brown by day; at night they keep their day colours,
+     so they read as warm lit panels on the dark page. */
+  .announce,
+  .counter,
+  .site-footer,
+  .about-cta,
+  .review-bar,
+  .bee-hello,
+  .pcard-media[data-tone='2'],
+  .shop-media[data-tone='2'] {
+    --cream: #f3eadf;
+    --cream-2: #e9dccb;
+    --white: #fffcf7;
+    --espresso: #2e1d1a;
+    --espresso-2: #3e2724;
+    --brown: #4a2e2b;
+    --oak-wash: #e7d8c5;
+    --oak-text: #7a4f2c;
+    --muted: #5c4838;
+    --honey: #c8913a;
+    --honey-light: #e0b46a;
+    --line: rgba(43, 30, 23, 0.14);
+  }
+
+  .site-footer {
+    background: #0f0a08;
+  }
+
+  /* Text that sits on a fixed light or honey background stays dark */
+  ::selection,
+  .basket-badge,
+  .pcard-badge[data-kind='sale'],
+  .bee[data-open] .bee-btn,
+  .hero3d[data-tone='studio'] .hero-actions .btn-primary,
+  .hero3d[data-tone='studio'] .hero-actions .btn-primary:hover {
+    color: #2e1d1a;
+  }
+
+  .hero3d[data-tone='studio'] .hero-actions .btn-primary:hover {
+    background: #fffcf7;
+  }
+
+  .site-header,
+  html[data-scrolled='true'] body:has(.hero3d) .site-header,
+  .menu-nav {
+    background: rgba(23, 17, 15, 0.9);
+  }
+
+  .hours th,
+  .hours td {
+    border-bottom-color: rgba(243, 233, 221, 0.18);
+  }
+
+  .menu-line .dots {
+    border-bottom-color: rgba(243, 233, 221, 0.28);
+  }
+
+  .basket-alert {
+    background: #3a2a1c;
+  }
+
+  .bee-error {
+    color: #f3a882;
+  }
+
+  .bee-btn {
+    border-color: rgba(243, 233, 221, 0.12);
+  }
+
+  .bee-form textarea,
+  .bee-row input {
+    border-color: rgba(243, 233, 221, 0.18);
+  }
+
+  .icon-btn:hover,
+  .basket-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Google Maps has no dark embed, so tint it to match */
+  .map iframe {
+    filter: invert(0.9) hue-rotate(180deg) sepia(0.25) saturate(0.8) brightness(0.92);
+  }
+
+  .story-media,
+  .gallery-item,
+  .insta-tile,
+  .team-photo {
+    box-shadow: none;
+  }
+
+  /* About: the shopfront at night, with the windows lit */
+  .about-hero {
+    background: #1b1411;
+  }
+
+  .about-hero-art img {
+    filter: brightness(0.58) saturate(0.85) sepia(0.2) contrast(1.08);
+  }
+
+  /* softer wood grain at night */
+  .visit {
+    background-image: repeating-linear-gradient(
+      92deg,
+      rgba(0, 0, 0, 0.12) 0 1px,
+      transparent 1px 7px,
+      rgba(255, 255, 255, 0.025) 7px 8px,
+      transparent 8px 19px
+    );
+  }
+
+  .about-hero-art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(9% 11% at 73% 58%, rgba(255, 196, 120, 0.55), transparent 70%),
+      radial-gradient(18% 22% at 72% 62%, rgba(255, 170, 80, 0.22), transparent 75%),
+      radial-gradient(6% 7% at 70.5% 29%, rgba(255, 210, 150, 0.35), transparent 70%);
+    mix-blend-mode: screen;
+  }
+
+  .about-hero::after {
+    background: linear-gradient(90deg, rgba(27, 20, 17, 0.95) 0%, rgba(27, 20, 17, 0.75) 28%, rgba(27, 20, 17, 0) 55%);
+  }
+
+  .about-hero .btn-ghost {
+    color: var(--espresso);
+  }
+}
+
+@media (prefers-color-scheme: dark) and (max-width: 860px) {
+  .about-hero::after {
+    background: linear-gradient(180deg, #1b1411 0%, #1b1411 42%, rgba(27, 20, 17, 0) 60%);
   }
 }

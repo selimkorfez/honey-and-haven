@@ -47,6 +47,16 @@ export function HeroScroll({
   const root = useRef<HTMLElement>(null)
   const progress = useRef(0)
   const [mode, setMode] = useState<'pending' | '3d' | 'still' | 'flat'>('pending')
+  // At night (device in dark mode) the cream backdrop would glare, so use the studio brown
+  const [night, setNight] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const update = () => setNight(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+  const shownTone: HeroTone = night ? 'studio' : tone
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -107,7 +117,7 @@ export function HeroScroll({
       ref={root}
       className="hero3d"
       data-mode={mode}
-      data-tone={tone}
+      data-tone={shownTone}
       style={{ ['--steps' as string]: steps.length }}
       aria-label="Welcome"
     >
@@ -115,7 +125,7 @@ export function HeroScroll({
         <div className="hero3d-glow" aria-hidden="true" />
         <div className="hero3d-canvas" aria-hidden="true">
           {mode === '3d' || mode === 'still' ? (
-            <CupScene progress={progress} still={mode === 'still'} tone={tone} />
+            <CupScene progress={progress} still={mode === 'still'} tone={shownTone} />
           ) : mode === 'flat' ? (
             fallbackImage ? (
               // eslint-disable-next-line @next/next/no-img-element

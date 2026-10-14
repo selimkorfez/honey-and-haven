@@ -32,21 +32,34 @@ export function BeeWidget({ greeting, picks }: { greeting?: string; picks: BeePi
   const button = useRef<HTMLButtonElement>(null)
   const ids = useId()
 
-  // Say hello once per visit, a few seconds after arriving
+  // Say hello once per visit, a few seconds in, once the visitor is past the big 3D opening
   useEffect(() => {
     let seen = false
     try {
       seen = sessionStorage.getItem('hh-bee-hi') === '1'
     } catch {}
     if (seen || !greeting) return
-    const show = setTimeout(() => {
-      setHello(true)
-      try {
-        sessionStorage.setItem('hh-bee-hi', '1')
-      } catch {}
-    }, 5000)
-    const hide = setTimeout(() => setHello(false), 15000)
+    let show: ReturnType<typeof setTimeout> | undefined
+    let hide: ReturnType<typeof setTimeout> | undefined
+    const clearOfHero = () => {
+      const hero = document.querySelector('.hero3d')
+      return !hero || hero.getBoundingClientRect().bottom < window.innerHeight * 0.5
+    }
+    const arm = () => {
+      if (show || !clearOfHero()) return
+      window.removeEventListener('scroll', arm)
+      show = setTimeout(() => {
+        setHello(true)
+        try {
+          sessionStorage.setItem('hh-bee-hi', '1')
+        } catch {}
+        hide = setTimeout(() => setHello(false), 10000)
+      }, 4000)
+    }
+    window.addEventListener('scroll', arm, { passive: true })
+    arm()
     return () => {
+      window.removeEventListener('scroll', arm)
       clearTimeout(show)
       clearTimeout(hide)
     }

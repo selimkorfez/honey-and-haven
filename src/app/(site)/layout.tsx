@@ -20,7 +20,13 @@ const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
 
 export const revalidate = 60
 
-export const viewport: Viewport = { themeColor: '#f4ece0' }
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f4ece0' },
+    { media: '(prefers-color-scheme: dark)', color: '#17110f' },
+  ],
+  colorScheme: 'light dark',
+}
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = (await sanityFetch<Settings>(SETTINGS_QUERY)) ?? FALLBACK_SETTINGS
