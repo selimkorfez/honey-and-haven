@@ -49,6 +49,15 @@ The reviews section shows the café's Google rating and its best reviews (Google
 3. Vercel → Environment Variables: `GOOGLE_PLACES_API_KEY`. Redeploy.
 Reviews refresh hourly (about 750 requests a month). Google bills reviews data per request after a free monthly allowance, so check the Google Maps Platform pricing page and set a budget alert in the Cloud console. The "Leave a review" button goes straight to Google's review form once the Place ID is set. Staff can also add real reviews by hand under **Home page → Reviews**.
 
+## Newsletter (Brevo)
+Signups from the pop-up and the "Stay in the hive" section above the footer go to **Honey & Haven's own Brevo account** (free plan: unlimited contacts, 300 emails a day).
+- **Double opt-in:** Brevo emails a confirm link (template `BREVO_DOI_TEMPLATE_ID`) and only adds the person to list `BREVO_LIST_ID` after they click it; they land on `/newsletter/confirmed`.
+- **Welcome email + 10% code:** a Brevo Automation (Welcome message, trigger: contact added to the list). Edited in Brevo, no code.
+- **Newsletters:** written, scheduled and sent from Brevo → Campaigns. Brevo adds the unsubscribe link and the café's address to every email.
+- **Wording** (headings, text, offer wording, button, pop-up on/off and delay): Studio → Site settings → Newsletter.
+- The signup only shows once the three `BREVO_*` variables are set in Vercel (always visible in the Studio's Preview). The consent box starts unticked and is checked again on the server.
+- Subscriber data stays in Honey & Haven's Brevo account; suppliers never get access or exports. Supplier coffee content is pasted into Honey & Haven's own campaigns.
+
 ## The bee
 The bee in the corner of every page lets visitors send feedback, ideas and recommendations. Notes arrive in **Studio → Inbox (customer notes)** and are private. Its greeting and "The bee recommends" list are in **Site settings → The bee**. Needs `SANITY_API_WRITE_TOKEN`.
 
@@ -69,6 +78,9 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 | `SUMUP_API_KEY` | Online payments (server only) |
 | `SUMUP_MERCHANT_CODE` | Optional: SumUp merchant code (looked up automatically) |
 | `NEXT_PUBLIC_SITE_URL` | Optional: the final domain, for Google and share links |
+| `BREVO_API_KEY` | Newsletter signups (server only) |
+| `BREVO_LIST_ID` | Newsletter list the confirmed subscribers join |
+| `BREVO_DOI_TEMPLATE_ID` | Brevo "confirm your subscription" email template |
 | `INSTAGRAM_ACCESS_TOKEN` | Optional: Instagram feed (server only) |
 | `CRON_SECRET` | Optional: protects the weekly Instagram token refresh |
 | `GOOGLE_PLACES_API_KEY` | Optional: Google rating and reviews (server only) |

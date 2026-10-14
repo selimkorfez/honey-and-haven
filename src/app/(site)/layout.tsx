@@ -17,6 +17,10 @@ import { BasketProvider } from '@/components/shop/BasketProvider'
 import { BeeWidget } from '@/components/bee/BeeWidget'
 import { draftMode } from 'next/headers'
 import { PreviewBridge } from '@/components/preview/PreviewBridge'
+import { newsletterSettings } from '@/lib/newsletter'
+import { brevoConfigured } from '@/lib/brevo'
+import { NewsletterBand } from '@/components/newsletter/NewsletterBand'
+import { NewsletterPopup } from '@/components/newsletter/NewsletterPopup'
 
 const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
 const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
@@ -47,6 +51,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const preview = (await draftMode()).isEnabled
   // The blog shows in the menu once there's at least one published post (the example post before the Studio is connected)
   const hasBlog = isConfigured ? Boolean(settingsData?.hasBlog) : true
+  // Newsletter signup: live once Brevo is connected; always visible in the Studio's Preview so the wording can be checked
+  const letter = newsletterSettings(settings)
+  const showLetter = letter.enabled && (brevoConfigured() || preview)
 
   // Tells Google this is a local café (helps with Maps & local search)
   const jsonLd = {
@@ -76,8 +83,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           <BasketProvider config={checkout}>
             <Header name={name} announcement={settings?.announcement} hasBlog={hasBlog} />
             <main>{children}</main>
+            {showLetter ? <NewsletterBand settings={letter} /> : null}
             <Footer settings={settings} />
             {settings?.beeEnabled !== false ? <BeeWidget greeting={settings?.beeGreeting} picks={settings?.beePicks ?? []} /> : null}
+            {showLetter && letter.popup ? <NewsletterPopup settings={letter} /> : null}
           </BasketProvider>
         </MotionProvider>
         <ScrollFX />

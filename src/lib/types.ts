@@ -34,8 +34,22 @@ export type Settings = {
   beePicks?: BeePick[]
   googlePlaceId?: string
   reviewLink?: string
+  newsletter?: Partial<NewsletterSettings>
   seo?: Seo
 } | null
+
+export type NewsletterSettings = {
+  enabled: boolean
+  popup: boolean
+  popupDelay: number
+  popupHeading: string
+  popupText: string
+  heading: string
+  text: string
+  offer: string
+  button: string
+  thanks: string
+}
 
 export type GalleryData = {
   heading?: string

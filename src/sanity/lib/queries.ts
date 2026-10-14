@@ -25,6 +25,7 @@ export const SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
   "hasBlog": count(*[_type == "post" && defined(slug.current) && publishedAt <= now()]) > 0,
   beeEnabled, beeGreeting, beePicks[]{ _key, title, text, link },
   googlePlaceId, reviewLink,
+  newsletter { enabled, popup, popupDelay, popupHeading, popupText, heading, text, offer, button, thanks },
   seo { title, description, image ${image}, noIndex }
 }`
 

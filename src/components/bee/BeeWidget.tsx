@@ -74,11 +74,15 @@ export function BeeWidget({ greeting, picks }: { greeting?: string; picks: BeePi
   useEffect(() => {
     const onOpen = (e: Event) => show(((e as CustomEvent).detail as Tab) || 'tell')
     const onClose = () => setOpen(false)
+    // The newsletter card is sliding in: the bee's greeting steps aside
+    const onLetter = () => setHello(false)
     window.addEventListener('hh:bee', onOpen)
     window.addEventListener('hh:bee-close', onClose)
+    window.addEventListener('hh:letter-popup', onLetter)
     return () => {
       window.removeEventListener('hh:bee', onOpen)
       window.removeEventListener('hh:bee-close', onClose)
+      window.removeEventListener('hh:letter-popup', onLetter)
     }
   }, [show])
 
