@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "deploy-studio": "SANITY_STUDIO_HOSTED=true SANITY_STUDIO_PROJECT_ID=1lpzx719 SANITY_STUDIO_DATASET=production sanity deploy -y",
+    "deploy-schema": "sanity schema deploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
