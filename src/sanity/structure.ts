@@ -94,6 +94,10 @@ export const structure: StructureResolver = (S) => {
                 .title('Categories')
                 .icon(TagsIcon)
                 .child(S.documentTypeList('productCategory').title('Shop categories').defaultOrdering([{ field: 'order', direction: 'asc' }])),
+              S.listItem()
+                .title('Discount codes')
+                .icon(TagIcon)
+                .child(S.documentTypeList('discountCode').title('Discount codes')),
               S.divider(),
               S.listItem()
                 .title('Shop settings')

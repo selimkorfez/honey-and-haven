@@ -1991,6 +1991,175 @@ html[data-scrolled='true'] .logo .logo-mark {
   text-align: center;
 }
 
+/* ---------- Checkout: discount code and details step ---------- */
+.basket-head h2 {
+  flex: 1;
+}
+
+.basket-back {
+  margin-left: -10px;
+  margin-right: 2px;
+}
+
+.code-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.code-form input,
+.details-field input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(43, 30, 23, 0.2);
+  border-radius: 12px;
+  background: var(--cream);
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--espresso);
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
+}
+
+.code-form input {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.code-form input::placeholder {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.code-form input:focus,
+.details-field input:focus {
+  outline: none;
+  border-color: var(--honey);
+  background: var(--white);
+}
+
+.details-field input[aria-invalid] {
+  border-color: #b4532a;
+}
+
+.code-form .btn {
+  min-height: 46px;
+  padding: 0 18px;
+}
+
+.code-msg {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 13.5px;
+  color: #a2401c;
+}
+
+.code-applied {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(200, 145, 58, 0.14);
+  font-size: 14px;
+}
+
+.code-applied svg {
+  flex: none;
+  color: var(--oak-text);
+}
+
+.code-applied span {
+  flex: 1;
+}
+
+.code-applied small {
+  color: var(--muted);
+}
+
+.basket-totals .basket-discount {
+  color: var(--oak-text);
+}
+
+.details {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.details-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 24px 24px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.details-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.details-field {
+  display: grid;
+  gap: 6px;
+}
+
+.details-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--espresso-2);
+}
+
+.details-field label span {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.details-address {
+  border: 0;
+  margin: 6px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+}
+
+.details-address legend {
+  padding: 0;
+  margin-bottom: 4px;
+  font-family: var(--serif);
+  font-size: 20px;
+}
+
+.details-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+}
+
+.details-collect {
+  margin: 6px 0 0;
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--oak-wash);
+  font-size: 14px;
+  color: var(--espresso-2);
+}
+
+.details-collect svg {
+  flex: none;
+  color: var(--oak-text);
+}
+
 /* ---------- Product cards ---------- */
 .pgrid {
   list-style: none;
@@ -4306,8 +4475,14 @@ html:not([data-scrolled='true']) body:has(.hero3d[data-tone='studio']) .basket-b
   }
 
   .bee-form textarea,
-  .bee-row input {
+  .bee-row input,
+  .code-form input,
+  .details-field input {
     border-color: rgba(243, 233, 221, 0.18);
+  }
+
+  .code-msg {
+    color: #f3a882;
   }
 
   .icon-btn:hover,

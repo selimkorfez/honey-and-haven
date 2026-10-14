@@ -71,8 +71,16 @@ export const order = defineType({
     defineField({ name: 'deliveryFee', title: 'Delivery (£)', type: 'number', readOnly: true }),
     defineField({ name: 'discount', title: 'Discount (£)', type: 'number', readOnly: true }),
     defineField({ name: 'total', title: 'Total paid (£)', type: 'number', readOnly: true }),
-    defineField({ name: 'stripeLink', title: 'View payment in Stripe', type: 'url', readOnly: true, description: 'Refunds are done from Stripe.' }),
-    defineField({ name: 'stripeSessionId', title: 'Stripe checkout ID', type: 'string', readOnly: true, hidden: true }),
+    defineField({ name: 'discountCode', title: 'Discount code used', type: 'string', readOnly: true, hidden: ({ document }) => !document?.discountCode }),
+    defineField({ name: 'paymentProvider', title: 'Paid with', type: 'string', readOnly: true }),
+    defineField({
+      name: 'transactionCode',
+      title: 'SumUp transaction code',
+      type: 'string',
+      readOnly: true,
+      description: 'Search for this in the SumUp app or dashboard (Sales) to see the payment or give a refund.',
+    }),
+    defineField({ name: 'sumupCheckoutId', title: 'SumUp checkout ID', type: 'string', readOnly: true, hidden: true }),
   ],
   orderings: [{ title: 'Newest first', name: 'placedDesc', by: [{ field: 'placedAt', direction: 'desc' }] }],
   preview: {

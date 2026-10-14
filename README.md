@@ -1,10 +1,10 @@
 # Honey & Haven — website
 
-Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid through Stripe Checkout, hosted on Vercel.
+Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid through SumUp, hosted on Vercel.
 
 - **Everything on the site** (text, photos, About page and team, the bee, menu, products, prices, stock, opening hours, holiday hours, delivery fees, info pages, Google/sharing settings) is edited at `/studio`. No code needed.
 - **Orders** appear in `/studio → Orders` the moment someone pays. Stock goes down automatically.
-- **Payments, refunds and discount codes** are handled in the Stripe dashboard.
+- **Payments and refunds** are in SumUp (the same account as the café's card reader). **Discount codes** are made in the Studio.
 - Until Sanity is connected, the site shows built-in starter content (`src/lib/fallback.ts`), and the example products can't be bought.
 
 ## 1. Connect Sanity (one-time)
@@ -19,23 +19,19 @@ Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid th
 
 Orders are saved with IDs starting `orders.`, which Sanity keeps private: only signed-in staff can read them, even though the dataset is public.
 
-## 2. Connect Stripe (one-time)
-1. Create a Stripe account (stripe.com) and complete the business details so payouts reach the café's bank.
-2. Vercel → Environment Variables, add `STRIPE_SECRET_KEY` (Stripe → Developers → API keys → Secret key). Start with the **test** key (`sk_test_…`) to try it, then swap for the live key.
-3. Stripe → Developers → Webhooks → Add endpoint:
-   - URL: `https://YOUR-SITE/api/stripe/webhook`
-   - Events: `checkout.session.completed`, `checkout.session.async_payment_succeeded`
-   - Copy the signing secret into Vercel as `STRIPE_WEBHOOK_SECRET`.
-4. Recommended Stripe settings:
-   - Settings → Customer emails → turn on **Successful payments** (customers get a receipt).
-   - Settings → Team & security / Notifications → turn on emails for **successful payments** (staff get an alert for each order; the Stripe phone app also sends push notifications).
-   - Settings → Payment methods → Apple Pay / Google Pay are on by default for Checkout.
-5. Redeploy.
+## 2. Connect SumUp (one-time)
+Online payments go through SumUp, the same account as the card reader in the café, so online sales show up alongside in-store ones.
+1. Log in at me.sumup.com → your profile → **Settings** → **For developers** → **Toolkit** → **API keys** → **Create**. Name it "Website" and copy the key (SumUp only shows it once).
+2. Vercel → Project **honey-and-haven** → Settings → Environment Variables, add `SUMUP_API_KEY` = that key. (`SUMUP_MERCHANT_CODE` is optional; the site looks it up from the key.)
+3. Make sure `SANITY_API_WRITE_TOKEN` is set too: the site saves each order to the Studio.
+4. Redeploy. The basket's Checkout button switches on automatically.
 
-Test card while using the test key: `4242 4242 4242 4242`, any future date, any CVC.
+How a payment works: the customer fills in their details in the basket, pays on SumUp's secure page (card, Apple Pay or Google Pay), and comes back to a thank-you page. SumUp also tells the website directly (`/api/sumup/webhook`), so the order is saved even if they close the tab. Refunds are done in the SumUp app or dashboard: each order in the Studio shows its **SumUp transaction code** to search for.
+
+To test without real money, create a sandbox account at developer.sumup.com and use its API key in a Vercel Preview deployment.
 
 ### Discount codes
-Stripe → Product catalogue → Coupons → create a coupon, then add a **promotion code** (e.g. `WELCOME10`). Customers enter it on the checkout page.
+**Studio → Shop → Discount codes → +**. Choose a code (e.g. `WELCOME10`), % or £ off, and optionally free delivery, a minimum spend, start/end dates or a maximum number of uses. Customers type it in the basket. Switch **Active** off to stop a code immediately. Note: codes are stored in the public part of the Studio's content, so treat them as promotional, not secret.
 
 ## 3. Instagram feed (optional)
 The "Slow mornings, warm cups" section shows the café's latest Instagram posts. Until it's connected, it shows the backup photos from **Home page → Instagram**.
@@ -56,8 +52,8 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 
 ## How the shop works
 - Prices, stock and delivery fees are always read fresh from the Studio when a customer checks out. The browser basket is never trusted.
-- Collection vs delivery is chosen in the basket. Delivery collects a UK address on Stripe's page. Products marked **Collection in store only** force collection.
-- After payment, the order is recorded twice for safety (the Stripe webhook and the thank-you page). Only the first counts, so stock is never taken off twice.
+- Collection vs delivery is chosen in the basket, then the customer adds their name, email, optional phone and (for delivery) a UK address. Products marked **Collection in store only** force collection.
+- After payment, the order is recorded twice for safety (SumUp's notification and the thank-you page). Only the first counts, so stock is never taken off twice. The amount SumUp says was paid is checked against the order before it's accepted.
 - **Shop settings → Take online orders** pauses the shop without hiding products.
 - Products can have options (size, colour…) with their own stock and price. Leave **Option name** empty for simple products.
 
@@ -67,8 +63,8 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` | Content |
 | `NEXT_PUBLIC_SANITY_DATASET` | Content (`production`) |
 | `SANITY_API_WRITE_TOKEN` | Saving orders, updating stock (server only) |
-| `STRIPE_SECRET_KEY` | Creating checkouts (server only) |
-| `STRIPE_WEBHOOK_SECRET` | Verifying Stripe's order notifications (server only) |
+| `SUMUP_API_KEY` | Online payments (server only) |
+| `SUMUP_MERCHANT_CODE` | Optional: SumUp merchant code (looked up automatically) |
 | `NEXT_PUBLIC_SITE_URL` | Optional: the final domain, for Google and share links |
 | `INSTAGRAM_ACCESS_TOKEN` | Optional: Instagram feed (server only) |
 | `CRON_SECRET` | Optional: protects the weekly Instagram token refresh |
@@ -80,4 +76,4 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 npm install
 npm run dev
 ```
-Open http://localhost:3000 (site) and http://localhost:3000/studio (editor). To test webhooks locally: `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+Open http://localhost:3000 (site) and http://localhost:3000/studio (editor).

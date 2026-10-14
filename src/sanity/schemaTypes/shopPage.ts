@@ -49,7 +49,7 @@ export const shopPage = defineType({
       type: 'text',
       rows: 3,
       group: 'orders',
-      description: 'Shown after someone pays. They also get a receipt email from Stripe.',
+      description: 'Shown on the thank-you page after someone pays.',
     }),
 
     defineField({ name: 'collectionEnabled', title: 'Offer collection in store', type: 'boolean', group: 'collection', initialValue: true }),

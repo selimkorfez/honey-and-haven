@@ -1,15 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import type { CheckoutRequest, CheckoutResponse, Fulfilment } from '@/lib/basket'
+import { checkDetails, type CheckoutRequest, type CheckoutResponse, type CustomerDetails, type Fulfilment } from '@/lib/basket'
+import { discountAmount, type DiscountRule } from '@/lib/discounts'
 import { deliveryCost, gbp } from '@/lib/money'
 import { LogoMark } from '../LogoMark'
-import { ArrowRight, Close, Lock, Minus, Plus, Store, Truck } from '../Icons'
+import { ArrowLeft, ArrowRight, Check, Close, Lock, Minus, Plus, Store, Truck } from '../Icons'
 import { useBasket } from './BasketProvider'
 
 const ease = [0.16, 1, 0.3, 1] as const
+const DETAILS_KEY = 'hh-details-v1'
+const EMPTY: CustomerDetails = { name: '', email: '', phone: '', line1: '', line2: '', city: '', postcode: '' }
+
+type Step = 'basket' | 'details'
+type Applied = { rule: DiscountRule; label: string } | null
 
 export function BasketDrawer() {
   const b = useBasket()
@@ -17,8 +23,16 @@ export function BasketDrawer() {
   const reduce = useReducedMotion()
   const panel = useRef<HTMLDivElement>(null)
   const closeBtn = useRef<HTMLButtonElement>(null)
+  const ids = useId()
+  const [step, setStep] = useState<Step>('basket')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [badField, setBadField] = useState<string | null>(null)
+  const [details, setDetails] = useState<CustomerDetails>(EMPTY)
+  const [codeInput, setCodeInput] = useState('')
+  const [applied, setApplied] = useState<Applied>(null)
+  const [codeMsg, setCodeMsg] = useState<string | null>(null)
+  const [checkingCode, setCheckingCode] = useState(false)
 
   const collectionOnly = lines.filter((l) => l.collectionOnly)
   const both = config.collectionEnabled && config.deliveryEnabled
@@ -30,10 +44,13 @@ export function BasketDrawer() {
         ? 'collection'
         : b.fulfilment
   const blockedByCollection = collectionOnly.length > 0 && !config.collectionEnabled
-  const delivery = fulfilment === 'delivery' ? deliveryCost(config, b.subtotal) : 0
-  const total = b.subtotal + delivery
+  const discount = discountAmount(applied?.rule, b.subtotal)
+  const belowMin = applied && typeof applied.rule.minSpend === 'number' && b.subtotal < applied.rule.minSpend ? applied.rule.minSpend : null
+  const freeDelivery = Boolean(applied?.rule.freeDelivery) && !belowMin
+  const delivery = fulfilment === 'delivery' && !freeDelivery ? deliveryCost(config, b.subtotal) : 0
+  const total = Math.round((b.subtotal - discount + delivery) * 100) / 100
   const toFree =
-    fulfilment === 'delivery' && typeof config.freeDeliveryOver === 'number' && config.freeDeliveryOver > 0 && delivery > 0
+    fulfilment === 'delivery' && !freeDelivery && typeof config.freeDeliveryOver === 'number' && config.freeDeliveryOver > 0 && delivery > 0
       ? config.freeDeliveryOver - b.subtotal
       : 0
 
@@ -44,6 +61,19 @@ export function BasketDrawer() {
       : blockedByCollection
         ? `${collectionOnly.map((l) => l.name).join(', ')} can only be collected in store, which isn’t available right now.`
         : null
+
+  // Remember the customer's details in this browser for next time
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DETAILS_KEY) || 'null')
+      if (saved && typeof saved === 'object') setDetails({ ...EMPTY, ...saved })
+    } catch {}
+  }, [])
+
+  // Back to the first step whenever the basket is reopened or emptied
+  useEffect(() => {
+    if (!open || !lines.length) setStep('basket')
+  }, [open, lines.length])
 
   // Focus, Escape, focus trap and scroll lock while open
   useEffect(() => {
@@ -91,13 +121,59 @@ export function BasketDrawer() {
       fn(...a)
     }
 
-  async function checkout() {
-    setBusy(true)
+  const field = (name: keyof CustomerDetails) => ({
+    id: `${ids}-${name}`,
+    name,
+    value: details[name] ?? '',
+    'aria-invalid': badField === name || undefined,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDetails((d) => ({ ...d, [name]: e.target.value }))
+      if (badField === name) {
+        setBadField(null)
+        setError(null)
+      }
+    },
+  })
+
+  async function applyCode(e?: React.FormEvent) {
+    e?.preventDefault()
+    if (!codeInput.trim() || checkingCode) return
+    setCheckingCode(true)
+    setCodeMsg(null)
+    try {
+      const res = await fetch('/api/discount', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: codeInput }) })
+      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; rule?: DiscountRule; label?: string; error?: string }
+      if (data.ok && data.rule) {
+        setApplied({ rule: data.rule, label: data.label || data.rule.code })
+        setCodeInput('')
+      } else setCodeMsg(data.error || 'That code isn’t valid.')
+    } catch {
+      setCodeMsg('We couldn’t check that code. Please try again.')
+    }
+    setCheckingCode(false)
+  }
+
+  async function pay(e: React.FormEvent) {
+    e.preventDefault()
+    if (busy) return
     setError(null)
+    const bad = checkDetails(details, fulfilment)
+    if (bad) {
+      setBadField(bad.field)
+      setError(bad.error)
+      document.getElementById(`${ids}-${bad.field}`)?.focus()
+      return
+    }
+    try {
+      localStorage.setItem(DETAILS_KEY, JSON.stringify(details))
+    } catch {}
+    setBusy(true)
     try {
       const body: CheckoutRequest = {
         lines: lines.map((l) => ({ productId: l.productId, variantKey: l.variantKey, qty: l.qty })),
         fulfilment,
+        customer: details,
+        code: applied?.rule.code,
       }
       const res = await fetch('/api/checkout', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
       const data = (await res.json().catch(() => ({ error: 'Something went wrong. Please try again.' }))) as CheckoutResponse
@@ -105,13 +181,45 @@ export function BasketDrawer() {
         window.location.assign(data.url)
         return
       }
-      if ('fix' in data && data.fix?.length) b.limit(data.fix)
-      setError('error' in data ? data.error : 'Something went wrong. Please try again.')
+      const err = 'error' in data ? data : { error: 'Something went wrong. Please try again.', field: undefined, fix: undefined }
+      if (err.fix?.length) {
+        b.limit(err.fix)
+        setStep('basket')
+      }
+      if (err.field === 'code') {
+        setApplied(null)
+        setCodeMsg(err.error)
+        setStep('basket')
+      } else if (err.field) setBadField(err.field)
+      setError(err.error)
     } catch {
       setError('We couldn’t reach the checkout. Please check your connection and try again.')
     }
     setBusy(false)
   }
+
+  const totals = (
+    <dl className="basket-totals">
+      <div>
+        <dt>Subtotal</dt>
+        <dd className="price">{gbp(b.subtotal)}</dd>
+      </div>
+      {discount > 0 ? (
+        <div className="basket-discount">
+          <dt>Discount ({applied?.rule.code})</dt>
+          <dd className="price">−{gbp(discount)}</dd>
+        </div>
+      ) : null}
+      <div>
+        <dt>{fulfilment === 'collection' ? 'Collection' : 'Delivery'}</dt>
+        <dd className="price">{delivery === 0 ? 'Free' : gbp(delivery)}</dd>
+      </div>
+      <div className="basket-total">
+        <dt>Total</dt>
+        <dd className="price">{gbp(total)}</dd>
+      </div>
+    </dl>
+  )
 
   return (
     <AnimatePresence>
@@ -137,8 +245,19 @@ export function BasketDrawer() {
             transition={{ duration: 0.55, ease }}
           >
             <div className="basket-head">
+              {step === 'details' ? (
+                <button type="button" className="icon-btn basket-back" onClick={() => setStep('basket')} aria-label="Back to basket">
+                  <ArrowLeft />
+                </button>
+              ) : null}
               <h2 id="basket-title">
-                Your basket {b.count ? <span className="basket-count">{b.count}</span> : null}
+                {step === 'details' ? (
+                  'Your details'
+                ) : (
+                  <>
+                    Your basket {b.count ? <span className="basket-count">{b.count}</span> : null}
+                  </>
+                )}
               </h2>
               <button ref={closeBtn} type="button" className="icon-btn" onClick={() => setOpen(false)} aria-label="Close basket">
                 <Close />
@@ -153,7 +272,7 @@ export function BasketDrawer() {
                   Visit the shop <ArrowRight />
                 </Link>
               </div>
-            ) : (
+            ) : step === 'basket' ? (
               <>
                 <ul className="basket-lines">
                   <AnimatePresence initial={false}>
@@ -252,20 +371,49 @@ export function BasketDrawer() {
                     {fulfilment === 'collection' ? config.collectionNote : config.deliveryNote}
                   </p>
 
-                  <dl className="basket-totals">
-                    <div>
-                      <dt>Subtotal</dt>
-                      <dd className="price">{gbp(b.subtotal)}</dd>
-                    </div>
-                    <div>
-                      <dt>{fulfilment === 'collection' ? 'Collection' : 'Delivery'}</dt>
-                      <dd className="price">{delivery === 0 ? 'Free' : gbp(delivery)}</dd>
-                    </div>
-                    <div className="basket-total">
-                      <dt>Total</dt>
-                      <dd className="price">{gbp(Math.round(total * 100) / 100)}</dd>
-                    </div>
-                  </dl>
+                  {/* Discount code */}
+                  {config.live ? (
+                    applied ? (
+                      <div className="code-applied">
+                        <Check />
+                        <span>
+                          <strong>{applied.rule.code}</strong> {applied.label}
+                          {belowMin ? <small> · spend {gbp(belowMin)} to use it</small> : null}
+                        </span>
+                        <button type="button" className="link-btn" onClick={() => setApplied(null)}>
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <form className="code-form" onSubmit={applyCode}>
+                        <label htmlFor={`${ids}-code`} className="sr-only">
+                          Discount code
+                        </label>
+                        <input
+                          id={`${ids}-code`}
+                          value={codeInput}
+                          onChange={(e) => {
+                            setCodeInput(e.target.value)
+                            setCodeMsg(null)
+                          }}
+                          placeholder="Discount code"
+                          autoCapitalize="characters"
+                          autoComplete="off"
+                          maxLength={30}
+                        />
+                        <button type="submit" className="btn btn-ghost" disabled={!codeInput.trim() || checkingCode}>
+                          {checkingCode ? 'Checking…' : 'Apply'}
+                        </button>
+                        {codeMsg ? (
+                          <p className="code-msg" role="alert">
+                            {codeMsg}
+                          </p>
+                        ) : null}
+                      </form>
+                    )
+                  ) : null}
+
+                  {totals}
                   {toFree > 0 ? <p className="basket-nudge">Add {gbp(Math.round(toFree * 100) / 100)} more for free delivery.</p> : null}
 
                   {notice ? <p className="basket-alert">{notice}</p> : null}
@@ -275,15 +423,87 @@ export function BasketDrawer() {
                     </p>
                   ) : null}
 
-                  <button type="button" className="btn btn-primary basket-checkout" onClick={checkout} disabled={Boolean(notice) || busy} aria-busy={busy}>
-                    {busy ? 'Opening secure checkout…' : 'Checkout'}
-                    {busy ? null : <ArrowRight />}
+                  <button
+                    type="button"
+                    className="btn btn-primary basket-checkout"
+                    onClick={() => {
+                      setError(null)
+                      setStep('details')
+                    }}
+                    disabled={Boolean(notice)}
+                  >
+                    Checkout <ArrowRight />
                   </button>
                   <p className="basket-secure">
-                    <Lock /> Secure payment by Stripe · Discount codes at checkout
+                    <Lock /> Secure payment by SumUp · Card, Apple Pay, Google Pay
                   </p>
                 </div>
               </>
+            ) : (
+              <form className="details" onSubmit={pay} noValidate>
+                <div className="details-body">
+                  <p className="details-intro">
+                    {fulfilment === 'collection' ? 'So we know whose order it is when you collect it.' : 'Where should we post your order? UK addresses only.'}
+                  </p>
+                  <div className="details-field">
+                    <label htmlFor={`${ids}-name`}>Full name</label>
+                    <input {...field('name')} autoComplete="name" maxLength={80} required />
+                  </div>
+                  <div className="details-field">
+                    <label htmlFor={`${ids}-email`}>Email</label>
+                    <input {...field('email')} type="email" autoComplete="email" inputMode="email" maxLength={160} required />
+                  </div>
+                  <div className="details-field">
+                    <label htmlFor={`${ids}-phone`}>
+                      Phone <span>optional, in case we need to reach you</span>
+                    </label>
+                    <input {...field('phone')} type="tel" autoComplete="tel" inputMode="tel" maxLength={30} />
+                  </div>
+                  {fulfilment === 'delivery' ? (
+                    <fieldset className="details-address">
+                      <legend>Delivery address</legend>
+                      <div className="details-field">
+                        <label htmlFor={`${ids}-line1`}>Address</label>
+                        <input {...field('line1')} autoComplete="address-line1" maxLength={120} required />
+                      </div>
+                      <div className="details-field">
+                        <label htmlFor={`${ids}-line2`} className="sr-only">
+                          Address line 2
+                        </label>
+                        <input {...field('line2')} autoComplete="address-line2" maxLength={120} placeholder="Flat, building (optional)" />
+                      </div>
+                      <div className="details-row">
+                        <div className="details-field">
+                          <label htmlFor={`${ids}-city`}>Town or city</label>
+                          <input {...field('city')} autoComplete="address-level2" maxLength={80} required />
+                        </div>
+                        <div className="details-field">
+                          <label htmlFor={`${ids}-postcode`}>Postcode</label>
+                          <input {...field('postcode')} autoComplete="postal-code" autoCapitalize="characters" maxLength={10} required />
+                        </div>
+                      </div>
+                    </fieldset>
+                  ) : (
+                    <p className="details-collect">
+                      <Store /> {config.collectionNote}
+                    </p>
+                  )}
+                </div>
+
+                <div className="basket-foot">
+                  {totals}
+                  {error ? (
+                    <p className="basket-alert" role="alert">
+                      {error}
+                    </p>
+                  ) : null}
+                  <button type="submit" className="btn btn-primary basket-checkout" disabled={busy} aria-busy={busy}>
+                    {busy ? 'Opening secure payment…' : `Pay ${gbp(total)}`}
+                    {busy ? null : <Lock />}
+                  </button>
+                  <p className="basket-secure">You’ll pay on SumUp’s secure page, then come back here.</p>
+                </div>
+              </form>
             )}
           </motion.div>
         </div>

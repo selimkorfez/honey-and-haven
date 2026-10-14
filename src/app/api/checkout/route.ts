@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import type Stripe from 'stripe'
 import { isConfigured } from '@/sanity/env'
-import { freshClient } from '@/sanity/lib/write'
+import { freshClient, getWriteClient } from '@/sanity/lib/write'
 import { CHECKOUT_PRODUCTS_QUERY, SHOP_SETTINGS_QUERY } from '@/sanity/lib/queries'
-import { getStripe } from '@/lib/stripe'
-import { withShopDefaults } from '@/lib/shop'
-import { deliveryCost, toPence } from '@/lib/money'
-import { MAX_PER_LINE, lineId, type CheckoutRequest } from '@/lib/basket'
+import { createCheckout, sumupConfigured } from '@/lib/sumup'
+import { checkoutLive, withShopDefaults } from '@/lib/shop'
+import { deliveryCost } from '@/lib/money'
+import { MAX_PER_LINE, checkDetails, lineId, type CheckoutRequest, type CustomerDetails } from '@/lib/basket'
+import { DISCOUNT_QUERY, checkDiscount, discountAmount, normaliseCode, type DiscountDoc } from '@/lib/discounts'
+import { newOrderRef, pendingId, type PendingCheckout } from '@/lib/orders'
 import type { ShopSettings } from '@/lib/types'
 import { siteUrl } from '@/lib/format'
 
@@ -20,15 +21,18 @@ type CheckoutProduct = {
   stock?: number | null
   collectionOnly?: boolean
   variants?: { _key: string; name: string; price?: number | null; stock?: number | null }[] | null
-  imageUrl?: string | null
 }
 
-const fail = (error: string, status = 400, fix?: { id: string; max: number }[]) => NextResponse.json({ error, fix }, { status })
+type Fail = { error: string; field?: string; fix?: { id: string; max: number }[] }
+const fail = (error: string, status = 400, extra: Omit<Fail, 'error'> = {}) => NextResponse.json({ error, ...extra }, { status })
+
+const text = (v: unknown, max: number) => (typeof v === 'string' ? v.replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max) : '')
 
 function parse(body: unknown): CheckoutRequest | null {
   const b = body as CheckoutRequest
   if (!b || !Array.isArray(b.lines) || b.lines.length === 0 || b.lines.length > 30) return null
   if (b.fulfilment !== 'collection' && b.fulfilment !== 'delivery') return null
+  if (!b.customer || typeof b.customer !== 'object') return null
   const seen = new Set<string>()
   for (const l of b.lines) {
     if (typeof l?.productId !== 'string' || l.productId.length > 100) return null
@@ -39,25 +43,43 @@ function parse(body: unknown): CheckoutRequest | null {
     if (l.variantKey !== undefined && typeof l.variantKey !== 'string') return null
     if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > MAX_PER_LINE) return null
   }
-  return b
+  const c = b.customer
+  const customer: CustomerDetails = {
+    name: text(c.name, 80),
+    email: text(c.email, 160).toLowerCase(),
+    phone: text(c.phone, 30) || undefined,
+  }
+  if (b.fulfilment === 'delivery') {
+    customer.line1 = text(c.line1, 120)
+    customer.line2 = text(c.line2, 120) || undefined
+    customer.city = text(c.city, 80)
+    customer.postcode = text(c.postcode, 10).toUpperCase()
+  }
+  return { ...b, customer, code: text(b.code, 30) || undefined }
 }
 
 export async function POST(req: NextRequest) {
-  const stripe = getStripe()
-  if (!stripe || !isConfigured) return fail('Online payments are being set up. Everything is available in store in the meantime.', 503)
+  const write = getWriteClient()
+  if (!checkoutLive() || !write || !sumupConfigured() || !isConfigured) {
+    return fail('Online payments are being set up. Everything is available in store in the meantime.', 503)
+  }
 
   const body = parse(await req.json().catch(() => null))
   if (!body) return fail('Your basket looks out of date. Please refresh the page and try again.')
+  const bad = checkDetails(body.customer, body.fulfilment)
+  if (bad) return fail(bad.error, 400, { field: bad.field })
 
-  // Prices, stock and settings always come from the Studio, never from the browser
+  // Prices, stock, codes and settings always come from the Studio, never from the browser
   const sanity = freshClient()
   const ids = [...new Set(body.lines.map((l) => l.productId))]
   let products: CheckoutProduct[]
   let rawSettings: Partial<ShopSettings> | null
+  let discountDoc: DiscountDoc | null = null
   try {
-    ;[products, rawSettings] = await Promise.all([
+    ;[products, rawSettings, discountDoc] = await Promise.all([
       sanity.fetch<CheckoutProduct[]>(CHECKOUT_PRODUCTS_QUERY, { ids }),
       sanity.fetch<Partial<ShopSettings> | null>(SHOP_SETTINGS_QUERY),
+      body.code ? write.fetch<DiscountDoc | null>(DISCOUNT_QUERY, { code: normaliseCode(body.code) }) : Promise.resolve(null),
     ])
   } catch (err) {
     console.error('[checkout] Sanity error', err)
@@ -68,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   const problems: string[] = []
   const fix: { id: string; max: number }[] = []
-  const items: Stripe.Checkout.SessionCreateParams.LineItem[] = []
+  const lines: PendingCheckout['lines'] = []
   let subtotal = 0
   let collectionOnly = false
 
@@ -95,64 +117,78 @@ export async function POST(req: NextRequest) {
       continue
     }
     const unit = typeof v?.price === 'number' ? v.price : p.price
-    subtotal += unit * line.qty
+    const amount = Math.round(unit * line.qty * 100) / 100
+    subtotal += amount
     collectionOnly ||= Boolean(p.collectionOnly)
-    items.push({
+    lines.push({
+      _key: `l${lines.length}`,
+      productId: p._id,
+      variantKey: v?._key,
+      name: p.name,
+      option: v?.name,
       quantity: line.qty,
-      price_data: {
-        currency: 'gbp',
-        unit_amount: toPence(unit),
-        product_data: {
-          name: p.name,
-          description: v ? `${v.name}` : undefined,
-          images: p.imageUrl ? [`${p.imageUrl}?w=600&h=600&fit=crop&auto=format`] : undefined,
-          metadata: { productId: p._id, variantKey: v?._key ?? '', name: p.name, option: v ? v.name : '' },
-        },
-      },
+      unitPrice: unit,
+      amount,
     })
   }
-  if (problems.length) return fail(problems.join(' '), 409, fix)
+  if (problems.length) return fail(problems.join(' '), 409, { fix })
+  subtotal = Math.round(subtotal * 100) / 100
 
-  const delivery = body.fulfilment === 'delivery'
-  if (delivery && !settings.deliveryEnabled) return fail('Delivery isn’t available right now. Please choose collection.', 409)
-  if (delivery && collectionOnly) return fail('Some items in your basket can only be collected in store.', 409)
-  if (!delivery && !settings.collectionEnabled) return fail('Collection isn’t available right now. Please choose delivery.', 409)
+  const isDelivery = body.fulfilment === 'delivery'
+  if (isDelivery && !settings.deliveryEnabled) return fail('Delivery isn’t available right now. Please choose collection.', 409)
+  if (isDelivery && collectionOnly) return fail('Some items in your basket can only be collected in store.', 409)
+  if (!isDelivery && !settings.collectionEnabled) return fail('Collection isn’t available right now. Please choose delivery.', 409)
+
+  // Discount code
+  let discount = 0
+  let freeDelivery = false
+  if (body.code) {
+    const check = checkDiscount(discountDoc)
+    if (!check.ok) return fail(check.error, 400, { field: 'code' })
+    if (typeof check.rule.minSpend === 'number' && subtotal < check.rule.minSpend) {
+      return fail(`That code needs a spend of at least £${check.rule.minSpend.toFixed(2)}.`, 400, { field: 'code' })
+    }
+    discount = discountAmount(check.rule, subtotal)
+    freeDelivery = Boolean(check.rule.freeDelivery)
+  }
+  const delivery = isDelivery && !freeDelivery ? deliveryCost(settings, subtotal) : 0
+  const total = Math.round((subtotal - discount + delivery) * 100) / 100
+  if (total < 0.5) return fail('Orders need to be at least 50p to pay online. Please pop in to the café instead.', 400)
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL ? siteUrl() : req.nextUrl.origin
-  const note = (delivery ? settings.deliveryNote : settings.collectionNote)?.slice(0, 1000)
+  const ref = newOrderRef()
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: items,
-      allow_promotion_codes: true,
-      phone_number_collection: { enabled: true },
-      locale: 'en-GB',
-      // Keeps the stock check fresh: unpaid checkouts expire after 30 minutes
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-      ...(delivery
-        ? {
-            shipping_address_collection: { allowed_countries: ['GB'] },
-            shipping_options: [
-              {
-                shipping_rate_data: {
-                  type: 'fixed_amount',
-                  display_name: 'UK delivery',
-                  fixed_amount: { amount: toPence(deliveryCost(settings, subtotal)), currency: 'gbp' },
-                },
-              },
-            ],
-          }
-        : {}),
-      custom_text: note ? { submit: { message: delivery ? note : `Collect in store: ${note}` } } : undefined,
-      metadata: { fulfilment: body.fulfilment, source: 'website' },
-      payment_intent_data: { description: `Honey & Haven online order (${delivery ? 'delivery' : 'collection'})`, metadata: { fulfilment: body.fulfilment } },
-      success_url: `${origin}/shop/thank-you?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/shop?basket=open`,
+    const checkout = await createCheckout({
+      reference: ref,
+      amount: total,
+      description: `Honey & Haven order ${ref} (${isDelivery ? 'UK delivery' : 'collect in store'})`,
+      returnUrl: `${origin}/api/sumup/webhook`,
+      redirectUrl: `${origin}/shop/thank-you?order=${ref}`,
     })
-    if (!session.url) throw new Error('No checkout URL')
-    return NextResponse.json({ url: session.url })
+    if (!checkout.hosted_checkout_url) throw new Error('SumUp did not return a payment page')
+
+    const pending: PendingCheckout = {
+      _id: pendingId(ref),
+      _type: 'pendingCheckout',
+      ref,
+      sumupId: checkout.id,
+      createdAt: new Date().toISOString(),
+      status: 'open',
+      fulfilment: body.fulfilment,
+      customer: body.customer,
+      lines,
+      subtotal,
+      delivery,
+      discount,
+      discountCode: discountDoc?.code,
+      discountId: discountDoc?._id,
+      total,
+    }
+    // Private (the "checkouts." prefix): only the server and signed-in staff can read it
+    await write.create(pending)
+    return NextResponse.json({ url: checkout.hosted_checkout_url })
   } catch (err) {
-    console.error('[checkout] Stripe error', err)
+    console.error('[checkout] SumUp error', err)
     return fail('We couldn’t open the checkout just now. Please try again in a moment.', 502)
   }
 }

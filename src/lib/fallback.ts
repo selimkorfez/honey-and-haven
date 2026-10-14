@@ -157,9 +157,9 @@ export const FALLBACK_INFO_PAGES: InfoPage[] = [
     slug: 'privacy',
     body: blocks(
       { h: 'What we collect' },
-      'When you order online we collect your name, email address, phone number and, for deliveries, your address. We use these only to prepare, deliver and contact you about your order.',
+      'When you order online we collect your name, email address, phone number (if you give it) and, for deliveries, your address. We use these only to prepare, deliver and contact you about your order.',
       { h: 'Payments' },
-      'Payments are handled securely by Stripe. We never see or store your card details.',
+      'Payments are handled securely by SumUp. We never see or store your card details.',
       { h: 'How long we keep it' },
       'We keep order records for as long as we need them for our accounts, and we never sell your details or use them for marketing without asking.',
       { h: 'Notes sent through the bee' },

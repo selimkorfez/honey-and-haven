@@ -4,8 +4,8 @@ import { SHOP_SETTINGS_QUERY } from '@/sanity/lib/queries'
 import { FALLBACK_SHOP_SETTINGS } from './fallback'
 import type { CheckoutConfig, ShopSettings } from './types'
 
-/** Online payments work once Sanity (products/orders) and Stripe are both connected. */
-export const checkoutLive = () => isConfigured && Boolean(process.env.STRIPE_SECRET_KEY)
+/** Online payments work once Sanity (products and orders, with a write token) and SumUp are both connected. */
+export const checkoutLive = () => isConfigured && Boolean(process.env.SUMUP_API_KEY) && Boolean(process.env.SANITY_API_WRITE_TOKEN)
 
 /** Fills in sensible defaults for anything the café hasn't set yet. */
 export function withShopDefaults(data: Partial<ShopSettings> | null | undefined): ShopSettings {

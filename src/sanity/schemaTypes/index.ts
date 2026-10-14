@@ -13,6 +13,7 @@ import { order } from './order'
 import { policyPage } from './policyPage'
 import { aboutPage } from './aboutPage'
 import { feedback } from './feedback'
+import { discountCode } from './discountCode'
 
 export const schemaTypes = [
   seo,
@@ -30,6 +31,7 @@ export const schemaTypes = [
   policyPage,
   aboutPage,
   feedback,
+  discountCode,
 ]
 
 export const singletonTypes = new Set(['siteSettings', 'homePage', 'menuPage', 'shopPage', 'aboutPage'])
