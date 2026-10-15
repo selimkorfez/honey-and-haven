@@ -12,7 +12,7 @@ import { LOGO_PATH, LOGO_TRANSFORM } from '../LogoMark'
 /* ------------------------------------------------------------------ */
 const BROWN = '#4a2e2b' // logo brown
 const BAMBOO = '#d6a89b' // blush bamboo-fibre cup
-const LID = '#c6a77b' // kraft (moulded plant-fibre) lid, as on the café's hot cups
+const LID = '#89704f' // brown kraft (moulded plant-fibre) lid, as on the café's hot cups
 const GOLD = '#d2ac55' // honey jar lid
 
 export type HeroTone = 'studio' | 'cream'
@@ -687,6 +687,60 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
   )
 }
 
+/**
+ * Runny, see-through honey like the café's own jars: bright gold where you look straight
+ * through it, deepening to amber at the edges (the light travels through more honey there),
+ * glowing a little at the base and with a soft streak of light refracted through the glass.
+ * A small custom shader, so it looks the same on every device and costs no extra render pass.
+ */
+const honeyVertex = /* glsl */ `
+  varying vec3 vN;
+  varying vec3 vV;
+  varying float vY;
+  void main() {
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    vN = normalize(normalMatrix * normal);
+    vV = -mv.xyz;
+    vY = position.y;
+    gl_Position = projectionMatrix * mv;
+  }
+`
+const honeyFragment = /* glsl */ `
+  uniform vec3 uCenter;
+  uniform vec3 uEdge;
+  uniform vec3 uGlow;
+  varying vec3 vN;
+  varying vec3 vV;
+  varying float vY;
+  void main() {
+    vec3 n = normalize(vN);
+    float facing = abs(dot(n, normalize(vV)));
+    float edge = pow(1.0 - facing, 1.6);
+    vec3 col = mix(uCenter, uEdge, edge);
+    // light gathers at the base of the jar
+    float base = smoothstep(-0.4, -0.72, vY);
+    col = mix(col, uGlow, base * 0.4 * (1.0 - edge));
+    // a soft vertical streak of light bent through the glass, and a fainter one opposite
+    float streak = exp(-pow((n.x + 0.42) / 0.13, 2.0)) * 0.5 + exp(-pow((n.x - 0.55) / 0.08, 2.0)) * 0.22;
+    col += uGlow * streak * (1.0 - edge * 0.6);
+    gl_FragColor = vec4(col, mix(0.85, 0.97, edge));
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
+  }
+`
+function honeyMaterial() {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uCenter: { value: new THREE.Color('#d49512') },
+      uEdge: { value: new THREE.Color('#874a03') },
+      uGlow: { value: new THREE.Color('#ffcf4a') },
+    },
+    vertexShader: honeyVertex,
+    fragmentShader: honeyFragment,
+    transparent: true,
+  })
+}
+
 /** The café's 340g Pure Honey jar: golden honey in clear glass, cream label, knurled gold lid, brown seal. */
 function HoneyJar() {
   const q = useQ()
@@ -758,33 +812,10 @@ function HoneyJar() {
 
   const mats = useMemo(
     () => ({
-      gloss: glossMaterial(q, undefined, 2.6),
-      tint: new THREE.MeshStandardMaterial({ color: '#f4f6ef', roughness: 0.05, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide }),
-      honey: q.transmission
-        ? new THREE.MeshPhysicalMaterial({
-            // runny, see-through honey: bright golden yellow, only deepening where it's thick
-            color: '#ffd23c',
-            transmission: 1,
-            thickness: 0.9,
-            roughness: 0.02,
-            ior: 1.49,
-            attenuationColor: new THREE.Color('#e99d00'),
-            attenuationDistance: 1.5,
-            emissive: new THREE.Color('#f2a900'),
-            emissiveIntensity: 0.48,
-            specularIntensity: 1,
-            envMapIntensity: 1.5,
-          })
-        : // lighter stand-in: clear golden honey, no extra render pass
-          new THREE.MeshStandardMaterial({
-            color: '#e2a00e',
-            roughness: 0.06,
-            transparent: true,
-            opacity: 0.9,
-            emissive: new THREE.Color('#c98400'),
-            emissiveIntensity: 0.3,
-            envMapIntensity: 0.9,
-          }),
+      // glass reflections kept light so they don't wash the honey out
+      gloss: glossMaterial(q, undefined, 0.8),
+      tint: new THREE.MeshStandardMaterial({ color: '#f4f6ef', roughness: 0.05, transparent: true, opacity: 0.035, depthWrite: false, side: THREE.DoubleSide }),
+      honey: honeyMaterial(),
       gold: new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1, roughness: 0.3, bumpMap: tex.knurl, bumpScale: 1.2, envMapIntensity: 1.4, side: THREE.DoubleSide }),
       goldTop: new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1, roughness: 0.22, envMapIntensity: 1.5 }),
       seal: new THREE.MeshStandardMaterial({ color: BROWN, roughness: 0.22 }),
