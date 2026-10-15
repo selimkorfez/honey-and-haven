@@ -49,9 +49,9 @@ type Quality = {
 }
 
 const LEVELS: Quality[] = [
-  { level: 0, dpr: 1, shadowSize: 512, shadowEvery: 4, beanShadows: false, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.5, segments: 56 },
-  { level: 1, dpr: 1.25, shadowSize: 1024, shadowEvery: 3, beanShadows: true, beans: 32, transmission: true, rich: false, wisps: 2, octaves: 4, runners: false, tex: 0.5, segments: 72 },
-  { level: 2, dpr: 1.5, shadowSize: 1024, shadowEvery: 2, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
+  { level: 0, dpr: 1.5, shadowSize: 1024, shadowEvery: 4, beanShadows: false, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.75, segments: 56 },
+  { level: 1, dpr: 1.75, shadowSize: 1024, shadowEvery: 3, beanShadows: true, beans: 32, transmission: true, rich: false, wisps: 2, octaves: 4, runners: false, tex: 0.75, segments: 72 },
+  { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 2, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
 ]
 
 /** A first guess from the device; the performance monitor steps down from there if frames drop. */
@@ -1065,7 +1065,7 @@ function Rig({ progress, still, tone, spread = 1 }: { progress: Progress; still:
       cup.current.rotation.set(0.06, t * 0.3 + p * Math.PI * 2.2, Math.sin(t * 0.7) * 0.04 + lerp(0, 0.1, enter))
     }
     if (bottle.current) {
-      bottle.current.position.set((lerp(4.8, 1.1, enter) + lerp(0, 0.25, honey)) * spread, Math.sin(t * 0.9 + 1.4) * 0.05 + lerp(0, 0.1, honey), lerp(0, -0.45, honey))
+      bottle.current.position.set((lerp(4.8, 1.1, enter) + lerp(0, 0.25, honey)) * spread, Math.sin(t * 0.9 + 1.4) * 0.05 + lerp(0, 0.1, honey), lerp(0, -0.45, honey) - (spread < 1 ? 0.35 : 0))
       bottle.current.rotation.set(0.05, -t * 0.25 - p * Math.PI * 1.8, lerp(-0.35, -0.08, enter))
       bottle.current.visible = enter > 0.001
     }
@@ -1110,7 +1110,8 @@ function Stage({ tone, children }: { tone: HeroTone; children: (spread: number) 
 
   // Pull the camera back on narrow screens so everything fits
   useEffect(() => {
-    const z = aspect < 0.75 ? 12 : aspect < 1.1 ? 9.2 : 8.6
+    // tall phones: far enough back that both cups fit side by side (half-width ~1.85 units at fov 32)
+    const z = aspect < 0.75 ? Math.max(12, 1.85 / (Math.tan((16 * Math.PI) / 180) * aspect)) : aspect < 1.1 ? 9.2 : 8.6
     camera.position.set(0, 0.45, z)
     camera.lookAt(0, -0.1, 0)
   }, [aspect, camera])
@@ -1124,7 +1125,7 @@ function Stage({ tone, children }: { tone: HeroTone; children: (spread: number) 
       <Backdrop tone={tone} focus={focus} />
       <group position={[x, y, 0]}>
         <Lights />
-        {children(narrow ? 0.6 : 1)}
+        {children(narrow ? 0.8 : 1)}
       </group>
     </>
   )
@@ -1228,6 +1229,8 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
   const wrap = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(true)
   const [level, setLevel] = useState<0 | 1 | 2 | null>(null)
+  // last resort on a struggling device: render at 1x
+  const [lowRes, setLowRes] = useState(false)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -1257,10 +1260,10 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
       <QualityContext.Provider value={q}>
         <Canvas
           frameloop={still ? 'demand' : visible ? 'always' : 'never'}
-          dpr={Math.min(q.dpr, window.devicePixelRatio || 1)}
+          dpr={Math.min(lowRes ? 1 : q.dpr, window.devicePixelRatio || 1)}
           shadows="percentage"
           camera={{ fov: 32, position: [0, 0.45, 8.6], near: 0.1, far: 60 }}
-          gl={{ antialias: q.level > 0, alpha: false, powerPreference: 'high-performance', stencil: false }}
+          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping
             gl.toneMappingExposure = 1.05
@@ -1273,8 +1276,14 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
                 iterations={6}
                 flipflops={2}
                 bounds={(r) => (r > 90 ? [50, 90] : [40, 60])}
-                onDecline={() => setLevel((l) => (l && l > 0 ? ((l - 1) as 0 | 1) : l))}
-                onFallback={() => setLevel(0)}
+                onDecline={() => {
+                  if (level === 0) setLowRes(true)
+                  else setLevel((l) => (l && l > 0 ? ((l - 1) as 0 | 1) : l))
+                }}
+                onFallback={() => {
+                  setLevel(0)
+                  setLowRes(true)
+                }}
               />
             ) : null}
             <ShadowThrottle still={still} />
