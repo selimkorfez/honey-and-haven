@@ -12,7 +12,7 @@ import { LOGO_PATH, LOGO_TRANSFORM } from '../LogoMark'
 /* ------------------------------------------------------------------ */
 const BROWN = '#4a2e2b' // logo brown
 const BAMBOO = '#d6a89b' // blush bamboo-fibre cup
-const LID = '#e4cbb6' // its cream lid
+const LID = '#c6a77b' // kraft (moulded plant-fibre) lid, as on the café's hot cups
 const GOLD = '#d2ac55' // honey jar lid
 
 export type HeroTone = 'studio' | 'cream'
@@ -388,7 +388,7 @@ function Wisp({
 /* Objects (modelled on the café's own cups and honey jar)             */
 /* ------------------------------------------------------------------ */
 
-/** The blush bamboo-fibre reusable cup: matte speckled body, stepped foot, cream lid with a sliding tab. */
+/** The blush hot cup: matte speckled body, stepped foot, kraft fibre lid with a sliding tab. */
 function HotCup({ steam, still }: { steam: string; still: boolean }) {
   const q = useQ()
   const wallR = (y: number) => 0.585 + ((0.72 - 0.585) * (y + 0.87)) / (0.86 + 0.87)
@@ -442,7 +442,10 @@ function HotCup({ steam, still }: { steam: string; still: boolean }) {
     fibre.repeat.set(6, 4)
     const bump = noiseTexture(256, 11)
     bump.repeat.set(8, 6)
-    return { print, fibre, bump }
+    // kraft lid: matte, flecked plant fibre
+    const kraft = toTexture(speckled(512, 512, LID, 23, 0.07, 0.05)[0], true, true)
+    kraft.repeat.set(5, 3)
+    return { print, fibre, bump, kraft }
   }, [q.tex])
 
   return (
@@ -458,11 +461,11 @@ function HotCup({ steam, still }: { steam: string; still: boolean }) {
         <meshStandardMaterial map={tex.print} transparent alphaTest={0.45} roughness={0.62} polygonOffset polygonOffsetFactor={-2} />
       </mesh>
       <mesh geometry={geo.lid} castShadow receiveShadow>
-        <meshStandardMaterial color={LID} roughness={0.55} bumpMap={tex.bump} bumpScale={0.25} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={tex.kraft} roughness={0.9} bumpMap={tex.bump} bumpScale={0.5} side={THREE.DoubleSide} />
       </mesh>
       {/* sliding drink-through cover */}
       <mesh position={[0, 1.13, -0.2]} castShadow receiveShadow geometry={geo.tab}>
-        <meshStandardMaterial color={LID} roughness={0.5} />
+        <meshStandardMaterial map={tex.kraft} roughness={0.88} bumpMap={tex.bump} bumpScale={0.4} />
       </mesh>
       {/* the drinking slot */}
       <mesh position={[0, 1.103, 0.42]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -759,19 +762,29 @@ function HoneyJar() {
       tint: new THREE.MeshStandardMaterial({ color: '#f4f6ef', roughness: 0.05, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide }),
       honey: q.transmission
         ? new THREE.MeshPhysicalMaterial({
-            color: '#ffd978',
+            // runny, see-through honey: bright golden yellow, only deepening where it's thick
+            color: '#ffd23c',
             transmission: 1,
-            thickness: 1.1,
-            roughness: 0.04,
+            thickness: 0.9,
+            roughness: 0.02,
             ior: 1.49,
-            attenuationColor: new THREE.Color('#f2a72a'),
-            attenuationDistance: 1.1,
-            emissive: new THREE.Color('#e0950f'),
-            emissiveIntensity: 0.42,
-            envMapIntensity: 1.4,
+            attenuationColor: new THREE.Color('#e99d00'),
+            attenuationDistance: 1.5,
+            emissive: new THREE.Color('#f2a900'),
+            emissiveIntensity: 0.48,
+            specularIntensity: 1,
+            envMapIntensity: 1.5,
           })
-        : // lighter stand-in: glowing gold, no extra render pass
-          new THREE.MeshStandardMaterial({ color: '#e7a531', roughness: 0.12, emissive: new THREE.Color('#c27a0a'), emissiveIntensity: 0.55, envMapIntensity: 1.6 }),
+        : // lighter stand-in: clear golden honey, no extra render pass
+          new THREE.MeshStandardMaterial({
+            color: '#e2a00e',
+            roughness: 0.06,
+            transparent: true,
+            opacity: 0.9,
+            emissive: new THREE.Color('#c98400'),
+            emissiveIntensity: 0.3,
+            envMapIntensity: 0.9,
+          }),
       gold: new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1, roughness: 0.3, bumpMap: tex.knurl, bumpScale: 1.2, envMapIntensity: 1.4, side: THREE.DoubleSide }),
       goldTop: new THREE.MeshStandardMaterial({ color: GOLD, metalness: 1, roughness: 0.22, envMapIntensity: 1.5 }),
       seal: new THREE.MeshStandardMaterial({ color: BROWN, roughness: 0.22 }),
@@ -781,8 +794,8 @@ function HoneyJar() {
 
   return (
     <group>
-      {/* honey: light passes through it and turns amber */}
-      <mesh geometry={geo.honey} material={mats.honey} castShadow />
+      {/* honey: clear and bright, light passes straight through it */}
+      <mesh geometry={geo.honey} material={mats.honey} castShadow renderOrder={1} />
       {/* label wraps the jar */}
       <mesh geometry={geo.label} castShadow receiveShadow>
         <meshStandardMaterial map={tex.label} roughness={0.78} />
