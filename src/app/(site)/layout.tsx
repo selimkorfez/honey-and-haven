@@ -7,6 +7,7 @@ import type { Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { siteUrl } from '@/lib/format'
 import { Header } from '@/components/Header'
+import { THEME_SCRIPT } from '@/components/ThemeSwitch'
 import { Footer } from '@/components/Footer'
 import { ScrollFX } from '@/components/ScrollFX'
 import { MotionProvider } from '@/components/MotionProvider'
@@ -28,10 +29,8 @@ const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
 export const revalidate = 60
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4ece0' },
-    { media: '(prefers-color-scheme: dark)', color: '#17110f' },
-  ],
+  // a single theme-color, kept in step with the light switch (see THEME_SCRIPT)
+  themeColor: '#f3eadf',
   colorScheme: 'light dark',
 }
 
@@ -77,7 +76,11 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="en-GB" className={`${serif.variable} ${sans.variable}`}>
+    // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads
+    <html lang="en-GB" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body>
         <MotionProvider>
           <BasketProvider config={checkout}>

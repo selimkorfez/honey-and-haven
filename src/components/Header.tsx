@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { LogoMark } from './LogoMark'
 import { FoldingWordmark } from './Wordmark'
 import { BasketButton } from './shop/BasketButton'
+import { ThemeSwitch } from './ThemeSwitch'
 
 /** "HONEY & HAVEN" folds into "HH" on scroll, then becomes the bee monogram. */
 export function Header({ name, announcement, hasBlog = false }: { name: string; announcement?: string; hasBlog?: boolean }) {
@@ -25,6 +26,7 @@ export function Header({ name, announcement, hasBlog = false }: { name: string; 
           <Link href="/#visit" className="nav-cta hide-sm">
             Visit us
           </Link>
+          <ThemeSwitch />
           <BasketButton />
         </nav>
       </div>

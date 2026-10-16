@@ -11,7 +11,8 @@ import type { HeroTone } from './CupScene'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
 
-const CupScene = dynamic(() => import('./CupScene'), { ssr: false })
+const loadScene = () => import('./CupScene')
+const CupScene = dynamic(loadScene, { ssr: false })
 
 type Step = { _key: string; title: string; text?: string }
 
@@ -47,21 +48,38 @@ export function HeroScroll({
   const root = useRef<HTMLElement>(null)
   const progress = useRef(0)
   const [mode, setMode] = useState<'pending' | '3d' | 'still' | 'flat'>('pending')
-  // At night (device in dark mode) the cream backdrop would glare, so use the studio brown
+  // At night (dark theme) the cream backdrop would glare, so use the studio brown
   const [night, setNight] = useState(false)
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const update = () => setNight(mq.matches)
+    const html = document.documentElement
+    const update = () => setNight(html.dataset.theme === 'dark')
     update()
-    mq.addEventListener('change', update)
-    return () => mq.removeEventListener('change', update)
+    const mo = new MutationObserver(update)
+    mo.observe(html, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => mo.disconnect()
   }, [])
   const shownTone: HeroTone = night ? 'studio' : tone
 
+  // The 3D scene is heavy to build, so its code downloads straight away but it's only
+  // built once the headline has (nearly) finished arriving: the opening stays smooth on phones.
+  const [sceneOn, setSceneOn] = useState(false)
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const gl = supportsWebGL()
-    setMode(!gl ? 'flat' : reduce ? 'still' : '3d')
+    const next = !gl ? 'flat' : reduce ? 'still' : '3d'
+    setMode(next)
+    if (next === 'flat') return
+    loadScene().catch(() => {})
+    let idle = 0
+    const timer = window.setTimeout(() => {
+      const ric = window.requestIdleCallback
+      if (ric) idle = ric(() => setSceneOn(true), { timeout: 400 })
+      else setSceneOn(true)
+    }, reduce ? 0 : 1000)
+    return () => {
+      window.clearTimeout(timer)
+      if (idle) window.cancelIdleCallback?.(idle)
+    }
   }, [])
 
   const animated = mode === '3d'
@@ -69,17 +87,7 @@ export function HeroScroll({
 
   useGSAP(
     () => {
-      if (mode === 'pending') return
-      // Headline arrival
-      gsap.from('.hero3d-word > span', {
-        yPercent: 108,
-        duration: 1.15,
-        ease: 'expo.out',
-        stagger: 0.06,
-        delay: 0.15,
-      })
-      gsap.from('.hero3d-panel.is-first .hero3d-after', { autoAlpha: 0, y: 16, duration: 0.9, ease: 'expo.out', delay: 0.65, stagger: 0.08 })
-
+      // (the headline's arrival is a CSS animation, see .hero3d-word in globals.css)
       if (!animated) return
 
       const panels = gsap.utils.toArray<HTMLElement>('.hero3d-panel')
@@ -124,7 +132,7 @@ export function HeroScroll({
       <div className="hero3d-stage">
         <div className="hero3d-glow" aria-hidden="true" />
         <div className="hero3d-canvas" aria-hidden="true">
-          {mode === '3d' || mode === 'still' ? (
+          {(mode === '3d' || mode === 'still') && sceneOn ? (
             <CupScene progress={progress} still={mode === 'still'} tone={shownTone} />
           ) : mode === 'flat' ? (
             fallbackImage ? (
@@ -141,7 +149,7 @@ export function HeroScroll({
             <h1 className="hero3d-title">
               {words.map((w, i) => (
                 <span key={i}>
-                  <span className="hero3d-word">
+                  <span className="hero3d-word" style={{ ['--i' as string]: i }}>
                     <span>{w}</span>
                   </span>
                   {i < words.length - 1 ? ' ' : null}
@@ -149,7 +157,9 @@ export function HeroScroll({
               ))}
             </h1>
             {text ? <p className="hero3d-text hero3d-after">{text}</p> : null}
-            <div className="hero3d-after">{children}</div>
+            <div className="hero3d-after" style={{ ['--i' as string]: text ? 1 : 0 }}>
+              {children}
+            </div>
           </div>
           {steps.map((s) => (
             <div key={s._key} className="hero3d-panel">

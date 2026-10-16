@@ -49,7 +49,7 @@ type Quality = {
 }
 
 const LEVELS: Quality[] = [
-  { level: 0, dpr: 1.5, shadowSize: 1024, shadowEvery: 4, beanShadows: false, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.75, segments: 56 },
+  { level: 0, dpr: 1.5, shadowSize: 1024, shadowEvery: 4, beanShadows: true, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.75, segments: 56 },
   { level: 1, dpr: 1.75, shadowSize: 1024, shadowEvery: 3, beanShadows: true, beans: 32, transmission: true, rich: false, wisps: 2, octaves: 4, runners: false, tex: 0.75, segments: 72 },
   { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 2, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
 ]
@@ -1168,6 +1168,15 @@ function Lights() {
   )
 }
 
+/** If a frame is ever drawn empty (e.g. while resizing) it shows the backdrop colour, not black. */
+function ClearColor({ tone }: { tone: HeroTone }) {
+  const gl = useThree((s) => s.gl)
+  useEffect(() => {
+    gl.setClearColor(BACKDROP[tone].edge)
+  }, [gl, tone])
+  return null
+}
+
 /** Shadows are redrawn every few frames instead of every frame (they move slowly, nobody can tell). */
 function ShadowThrottle({ still }: { still: boolean }) {
   const q = useQ()
@@ -1270,23 +1279,14 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
           }}
         >
           <QualityContext.Provider value={q}>
-            {/* If frames drop, step down to a lighter scene (never back up, to avoid flicker) */}
-            {ready && !still && !/[?&]quality=/.test(window.location.search) ? (
-              <PerformanceMonitor
-                iterations={6}
-                flipflops={2}
-                bounds={(r) => (r > 90 ? [50, 90] : [40, 60])}
-                onDecline={() => {
-                  if (level === 0) setLowRes(true)
-                  else setLevel((l) => (l && l > 0 ? ((l - 1) as 0 | 1) : l))
-                }}
-                onFallback={() => {
-                  setLevel(0)
-                  setLowRes(true)
-                }}
-              />
+            {/* The scene is never swapped for a lighter one once it's showing (that made the colours
+                jump and the bean shadows vanish mid-scroll). Only if frames keep dropping does it
+                drop to 1x resolution, once. */}
+            {ready && !still && !lowRes && !/[?&]quality=/.test(window.location.search) ? (
+              <PerformanceMonitor iterations={10} flipflops={2} bounds={(r) => (r > 90 ? [45, 90] : [30, 60])} onFallback={() => setLowRes(true)} />
             ) : null}
             <ShadowThrottle still={still} />
+            <ClearColor tone={tone} />
             {/* What the shiny things reflect: a big softbox left, a strip right, a ceiling panel */}
             <Environment resolution={q.level === 2 ? 256 : 128} frames={1}>
               <Lightformer form="rect" intensity={3} position={[-5, 2, 3]} rotation-y={Math.PI / 2.6} scale={[4, 6, 1]} color="#fff6ea" />

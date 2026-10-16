@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 /**
  * Small scroll helpers (the animations themselves live in Motion components):
- *  - the header fills with cream once you scroll past the top
+ *  - the header fills in once you scroll past the top
  *  - the menu page's category bar highlights the section you're reading
  */
 export function ScrollFX() {
@@ -35,10 +35,18 @@ export function ScrollFX() {
     )
     document.querySelectorAll('.menu-section[id]').forEach((s) => sectionIO.observe(s))
 
+    // 'hero' while the header is still over the home page's 3D hero (it takes the hero's colour there),
+    // 'true' once past it. A little gap between the on/off points stops it flickering at the threshold.
+    const hero = document.querySelector<HTMLElement>('.hero3d')
     let ticking = false
     const update = () => {
       ticking = false
-      root.dataset.scrolled = window.scrollY > 40 ? 'true' : 'false'
+      const y = window.scrollY
+      const was = root.dataset.scrolled
+      const scrolled = was === 'true' || was === 'hero' ? y > 16 : y > 48
+      const overHero = Boolean(hero && hero.getBoundingClientRect().bottom > (header?.offsetHeight ?? 64))
+      const next = !scrolled ? 'false' : overHero ? 'hero' : 'true'
+      if (next !== was) root.dataset.scrolled = next
     }
     const onScroll = () => {
       if (!ticking) {
