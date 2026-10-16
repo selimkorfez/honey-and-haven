@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { BeeMark } from './bee/BeeMark'
 
 const KEY = 'hh-theme'
 type Theme = 'light' | 'dark'
@@ -27,9 +28,9 @@ function saved(): Theme | null {
 }
 
 /**
- * The light switch in the header: a little wall rocker. Up = lights on (day look),
- * down = lights off (night look). Follows the device setting until someone flips it,
- * then remembers their choice. How it looks is pure CSS on html[data-theme], so it's
+ * The light switch in the header: a honey slider. Bee knob on the left with the sun
+ * by day; at night it slides across, the moon rises and stars come out. Follows the
+ * device setting until someone flips it, then remembers their choice. How it looks is pure CSS on html[data-theme], so it's
  * right from the first paint.
  */
 export function ThemeSwitch() {
@@ -76,9 +77,22 @@ export function ThemeSwitch() {
       title={dark ? 'Lights on' : 'Lights off'}
       onClick={flip}
     >
-      <span className="ls-plate" aria-hidden="true">
-        <span className="ls-rocker" />
-        <span className="ls-dot" />
+      <span className="ls-track" aria-hidden="true">
+        <span className="ls-stars">
+          <i />
+          <i />
+          <i />
+        </span>
+        <svg className="ls-ico ls-moon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z" />
+        </svg>
+        <svg className="ls-ico ls-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+          <circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none" />
+          <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" />
+        </svg>
+        <span className="ls-knob">
+          <BeeMark className="ls-bee" />
+        </span>
       </span>
     </button>
   )

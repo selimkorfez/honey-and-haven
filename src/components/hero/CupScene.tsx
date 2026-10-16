@@ -31,7 +31,8 @@ type Progress = { current: number }
 type Quality = {
   level: 0 | 1 | 2
   dpr: number
-  /** shadow map size, and how often (in frames) it's redrawn */
+  /** shadow map size, and how often (in frames) it's redrawn (every frame: skipping frames made
+   *  the cup's own shadows lag and jump as it turns, which read as flickering light on phones) */
   shadowSize: number
   shadowEvery: number
   beanShadows: boolean
@@ -49,9 +50,9 @@ type Quality = {
 }
 
 const LEVELS: Quality[] = [
-  { level: 0, dpr: 1.5, shadowSize: 1024, shadowEvery: 4, beanShadows: true, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.75, segments: 56 },
-  { level: 1, dpr: 1.75, shadowSize: 1024, shadowEvery: 3, beanShadows: true, beans: 32, transmission: true, rich: false, wisps: 2, octaves: 4, runners: false, tex: 0.75, segments: 72 },
-  { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 2, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
+  { level: 0, dpr: 1.5, shadowSize: 1024, shadowEvery: 1, beanShadows: true, beans: 20, transmission: false, rich: false, wisps: 1, octaves: 3, runners: false, tex: 0.75, segments: 56 },
+  { level: 1, dpr: 1.75, shadowSize: 1024, shadowEvery: 1, beanShadows: true, beans: 32, transmission: true, rich: false, wisps: 2, octaves: 4, runners: false, tex: 0.75, segments: 72 },
+  { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 1, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
 ]
 
 /** A first guess from the device; the performance monitor steps down from there if frames drop. */
@@ -427,7 +428,7 @@ function HotCup({ steam, still }: { steam: string; still: boolean }) {
         ],
         q.segments,
       ),
-      band: new THREE.CylinderGeometry(wallR(0.42) + 0.003, wallR(-0.42) + 0.003, 0.84, q.segments, 1, true, -Math.PI, Math.PI * 2),
+      band: new THREE.CylinderGeometry(wallR(0.42) + 0.006, wallR(-0.42) + 0.006, 0.84, q.segments, 1, true, -Math.PI, Math.PI * 2),
       tab: new RoundedBoxGeometry(0.3, 0.07, 0.56, 3, 0.025),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -452,16 +453,16 @@ function HotCup({ steam, still }: { steam: string; still: boolean }) {
     <group>
       <mesh geometry={geo.body} castShadow receiveShadow>
         {q.rich ? (
-          <meshPhysicalMaterial map={tex.fibre} bumpMap={tex.bump} bumpScale={0.6} roughness={0.82} sheen={0.5} sheenColor="#f6dcd2" sheenRoughness={0.75} side={THREE.DoubleSide} />
+          <meshPhysicalMaterial map={tex.fibre} bumpMap={tex.bump} bumpScale={0.6} roughness={0.82} sheen={0.5} sheenColor="#f6dcd2" sheenRoughness={0.75} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
         ) : (
-          <meshStandardMaterial map={tex.fibre} bumpMap={tex.bump} bumpScale={0.6} roughness={0.8} side={THREE.DoubleSide} />
+          <meshStandardMaterial map={tex.fibre} bumpMap={tex.bump} bumpScale={0.6} roughness={0.8} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
         )}
       </mesh>
       <mesh geometry={geo.band} receiveShadow>
-        <meshStandardMaterial map={tex.print} transparent alphaTest={0.45} roughness={0.62} polygonOffset polygonOffsetFactor={-2} />
+        <meshStandardMaterial map={tex.print} transparent alphaTest={0.45} roughness={0.62} polygonOffset polygonOffsetFactor={-2} polygonOffsetUnits={-4} />
       </mesh>
       <mesh geometry={geo.lid} castShadow receiveShadow>
-        <meshStandardMaterial map={tex.kraft} roughness={0.9} bumpMap={tex.bump} bumpScale={0.5} side={THREE.DoubleSide} />
+        <meshStandardMaterial map={tex.kraft} roughness={0.9} bumpMap={tex.bump} bumpScale={0.5} side={THREE.DoubleSide} shadowSide={THREE.BackSide} />
       </mesh>
       {/* sliding drink-through cover */}
       <mesh position={[0, 1.13, -0.2]} castShadow receiveShadow geometry={geo.tab}>
@@ -1271,7 +1272,7 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
           frameloop={still ? 'demand' : visible ? 'always' : 'never'}
           dpr={Math.min(lowRes ? 1 : q.dpr, window.devicePixelRatio || 1)}
           shadows="percentage"
-          camera={{ fov: 32, position: [0, 0.45, 8.6], near: 0.1, far: 60 }}
+          camera={{ fov: 32, position: [0, 0.45, 8.6], near: 2, far: 40 }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', stencil: false }}
           onCreated={({ gl }) => {
             gl.toneMapping = THREE.ACESFilmicToneMapping
