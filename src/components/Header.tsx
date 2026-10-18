@@ -3,18 +3,22 @@ import { LogoMark } from './LogoMark'
 import { FoldingWordmark } from './Wordmark'
 import { BasketButton } from './shop/BasketButton'
 import { ThemeSwitch } from './ThemeSwitch'
+import { MobileMenu } from './MobileMenu'
 
 /** "HONEY & HAVEN" folds into "HH" on scroll, then becomes the bee monogram. */
 export function Header({
   name,
   announcement,
   announcementHref,
+  directions,
   hasBlog = false,
 }: {
   name: string
   announcement?: string
   /** where the announcement goes when tapped (optional) */
   announcementHref?: string
+  /** Google Maps link for the phone menu's "Get directions" */
+  directions?: string
   hasBlog?: boolean
 }) {
   const external = announcementHref ? /^(https?:|mailto:|tel:)/.test(announcementHref) : false
@@ -43,19 +47,27 @@ export function Header({
           <LogoMark className="logo-mark" />
         </Link>
         <nav className="nav" aria-label="Main">
-          <Link href="/menu">Menu</Link>
-          <Link href="/shop">Shop</Link>
-          <Link href="/about">About</Link>
+          {/* on phones these move into the side menu */}
+          <Link href="/menu" className="nav-link">
+            Menu
+          </Link>
+          <Link href="/shop" className="nav-link">
+            Shop
+          </Link>
+          <Link href="/about" className="nav-link">
+            About
+          </Link>
           {hasBlog ? (
-            <Link href="/blog" className="hide-sm">
+            <Link href="/blog" className="nav-link">
               Blog
             </Link>
           ) : null}
-          <Link href="/#visit" className="nav-cta hide-sm">
+          <Link href="/#visit" className="nav-cta nav-link">
             Visit us
           </Link>
           <ThemeSwitch />
           <BasketButton />
+          <MobileMenu hasBlog={hasBlog} directions={directions} />
         </nav>
       </div>
     </header>

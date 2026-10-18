@@ -914,14 +914,53 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   filter: sepia(0.25) saturate(0.85) contrast(0.95);
 }
 
+/* Illustrated "Find us at" map: the day version in light mode, the night version in dark mode.
+   The frame takes the picture's own background colour so it blends at any size. */
+.find-us {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #e2d5c2;
+  min-height: 100%;
+}
+
+.find-us img {
+  width: 100%;
+  height: auto;
+  max-height: 760px;
+  object-fit: contain;
+  transition: transform 0.9s var(--ease);
+}
+
+.find-us:hover img {
+  transform: scale(1.02);
+}
+
+.find-us:focus-visible {
+  outline: 2px solid var(--honey);
+  outline-offset: 4px;
+}
+
+.find-us-dark {
+  display: none;
+}
+
+:where(html[data-theme='dark']) .find-us {
+  background: #221411;
+}
+
+:where(html[data-theme='dark']) .find-us-light {
+  display: none;
+}
+
+:where(html[data-theme='dark']) .find-us-dark {
+  display: block;
+}
+
 @media (max-width: 900px) {
   .visit-grid {
     grid-template-columns: 1fr;
-  }
-
-  .map,
-  .map iframe {
-    min-height: 320px;
   }
 }
 
@@ -5471,6 +5510,168 @@ html:where([data-theme='dark']):is([data-scrolled='true'], [data-scrolled='hero'
   .ls-knob,
   .ls-ico,
   .ls-stars {
+    transition: none;
+  }
+}
+
+/* ======================================================================
+   Phones: page links live in a side menu; the light switch and basket stay
+   ====================================================================== */
+.menu-toggle {
+  display: none;
+  place-content: center;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 22px;
+  height: 1.75px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.menu-toggle span:last-child {
+  width: 14px;
+  justify-self: end;
+}
+
+@media (max-width: 900px) {
+  .nav .nav-link {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: inline-grid;
+  }
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.drawer[data-open] {
+  pointer-events: auto;
+}
+
+.drawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(23, 17, 15, 0.45);
+  opacity: 0;
+  transition: opacity 0.4s var(--ease);
+}
+
+.drawer[data-open] .drawer-scrim {
+  opacity: 1;
+}
+
+.drawer-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(86vw, 380px);
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 84px 28px max(28px, env(safe-area-inset-bottom));
+  background: var(--cream);
+  color: var(--espresso);
+  box-shadow: -24px 0 60px -30px rgba(0, 0, 0, 0.5);
+  transform: translateX(104%);
+  transition: transform 0.5s var(--ease);
+  overflow-y: auto;
+}
+
+.drawer[data-open] .drawer-panel {
+  transform: none;
+}
+
+.drawer-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.drawer-close:hover {
+  background: rgba(46, 29, 26, 0.07);
+}
+
+.drawer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.drawer-links li {
+  border-bottom: 1px solid var(--line);
+  opacity: 0;
+  transform: translateX(24px);
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.6s var(--ease);
+}
+
+.drawer[data-open] .drawer-links li {
+  opacity: 1;
+  transform: none;
+  transition-delay: calc(0.08s + var(--i, 0) * 0.04s);
+}
+
+.drawer-links a {
+  display: block;
+  padding: 16px 0;
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: inherit;
+  text-decoration: none;
+}
+
+.drawer-links a[aria-current='page'] {
+  color: var(--oak-text);
+}
+
+.drawer-cta {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+/* no page scrolling behind the open menu */
+html[data-menu-open],
+html[data-menu-open] body {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-panel,
+  .drawer-scrim,
+  .drawer-links li {
     transition: none;
   }
 }

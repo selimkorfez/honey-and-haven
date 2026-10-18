@@ -4,7 +4,7 @@ import { sanityFetch } from '@/sanity/lib/client'
 import { HOME_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
 import type { GalleryData, HomeData, Product, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
-import { DIETARY_LABELS, formatPrice, mapsEmbed, mapsLink, paragraphs } from '@/lib/format'
+import { DIETARY_LABELS, formatPrice, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
 import { HeroScroll } from '@/components/hero/HeroScroll'
 import { LogoMark } from '@/components/LogoMark'
@@ -257,14 +257,24 @@ export default async function HomePage() {
               ) : null}
             </div>
           </div>
-          <div className="map">
-            <iframe
-              title={`Map showing ${settings?.name || 'Honey & Haven'}`}
-              src={mapsEmbed(settings?.mapQuery)}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
+          {/* Illustrated "Find us at" map (day and night versions follow the light switch); tap for directions */}
+          <a className="find-us" href={mapsLink(settings?.mapQuery)} target="_blank" rel="noopener noreferrer" aria-label="Open directions in Google Maps">
+            {['light', 'dark'].map((t) => (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={t}
+                className={`find-us-${t}`}
+                src={`/visit/find-us-${t}.webp`}
+                srcSet={`/visit/find-us-${t}-800.webp 800w, /visit/find-us-${t}.webp 1254w`}
+                sizes="(max-width: 900px) 100vw, 50vw"
+                width={1254}
+                height={1254}
+                alt={`Map: find us at ${addressLines.join(', ') || '41D The Parade, Oadby, Leicester, LE2 5BB'}, on The Parade between Harborough Road and Chestnut Avenue`}
+                loading="lazy"
+                decoding="async"
+              />
+            ))}
+          </a>
         </div>
       </section>
     </>
