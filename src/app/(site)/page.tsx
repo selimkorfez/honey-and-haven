@@ -125,11 +125,8 @@ export default async function HomePage() {
           ) : null}
         </ul>
         <div className="hero-actions">
-          <Link href="/menu" className="btn btn-primary">
-            See the menu <ArrowRight />
-          </Link>
-          <a href={mapsLink(settings?.mapQuery)} className="btn btn-ghost" target="_blank" rel="noopener noreferrer">
-            Get directions
+          <a href={mapsLink(settings?.mapQuery)} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+            Get directions <ArrowUpRight />
           </a>
         </div>
       </HeroScroll>

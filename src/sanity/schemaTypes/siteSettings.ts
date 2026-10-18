@@ -38,6 +38,55 @@ export const siteSettings = defineType({
       description: 'A one-line message at the very top of every page, e.g. "Pumpkin spice lattes are back". Leave empty to hide it.',
     }),
     defineField({
+      name: 'announcementLink',
+      title: 'Announcement bar link (optional)',
+      type: 'object',
+      group: 'general',
+      description: 'Where people go when they tap the announcement.',
+      hidden: ({ document }) => !document?.announcement,
+      fields: [
+        defineField({
+          name: 'page',
+          title: 'Go to',
+          type: 'string',
+          options: {
+            list: [
+              { title: 'Nowhere (just text)', value: '' },
+              { title: 'Home page', value: '/' },
+              { title: 'Menu', value: '/menu' },
+              { title: 'Shop', value: '/shop' },
+              { title: 'About', value: '/about' },
+              { title: 'Blog', value: '/blog' },
+              { title: 'Opening hours & map', value: '/#visit' },
+              { title: 'Another page or website…', value: 'custom' },
+            ],
+          },
+        }),
+        defineField({
+          name: 'menuSection',
+          title: 'Menu section (optional)',
+          type: 'reference',
+          to: [{ type: 'menuCategory' }],
+          description: 'Jump straight to one part of the menu, e.g. Autumn Specials.',
+          hidden: ({ parent }) => parent?.page !== '/menu',
+        }),
+        defineField({
+          name: 'url',
+          title: 'Web address',
+          type: 'string',
+          description: 'A page on this site like /shop/pure-honey, or a full link like https://instagram.com/…',
+          hidden: ({ parent }) => parent?.page !== 'custom',
+          validation: (r) =>
+            r.custom((v, ctx) => {
+              const parent = ctx.parent as { page?: string } | undefined
+              if (parent?.page !== 'custom') return true
+              if (!v) return 'Add the web address'
+              return /^(\/|https?:\/\/|mailto:|tel:)/.test(v) || 'Start with / for a page on this site, or https:// for another website'
+            }),
+        }),
+      ],
+    }),
+    defineField({
       name: 'address',
       title: 'Address',
       type: 'text',

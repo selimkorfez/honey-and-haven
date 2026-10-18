@@ -17,6 +17,7 @@ export type Settings = {
   name?: string
   tagline?: string
   announcement?: string
+  announcementLink?: { page?: string; url?: string; section?: string } | null
   address?: string
   mapQuery?: string
   phone?: string

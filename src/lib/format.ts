@@ -32,3 +32,19 @@ export function siteUrl() {
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
   return 'http://localhost:3000'
 }
+
+/** A section id from a title, e.g. "Autumn Specials" → "autumn-specials" (used for menu sections and links to them). */
+export const sectionId = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+
+/** Where the announcement bar goes when tapped (from Site settings). */
+export function announcementHref(link?: { page?: string; section?: string; url?: string } | null) {
+  if (!link?.page) return undefined
+  if (link.page === 'custom') return link.url?.trim() || undefined
+  if (link.page === '/menu' && link.section) return `/menu#${sectionId(link.section)}`
+  return link.page
+}

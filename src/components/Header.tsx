@@ -5,10 +5,38 @@ import { BasketButton } from './shop/BasketButton'
 import { ThemeSwitch } from './ThemeSwitch'
 
 /** "HONEY & HAVEN" folds into "HH" on scroll, then becomes the bee monogram. */
-export function Header({ name, announcement, hasBlog = false }: { name: string; announcement?: string; hasBlog?: boolean }) {
+export function Header({
+  name,
+  announcement,
+  announcementHref,
+  hasBlog = false,
+}: {
+  name: string
+  announcement?: string
+  /** where the announcement goes when tapped (optional) */
+  announcementHref?: string
+  hasBlog?: boolean
+}) {
+  const external = announcementHref ? /^(https?:|mailto:|tel:)/.test(announcementHref) : false
   return (
     <header className="site-header">
-      {announcement ? <div className="announce">{announcement}</div> : null}
+      {announcement ? (
+        <div className="announce">
+          {announcementHref ? (
+            external ? (
+              <a href={announcementHref} target={announcementHref.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
+                {announcement} <span aria-hidden="true">→</span>
+              </a>
+            ) : (
+              <Link href={announcementHref}>
+                {announcement} <span aria-hidden="true">→</span>
+              </Link>
+            )
+          ) : (
+            announcement
+          )}
+        </div>
+      ) : null}
       <div className="container header-inner">
         <Link href="/" className="logo" aria-label={`${name} home`}>
           <FoldingWordmark />

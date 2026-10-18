@@ -17,7 +17,7 @@ const SHOP_SETTINGS_FIELDS = `
 `
 
 export const SETTINGS_QUERY = `*[_id == "siteSettings"][0]{
-  name, tagline, announcement, address, mapQuery, phone, email,
+  name, tagline, announcement, "announcementLink": announcementLink{ page, url, "section": menuSection->title }, address, mapQuery, phone, email,
   hours[]{ _key, days, hours }, hoursNote,
   specialHours[]{ _key, label, date, endDate, closed, hours },
   "infoPages": *[_type == "policyPage" && showInFooter != false && defined(slug.current)] | order(order asc){ title, "slug": slug.current },

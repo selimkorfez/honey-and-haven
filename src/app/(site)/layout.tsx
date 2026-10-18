@@ -5,7 +5,7 @@ import { sanityFetch } from '@/sanity/lib/client'
 import { SETTINGS_QUERY } from '@/sanity/lib/queries'
 import type { Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
-import { siteUrl } from '@/lib/format'
+import { announcementHref, siteUrl } from '@/lib/format'
 import { Header } from '@/components/Header'
 import { THEME_SCRIPT } from '@/components/ThemeSwitch'
 import { Footer } from '@/components/Footer'
@@ -84,7 +84,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <body>
         <MotionProvider>
           <BasketProvider config={checkout}>
-            <Header name={name} announcement={settings?.announcement} hasBlog={hasBlog} />
+            <Header name={name} announcement={settings?.announcement} announcementHref={announcementHref(settings?.announcementLink)} hasBlog={hasBlog} />
             <main>{children}</main>
             {showLetter ? <NewsletterBand settings={letter} /> : null}
             <Footer settings={settings} />

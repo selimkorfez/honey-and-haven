@@ -3,7 +3,7 @@ import { sanityFetch } from '@/sanity/lib/client'
 import { MENU_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
 import type { MenuData, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
-import { DIETARY_LABELS, formatPrice } from '@/lib/format'
+import { DIETARY_LABELS, formatPrice, sectionId } from '@/lib/format'
 import { SanityImg } from '@/components/SanityImg'
 import { FALLBACK_MENU, FALLBACK_SETTINGS } from '@/lib/fallback'
 
@@ -21,12 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata(settings ?? FALLBACK_SETTINGS, data.page?.seo, 'Menu')
 }
 
-const slug = (s: string) =>
-  s
-    .toLowerCase()
-    .replace(/&/g, 'and')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
+const slug = sectionId
 
 export default async function MenuPage() {
   const data = await getMenu()
