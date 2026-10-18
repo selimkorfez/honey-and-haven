@@ -1238,7 +1238,7 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 /* the 3D scene fades in once everything is ready, so it never stutters into view */
 .cup-scene canvas {
   opacity: 0;
-  transition: opacity 0.9s var(--ease);
+  transition: opacity 0.5s var(--ease);
 }
 
 .cup-scene[data-ready] canvas {

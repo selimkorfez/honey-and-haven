@@ -176,23 +176,6 @@ function noiseTexture(size: number, seed: number, stripes = 0) {
   return toTexture(c, false, true)
 }
 
-/** Turns a height map (white = raised) into a tangent-space normal map. */
-function heightToNormal(src: HTMLCanvasElement, strength: number) {
-  const { width: w, height: h } = src
-  const hd = src.getContext('2d')!.getImageData(0, 0, w, h).data
-  const H = (x: number, y: number) => hd[(((y + h) % h) * w + ((x + w) % w)) * 4] / 255
-  const [c] = paint(w, h, (x, y, o) => {
-    const dx = (H(x + 1, y) - H(x - 1, y)) * strength
-    const dy = (H(x, y + 1) - H(x, y - 1)) * strength
-    const inv = 1 / Math.sqrt(dx * dx + dy * dy + 1)
-    o[0] = (-dx * inv * 0.5 + 0.5) * 255
-    o[1] = (dy * inv * 0.5 + 0.5) * 255
-    o[2] = (inv * 0.5 + 0.5) * 255
-    o[3] = 255
-  })
-  return toTexture(c, false, true)
-}
-
 /** A soft round droplet drawn once, then stamped many times. */
 function dropSprite(stops: [number, string][]) {
   const [c, ctx] = canvas(64, 64)
@@ -203,62 +186,176 @@ function dropSprite(stops: [number, string][]) {
   return c
 }
 
+/** Yields to the browser so long jobs never hold up a frame. */
+const breather = () => new Promise<void>((resolve) => setTimeout(resolve, 0))
+
+/** Runs `step` over 0…n-1 in small time slices (about 6 ms each), pausing between them. */
+async function sliced(n: number, step: (i: number) => void, cancelled: () => boolean) {
+  let t = performance.now()
+  for (let i = 0; i < n; i++) {
+    step(i)
+    if (performance.now() - t > 6) {
+      await breather()
+      if (cancelled()) return false
+      t = performance.now()
+    }
+  }
+  return !cancelled()
+}
+
+/** Stand-in until the condensation is ready: an even haze and a flat surface. */
+function condensationPlaceholder() {
+  const [fogC, fctx] = canvas(4, 4)
+  fctx.fillStyle = 'rgb(70,70,70)'
+  fctx.fillRect(0, 0, 4, 4)
+  const [nC, nctx] = canvas(4, 4)
+  nctx.fillStyle = 'rgb(128,128,255)'
+  nctx.fillRect(0, 0, 4, 4)
+  return { fog: toTexture(fogC, false, true), normal: toTexture(nC, false, true) }
+}
+
 /**
  * Condensation on a cold cup: a frosty haze (alpha map) broken up by droplets,
- * plus a normal map so every droplet catches the light.
+ * plus a normal map so every droplet catches the light. It's built in small slices
+ * after the scene is showing (the iced cup only appears once you scroll), so it
+ * never delays the opening.
  */
-function condensation(w: number, h: number, seed: number) {
+async function condensation(w: number, h: number, seed: number, cancelled: () => boolean) {
   const rand = rng(seed)
   const W = Math.round(w)
   const H = Math.round(h)
   // Haze, a touch thicker lower down where the ice and milk keep the cup coldest (canvas top = top of cup)
-  const [fogC, fctx] = paint(W, H, (_x, y, o) => {
-    const v = 46 + (y / H) * 38 + (rand() > 0.8 ? rand() * 40 : 0)
-    o[0] = o[1] = o[2] = v
-    o[3] = 255
-  })
-  const [heightC, hctx] = canvas(W, H)
-  hctx.fillStyle = '#000'
-  hctx.fillRect(0, 0, W, H)
-
-  const bump = dropSprite([
-    [0, 'rgba(255,255,255,1)'],
-    [0.65, 'rgba(200,200,200,0.85)'],
-    [1, 'rgba(0,0,0,0)'],
-  ])
+  const [fogC, fctx] = canvas(W, H)
+  const fog = fctx.createImageData(W, H)
+  const fd = fog.data
+  const rowsOk = await sliced(
+    H,
+    (y) => {
+      for (let x = 0, i = y * W * 4; x < W; x++, i += 4) {
+        const v = 46 + (y / H) * 38 + (rand() > 0.8 ? rand() * 40 : 0)
+        fd[i] = fd[i + 1] = fd[i + 2] = v
+        fd[i + 3] = 255
+      }
+    },
+    cancelled,
+  )
+  if (!rowsOk) return null
+  fctx.putImageData(fog, 0, 0)
+  // The droplet height map is worked out in plain numbers (no canvas read-back, which is slow on
+  // phones); the clear spots in the haze are drawn on the fog canvas at the same places.
+  const hgt = new Float32Array(W * H)
   const clear = dropSprite([
     [0, 'rgba(20,20,20,0.95)'],
     [0.7, 'rgba(20,20,20,0.9)'],
     [0.8, 'rgba(255,255,255,0.5)'],
     [1, 'rgba(255,255,255,0)'],
   ])
+  /** one raised droplet: bright in the middle (lit from top left), fading out at the rim */
+  const bump = (x: number, y: number, r: number, stretch: number) => {
+    const ry = r * stretch
+    const x0 = Math.max(0, Math.floor(x - r))
+    const x1 = Math.min(W - 1, Math.ceil(x + r))
+    const y0 = Math.max(0, Math.floor(y - ry))
+    const y1 = Math.min(H - 1, Math.ceil(y + ry))
+    // gradient centre sits slightly up and left, like the drawn sprite (28,27 of 64)
+    const cx = x - r * 0.125
+    const cy = y - ry * 0.156
+    for (let py = y0; py <= y1; py++) {
+      for (let px = x0; px <= x1; px++) {
+        const t = Math.hypot((px + 0.5 - cx) / r, (py + 0.5 - cy) / ry)
+        if (t >= 1) continue
+        let c: number
+        let al: number
+        if (t <= 0.65) {
+          const k = t / 0.65
+          c = 1 - k * (55 / 255)
+          al = 1 - k * 0.15
+        } else {
+          const k = (t - 0.65) / 0.35
+          c = (200 / 255) * (1 - k)
+          al = 0.85 * (1 - k)
+        }
+        const i = py * W + px
+        hgt[i] = hgt[i] * (1 - al) + c * al
+      }
+    }
+  }
+  /** a run trail: a soft grey line along the curve */
+  const trail = (pts: [number, number][], lw: number) => {
+    const half = lw / 2
+    const hit = new Set<number>()
+    for (const [x, y] of pts) {
+      for (let py = Math.max(0, Math.floor(y - half)); py <= Math.min(H - 1, Math.ceil(y + half)); py++) {
+        for (let px = Math.max(0, Math.floor(x - half)); px <= Math.min(W - 1, Math.ceil(x + half)); px++) {
+          if (Math.hypot(px + 0.5 - x, py + 0.5 - y) <= half) hit.add(py * W + px)
+        }
+      }
+    }
+    hit.forEach((i) => (hgt[i] = hgt[i] * 0.2 + (150 / 255) * 0.8))
+  }
   const scale = W / 1024
   const drop = (x: number, y: number, r: number, stretch = 1) => {
-    hctx.drawImage(bump, x - r, y - r * stretch, r * 2, r * 2 * stretch)
+    bump(x, y, r, stretch)
     fctx.drawImage(clear, x - r, y - r * stretch, r * 2, r * 2 * stretch)
   }
   // a mist of tiny droplets, then medium ones
-  for (let i = 0; i < W * H * 0.0022; i++) drop(rand() * W, rand() * H, (1 + rand() * 2.2) * Math.max(scale, 0.6))
-  for (let i = 0; i < W * H * 0.0004; i++) drop(rand() * W, rand() * H, (3 + rand() * 5) * scale, 1 + rand() * 0.3)
+  if (!(await sliced(Math.ceil(W * H * 0.0022), () => drop(rand() * W, rand() * H, (1 + rand() * 2.2) * Math.max(scale, 0.6)), cancelled))) return null
+  if (!(await sliced(Math.ceil(W * H * 0.0004), () => drop(rand() * W, rand() * H, (3 + rand() * 5) * scale, 1 + rand() * 0.3), cancelled))) return null
   // a few drips that have run, with trails
   for (let i = 0; i < 14; i++) {
     const x = rand() * W
     const y0 = rand() * H * 0.6
     const len = (40 + rand() * 160) * scale
     const lw = (2 + rand() * 3) * scale
-    hctx.strokeStyle = 'rgba(150,150,150,0.8)'
-    fctx.strokeStyle = 'rgba(25,25,25,0.85)'
-    hctx.lineWidth = lw
-    fctx.lineWidth = lw * 1.4
-    for (const ctx of [hctx, fctx]) {
-      ctx.beginPath()
-      ctx.moveTo(x, y0)
-      ctx.bezierCurveTo(x + (rand() - 0.5) * 8 * scale, y0 + len * 0.4, x + (rand() - 0.5) * 8 * scale, y0 + len * 0.7, x, y0 + len)
-      ctx.stroke()
+    // same curve for the height map and the haze (the original drew it twice with fresh wobbles)
+    const c1 = x + (rand() - 0.5) * 8 * scale
+    const c2 = x + (rand() - 0.5) * 8 * scale
+    const c1b = x + (rand() - 0.5) * 8 * scale
+    const c2b = x + (rand() - 0.5) * 8 * scale
+    const bez = (a: number, b1: number, b2: number, d: number, t: number) => (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b1 + 3 * (1 - t) * t * t * b2 + t ** 3 * d
+    const steps = Math.max(8, Math.ceil(len))
+    const pts: [number, number][] = []
+    for (let k = 0; k <= steps; k++) {
+      const t = k / steps
+      pts.push([bez(x, c1, c2, x, t), bez(y0, y0 + len * 0.4, y0 + len * 0.7, y0 + len, t)])
     }
+    trail(pts, lw)
+    fctx.strokeStyle = 'rgba(25,25,25,0.85)'
+    fctx.lineWidth = lw * 1.4
+    fctx.beginPath()
+    fctx.moveTo(x, y0)
+    fctx.bezierCurveTo(c1b, y0 + len * 0.4, c2b, y0 + len * 0.7, x, y0 + len)
+    fctx.stroke()
     drop(x, y0 + len + 4 * scale, (6 + rand() * 4) * scale, 1.25)
+    if (i % 4 === 3) {
+      await breather()
+      if (cancelled()) return null
+    }
   }
-  return { fog: toTexture(fogC, false, true), normal: heightToNormal(heightC, 5) }
+  // height map → tangent-space normal map (white = raised)
+  const Hh = (x: number, y: number) => hgt[((y + H) % H) * W + ((x + W) % W)]
+  const [nC, nctx] = canvas(W, H)
+  const nimg = nctx.createImageData(W, H)
+  const nd = nimg.data
+  const strength = 5
+  const normalOk = await sliced(
+    H,
+    (y) => {
+      for (let x = 0, i = y * W * 4; x < W; x++, i += 4) {
+        const dx = (Hh(x + 1, y) - Hh(x - 1, y)) * strength
+        const dy = (Hh(x, y + 1) - Hh(x, y - 1)) * strength
+        const inv = 1 / Math.sqrt(dx * dx + dy * dy + 1)
+        nd[i] = (-dx * inv * 0.5 + 0.5) * 255
+        nd[i + 1] = (dy * inv * 0.5 + 0.5) * 255
+        nd[i + 2] = (inv * 0.5 + 0.5) * 255
+        nd[i + 3] = 255
+      }
+    },
+    cancelled,
+  )
+  if (!normalOk) return null
+  nctx.putImageData(nimg, 0, 0)
+  return { fog: toTexture(fogC, false, true), normal: toTexture(nC, false, true) }
 }
 
 /** A lathe from [radius, height] points. */
@@ -529,7 +626,8 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
   }, [q.segments])
 
   const mats = useMemo(() => {
-    const cond = condensation(1024 * q.tex, 600 * q.tex, 3)
+    // the droplets are filled in just after the scene appears (see the effect below)
+    const cond = condensationPlaceholder()
     const frost = new THREE.MeshStandardMaterial({
       color: '#f3f1ee',
       roughness: 0.55,
@@ -568,6 +666,35 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
         : new THREE.MeshStandardMaterial({ color: '#f4ece2', roughness: 0.1, transparent: true, opacity: 0.55, envMapIntensity: 2 }),
     }
   }, [q])
+
+  // Build the condensation in the background, then swap it in (same kind of texture, so no shader rebuild)
+  const gl = useThree((s) => s.gl)
+  useEffect(() => {
+    let off = false
+    const run = async () => {
+      const cond = await condensation(1024 * q.tex, 600 * q.tex, 3, () => off)
+      if (!cond || off) {
+        cond?.fog.dispose()
+        cond?.normal.dispose()
+        return
+      }
+      const old = [mats.frost.alphaMap, mats.frost.normalMap]
+      for (const m of [mats.frost, mats.frostBack]) {
+        m.alphaMap = cond.fog
+        m.normalMap = cond.normal
+      }
+      mats.gloss.normalMap = cond.normal
+      gl.initTexture(cond.fog)
+      gl.initTexture(cond.normal)
+      old.forEach((t) => t?.dispose())
+    }
+    // give the opening a moment first
+    const t = window.setTimeout(run, 1200)
+    return () => {
+      off = true
+      window.clearTimeout(t)
+    }
+  }, [gl, mats, q.tex])
 
   // Iced latte: milky at the bottom, espresso and caramel at the top → iced matcha
   const coffee = useMemo(() => ['#bf9066', '#a97a4f', '#8a5a34', '#5c3720'].map((c) => new THREE.Color(c)), [])
@@ -1238,13 +1365,13 @@ function Warmup({ onReady }: { onReady: () => void }) {
 export default function CupScene({ progress, still = false, tone = 'studio' }: { progress: Progress; still?: boolean; tone?: HeroTone }) {
   const wrap = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(true)
-  const [level, setLevel] = useState<0 | 1 | 2 | null>(null)
+  // client-only component (loaded with ssr: false), so the device can be read straight away
+  const [level] = useState<0 | 1 | 2>(startLevel)
   // last resort on a struggling device: render at 1x
   const [lowRes, setLowRes] = useState(false)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    setLevel(startLevel())
     // Only render frames while the scene is on screen
     const el = wrap.current
     const io = el ? new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { rootMargin: '100px' }) : null
@@ -1262,7 +1389,6 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
     }
   }, [])
 
-  if (level === null) return <div ref={wrap} style={{ position: 'absolute', inset: 0 }} />
   const q = LEVELS[level]
 
   return (

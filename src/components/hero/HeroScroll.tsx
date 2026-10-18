@@ -13,6 +13,8 @@ gsap.registerPlugin(ScrollTrigger, useGSAP)
 
 const loadScene = () => import('./CupScene')
 const CupScene = dynamic(loadScene, { ssr: false })
+// start downloading the 3D scene as soon as this file runs in the browser, not after hydration
+if (typeof window !== 'undefined') loadScene().catch(() => {})
 
 type Step = { _key: string; title: string; text?: string }
 
@@ -60,26 +62,10 @@ export function HeroScroll({
   }, [])
   const shownTone: HeroTone = night ? 'studio' : tone
 
-  // The 3D scene is heavy to build, so its code downloads straight away but it's only
-  // built once the headline has (nearly) finished arriving: the opening stays smooth on phones.
-  const [sceneOn, setSceneOn] = useState(false)
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const gl = supportsWebGL()
-    const next = !gl ? 'flat' : reduce ? 'still' : '3d'
-    setMode(next)
-    if (next === 'flat') return
-    loadScene().catch(() => {})
-    let idle = 0
-    const timer = window.setTimeout(() => {
-      const ric = window.requestIdleCallback
-      if (ric) idle = ric(() => setSceneOn(true), { timeout: 400 })
-      else setSceneOn(true)
-    }, reduce ? 0 : 1000)
-    return () => {
-      window.clearTimeout(timer)
-      if (idle) window.cancelIdleCallback?.(idle)
-    }
+    setMode(!gl ? 'flat' : reduce ? 'still' : '3d')
   }, [])
 
   const animated = mode === '3d'
@@ -132,7 +118,7 @@ export function HeroScroll({
       <div className="hero3d-stage">
         <div className="hero3d-glow" aria-hidden="true" />
         <div className="hero3d-canvas" aria-hidden="true">
-          {(mode === '3d' || mode === 'still') && sceneOn ? (
+          {mode === '3d' || mode === 'still' ? (
             <CupScene progress={progress} still={mode === 'still'} tone={shownTone} />
           ) : mode === 'flat' ? (
             fallbackImage ? (
