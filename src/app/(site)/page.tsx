@@ -156,9 +156,6 @@ export default async function HomePage() {
                 ))}
               </ul>
             ) : null}
-            <Link href="/menu" className="text-link">
-              Explore the menu <ArrowRight />
-            </Link>
           </div>
         </div>
       </section>

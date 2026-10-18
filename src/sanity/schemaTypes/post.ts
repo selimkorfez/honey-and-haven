@@ -2,7 +2,7 @@ import { defineField, defineType } from 'sanity'
 import { ComposeIcon } from '@sanity/icons/Compose'
 import { photoFields, richText } from './fields'
 
-export const POST_CATEGORIES = ['News', 'New on the menu', 'Events', 'Behind the counter', 'Honey', 'Recipes']
+export const POST_CATEGORIES = ['News', 'Coffee News & Insights', 'New on the menu', 'Events', 'Behind the counter', 'Honey', 'Recipes']
 
 /** Blog posts. Drafts stay private until Publish; Unpublish takes a post down without deleting it. */
 export const post = defineType({
