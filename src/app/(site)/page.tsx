@@ -29,7 +29,7 @@ async function getData() {
   const featured = data?.featured?.length ? data.featured : data?.page ? [] : FALLBACK_HOME.featured
   // Pinned products (example products only before the Studio is connected)
   const pinned: Product[] = isConfigured ? (data?.shop ?? []) : FALLBACK_PRODUCTS.filter((p) => p.featured)
-  const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 520px) 100vw, 22vw'))
+  const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 520px) 100vw, 16vw'))
   // The Gallery section (starter photos until the café publishes its own)
   const gallery = data?.gallery ?? FALLBACK_GALLERY
   return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop, gallery }
@@ -37,10 +37,10 @@ async function getData() {
 
 /** Instagram posts when connected (and chosen in Gallery), otherwise the Gallery photos. */
 async function getFeed(gallery: NonNullable<GalleryData>, profile?: string) {
-  const live = gallery.show === 'photos' ? null : await getInstagramPosts(8)
+  const live = gallery.show === 'photos' ? null : await getInstagramPosts(10)
   if (live) return { live: true, posts: live as FeedTile[] }
-  const posts: FeedTile[] = (gallery.photos ?? []).slice(0, 8).flatMap((img, i) => {
-    const p = imgProps(img, 600, 750, '(max-width: 700px) 50vw, 25vw')
+  const posts: FeedTile[] = (gallery.photos ?? []).slice(0, 10).flatMap((img, i) => {
+    const p = imgProps(img, 600, 750, '(max-width: 700px) 50vw, 20vw')
     return p ? [{ id: img._key || `g${i}`, image: p.src, srcSet: p.srcSet, href: img.link || profile || '#', caption: img.alt || undefined, kind: 'image' as const }] : []
   })
   return { live: false, posts }
@@ -136,7 +136,7 @@ export default async function HomePage() {
 
       {/* ---------- Story ---------- */}
       <section className="section story" id="story">
-        <div className="container story-grid">
+        <div className="container wide story-grid">
           <div className="story-media">
             <SanityImg image={page?.storyImage} width={900} height={1125} sizes="(max-width: 860px) 100vw, 45vw" />
           </div>
@@ -204,7 +204,7 @@ export default async function HomePage() {
 
       {/* ---------- Visit ---------- */}
       <section className="section visit" id="visit">
-        <div className="container visit-grid">
+        <div className="container wide visit-grid">
           <div className="visit-card">
             <h2>{page?.visitHeading || 'Come say hello'}</h2>
             {page?.visitText ? <p className="body-text">{page.visitText}</p> : null}
@@ -280,7 +280,7 @@ export default async function HomePage() {
 function Shop({ heading, text, items }: { heading?: string; text?: string; items: ProductCardView[] }) {
   return (
     <section className="section shop" id="shop">
-      <div className="container">
+      <div className="container wide">
         <div className="shop-head">
           <div className="shop-head-copy">
             <h2>{heading || 'Take a little haven home'}</h2>

@@ -110,7 +110,7 @@ export const product = defineType({
     }),
 
     defineField({ name: 'available', title: 'Show in shop', type: 'boolean', group: 'display', initialValue: true, description: 'Turn off to hide the product without deleting it.' }),
-    defineField({ name: 'featured', title: 'Pin to home page', type: 'boolean', group: 'display', initialValue: false, description: 'Pinned products appear in the shop section of the home page (up to 4).' }),
+    defineField({ name: 'featured', title: 'Pin to home page', type: 'boolean', group: 'display', initialValue: false, description: 'Pinned products appear in the shop section of the home page, three to a row (up to 6).' }),
     orderRankField({ type: 'product', newItemPosition: 'before', hidden: true }),
   ],
   orderings: [

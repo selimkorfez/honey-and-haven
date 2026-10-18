@@ -113,6 +113,13 @@ figure {
   padding: 0 var(--gutter);
 }
 
+/* Home page sections that use the full width of the screen (capped on very wide monitors);
+   the header widens with them on the home page so the edges line up */
+.container.wide,
+body:has(.hero3d) .header-inner {
+  max-width: 1920px;
+}
+
 .section {
   padding: clamp(80px, 11vw, 140px) 0;
 }
@@ -528,6 +535,13 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   aspect-ratio: 4 / 5;
   background: var(--cream-2);
   box-shadow: 0 30px 60px -32px rgba(43, 30, 23, 0.5);
+}
+
+/* side by side at full width: square, so the photo stays within the screen height */
+@media (min-width: 861px) {
+  .story-media {
+    aspect-ratio: 1 / 1;
+  }
 }
 
 .story-media img {
@@ -1048,8 +1062,11 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 }
 
 .menu-section {
-  padding: clamp(56px, 8vw, 96px) 0 0;
-  scroll-margin-top: 150px;
+  --menu-pad: clamp(56px, 8vw, 96px);
+  padding: var(--menu-pad) 0 0;
+  /* tapping a category lands its heading just under the sticky category bar
+     (header + 65px bar + a little air, minus the section's own top padding) */
+  scroll-margin-top: calc(var(--header-h, 76px) + 65px + 24px - var(--menu-pad));
 }
 
 .menu-section-head {
@@ -1541,8 +1558,20 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
-  gap: clamp(18px, 2.5vw, 32px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 32px);
+}
+
+@media (max-width: 1180px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .shop-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .shop-item {
@@ -2916,11 +2945,7 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   font-size: 17px;
 }
 
-/* ---------- Home: pinned products ---------- */
-.shop .shop-grid {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
-}
-
+/* ---------- Home: pinned products (three to a row, see .shop-grid) ---------- */
 .shop-head {
   max-width: none;
   display: flex;
@@ -3927,7 +3952,7 @@ html:has(.basket-layer) .bee {
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: clamp(8px, 1.4vw, 18px);
 }
 

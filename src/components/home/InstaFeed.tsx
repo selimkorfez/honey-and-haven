@@ -22,7 +22,7 @@ export function InstaFeed({
 }) {
   return (
     <section className="section insta" id="instagram" aria-labelledby="insta-title">
-      <div className="container">
+      <div className="container wide">
         <Reveal className="insta-head">
           <div>
             <p className="eyebrow">
@@ -42,7 +42,7 @@ export function InstaFeed({
             <Reveal as="li" key={p.id} delay={(i % 4) * 0.08} y={36}>
               <a href={p.href} className="insta-tile" target="_blank" rel="noopener noreferrer" aria-label={p.caption ? `Instagram post: ${p.caption.slice(0, 90)}` : 'Open on Instagram'}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.image} srcSet={p.srcSet} sizes="(max-width: 700px) 50vw, 25vw" alt="" loading="lazy" decoding="async" />
+                <img src={p.image} srcSet={p.srcSet} sizes="(max-width: 700px) 50vw, 20vw" alt="" loading="lazy" decoding="async" />
                 {p.kind !== 'image' ? <span className="insta-kind">{p.kind === 'video' ? <Play /> : <Layers />}</span> : null}
                 <span className="insta-over" aria-hidden="true">
                   <Instagram />

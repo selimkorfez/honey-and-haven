@@ -43,7 +43,7 @@ export const HOME_QUERY = `{
   "featured": *[_type == "menuItem" && featured == true && available != false] | order(orderRank asc)[0...6]{
     _id, name, description, price, priceNote, dietary, image ${image}, "category": category->title
   },
-  "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(orderRank asc)[0...4]{ ${PRODUCT_CARD} }
+  "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(orderRank asc)[0...6]{ ${PRODUCT_CARD} }
 }`
 
 export const MENU_QUERY = `{
