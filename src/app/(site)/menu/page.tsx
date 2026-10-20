@@ -55,6 +55,8 @@ export default async function MenuPage() {
         </nav>
       ) : null}
 
+      {page?.drinksNote ? <p className="menu-note">{page.drinksNote}</p> : null}
+
       <div className="container">
         {categories.length === 0 ? <p className="empty">Our menu is being updated. Pop in to see what&rsquo;s on today.</p> : null}
 

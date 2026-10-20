@@ -169,6 +169,8 @@ export type MenuData = {
   page: {
     heading?: string
     intro?: string
+    /** short italic line under the category buttons */
+    drinksNote?: string
     footnote?: string
     /** the "Swap your milk" line shown under milky sections */
     milkLabel?: string

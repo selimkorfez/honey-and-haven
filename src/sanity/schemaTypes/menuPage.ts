@@ -11,6 +11,13 @@ export const menuPage = defineType({
     defineField({ name: 'heading', title: 'Heading', type: 'string' }),
     defineField({ name: 'intro', title: 'Intro text', type: 'text', rows: 3 }),
     defineField({
+      name: 'drinksNote',
+      title: 'Line under the category buttons',
+      type: 'string',
+      initialValue: 'All drinks can be hot or iced',
+      description: 'A short italic line shown just below the category buttons, e.g. "All drinks can be hot or iced". Leave empty to hide it.',
+    }),
+    defineField({
       name: 'footnote',
       title: 'Note at the bottom',
       type: 'text',

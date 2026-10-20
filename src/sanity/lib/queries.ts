@@ -47,7 +47,7 @@ export const HOME_QUERY = `{
 }`
 
 export const MENU_QUERY = `{
-  "page": *[_id == "menuPage"][0]{ heading, intro, footnote, milkLabel, milks[]{ _key, name, dietary }, seo { title, description, image ${image}, noIndex } },
+  "page": *[_id == "menuPage"][0]{ heading, intro, drinksNote, footnote, milkLabel, milks[]{ _key, name, dietary }, seo { title, description, image ${image}, noIndex } },
   "categories": *[_type == "menuCategory"] | order(orderRank asc){
     _id, title, description, showMilks,
     "items": *[_type == "menuItem" && references(^._id) && available != false] | order(orderRank asc){

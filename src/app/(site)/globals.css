@@ -1125,6 +1125,17 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   color: var(--white);
 }
 
+/* "All drinks can be hot or iced": just under the category buttons, in the same italic as the section notes */
+.menu-note {
+  margin: 0;
+  padding: 22px var(--gutter) 0;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--muted);
+}
+
 .menu-section {
   --menu-pad: clamp(56px, 8vw, 96px);
   padding: var(--menu-pad) 0 0;
