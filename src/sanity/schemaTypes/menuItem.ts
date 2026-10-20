@@ -8,6 +8,7 @@ export const DIETARY_OPTIONS = [
   { title: 'Gluten free (GF)', value: 'gf' },
   { title: 'Dairy free (DF)', value: 'df' },
   { title: 'Contains nuts (N)', value: 'n' },
+  { title: 'Contains soya (SOY)', value: 'soy' },
 ]
 
 export const menuItem = defineType({

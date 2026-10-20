@@ -27,7 +27,12 @@ export default async function MenuPage() {
   const data = await getMenu()
   const categories = data.categories ?? []
   const page = data.page
-  const usedTags = new Set(categories.flatMap((c) => c.items.flatMap((i) => i.dietary ?? [])))
+  const milks = page?.milks?.filter((m) => m.name) ?? []
+  const milkLine = milks.length && categories.some((c) => c.showMilks)
+  const usedTags = new Set([
+    ...categories.flatMap((c) => c.items.flatMap((i) => i.dietary ?? [])),
+    ...(milkLine ? milks.flatMap((m) => m.dietary ?? []) : []),
+  ])
 
   return (
     <>
@@ -58,6 +63,23 @@ export default async function MenuPage() {
             <div className="menu-section-head">
               <h2>{cat.title}</h2>
               {cat.description ? <p>{cat.description}</p> : null}
+              {cat.showMilks && milks.length ? (
+                <div className="milk-swap">
+                  <em>{page?.milkLabel || 'Swap your milk:'}</em>
+                  <ul>
+                    {milks.map((m) => (
+                      <li key={m._key}>
+                        {m.name}
+                        {m.dietary?.map((d) => (
+                          <span key={d} className="tag" title={DIETARY_LABELS[d]?.long}>
+                            {DIETARY_LABELS[d]?.short ?? d}
+                          </span>
+                        ))}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
             </div>
             <ul className="menu-list">
               {cat.items.map((item) => (

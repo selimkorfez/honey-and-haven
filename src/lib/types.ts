@@ -164,8 +164,16 @@ export type CheckoutConfig = Pick<
 export type InfoPage = { title: string; slug: string; body?: PortableTextBlock[] | null }
 
 export type MenuData = {
-  page: { heading?: string; intro?: string; footnote?: string; seo?: Seo } | null
-  categories: { _id: string; title: string; description?: string; items: MenuItem[] }[]
+  page: {
+    heading?: string
+    intro?: string
+    footnote?: string
+    /** the "Swap your milk" line shown under milky sections */
+    milkLabel?: string
+    milks?: { _key: string; name: string; dietary?: string[] }[]
+    seo?: Seo
+  } | null
+  categories: { _id: string; title: string; description?: string; showMilks?: boolean; items: MenuItem[] }[]
 }
 
 export type PostCard = {

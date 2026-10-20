@@ -4,6 +4,7 @@ export const DIETARY_LABELS: Record<string, { short: string; long: string }> = {
   gf: { short: 'GF', long: 'Gluten free' },
   df: { short: 'DF', long: 'Dairy free' },
   n: { short: 'N', long: 'Contains nuts' },
+  soy: { short: 'SOY', long: 'Contains soya' },
 }
 
 export function formatPrice(price?: number | null, note?: string | null) {
