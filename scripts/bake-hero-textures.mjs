@@ -1,5 +1,5 @@
 // Repaints the hero's pre-made textures into public/hero-tex (only needed after changing a pattern
-// in src/components/hero/CupScene.tsx).
+// in src/components/hero/scene.tsx).
 //
 //   1. npm run build && npm start            (or npm run dev)
 //   2. npx -y playwright@1 install chromium  (once)
