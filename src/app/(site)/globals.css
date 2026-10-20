@@ -4127,6 +4127,12 @@ html:has(.basket-layer) .bee {
     transform 0.6s var(--ease);
 }
 
+/* the caption sits on a dark photo fade, so it stays white in both light and dark mode */
+.insta-tile .insta-over,
+.insta-tile .insta-kind {
+  color: #fffaf3;
+}
+
 .insta-cap {
   font-size: 13px;
   line-height: 1.45;

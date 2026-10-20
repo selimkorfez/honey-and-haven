@@ -9,12 +9,12 @@ import { SanityImg, imgProps } from '@/components/SanityImg'
 import { HeroScroll } from '@/components/hero/HeroScroll'
 import { LogoMark } from '@/components/LogoMark'
 import { MenuBoard, type BoardItem } from '@/components/MenuBoard'
-import { ArrowRight, ArrowUpRight, Camera, Clock, HexMark, Pin, Video } from '@/components/Icons'
+import { ArrowRight, ArrowUpRight, Camera, HexMark, Video } from '@/components/Icons'
 import { FALLBACK_GALLERY, FALLBACK_HOME, FALLBACK_PRODUCTS, FALLBACK_SETTINGS } from '@/lib/fallback'
 import { isConfigured } from '@/sanity/env'
 import { getShopSettings } from '@/lib/shop'
 import { toCard, type ProductCardView } from '@/lib/productView'
-import { formatDays, specialText, specialToday, upcomingSpecialHours } from '@/lib/hours'
+import { formatDays, specialText, upcomingSpecialHours } from '@/lib/hours'
 import { Img } from '@/components/Img'
 import { QuickAdd } from '@/components/shop/QuickAdd'
 import { InstaFeed, type FeedTile } from '@/components/home/InstaFeed'
@@ -79,8 +79,6 @@ export default async function HomePage() {
   const [feed, review] = await Promise.all([getFeed(gallery, settings?.instagram), getReviewData(page, settings)])
   const heading = page?.heroHeading || settings?.name || 'Honey & Haven'
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
-  const firstHours = settings?.hours?.[0]
-  const today = specialToday(settings?.specialHours)
   const upcoming = upcomingSpecialHours(settings?.specialHours)
 
   const board: BoardItem[] = featured.map((item) => ({
@@ -100,36 +98,7 @@ export default async function HomePage() {
         steps={page?.heroSteps ?? []}
         fallbackImage={imgProps(page?.heroImage, 1440, 1200, '55vw')}
         tone={page?.heroTone === 'cream' ? 'cream' : 'studio'}
-      >
-        <ul className="hero-facts">
-          {addressLines.length ? (
-            <li>
-              <Pin />
-              <span>{addressLines.slice(0, 2).join(', ')}</span>
-            </li>
-          ) : null}
-          {today ? (
-            <li className="hero-fact-special">
-              <Clock />
-              <span>
-                Today ({today.label}): {specialText(today)}
-              </span>
-            </li>
-          ) : firstHours ? (
-            <li>
-              <Clock />
-              <span>
-                {firstHours.days} {firstHours.hours}
-              </span>
-            </li>
-          ) : null}
-        </ul>
-        <div className="hero-actions">
-          <a href={mapsLink(settings?.mapQuery)} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
-            Get directions <ArrowUpRight />
-          </a>
-        </div>
-      </HeroScroll>
+      />
 
       {/* ---------- Story ---------- */}
       <section className="section story" id="story">

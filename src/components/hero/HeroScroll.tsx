@@ -45,7 +45,7 @@ export function HeroScroll({
   text?: string
   steps: Step[]
   fallbackImage: ImgProps | null
-  children: React.ReactNode
+  children?: React.ReactNode
 }) {
   const root = useRef<HTMLElement>(null)
   const progress = useRef(0)
@@ -143,9 +143,11 @@ export function HeroScroll({
               ))}
             </h1>
             {text ? <p className="hero3d-text hero3d-after">{text}</p> : null}
-            <div className="hero3d-after" style={{ ['--i' as string]: text ? 1 : 0 }}>
-              {children}
-            </div>
+            {children ? (
+              <div className="hero3d-after" style={{ ['--i' as string]: text ? 1 : 0 }}>
+                {children}
+              </div>
+            ) : null}
           </div>
           {steps.map((s) => (
             <div key={s._key} className="hero3d-panel">
