@@ -55,20 +55,79 @@ const LEVELS: Quality[] = [
   { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 1, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
 ]
 
-/** A first guess from the device; the performance monitor steps down from there if frames drop. */
+/** The graphics chip's name as the browser reports it (e.g. "Adreno (TM) 740", "Apple M2"), or "". */
+function gpuName() {
+  try {
+    const c = document.createElement('canvas')
+    const gl = c.getContext('webgl')
+    if (!gl) return ''
+    const info = gl.getExtension('WEBGL_debug_renderer_info')
+    const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '')
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+    return name
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * How much the graphics chip can take: 0 light, 1 medium, 2 full, or null when the name
+ * doesn't tell us (e.g. iPhones just say "Apple GPU"). Only used to step *down*.
+ */
+export function gpuLevel(name: string): 0 | 1 | 2 | null {
+  const s = name.toLowerCase()
+  if (!s) return null
+  // drawn by the processor instead of a graphics chip: keep it light
+  if (/swiftshader|llvmpipe|softpipe|software|basic render/.test(s)) return 0
+  // Android: Qualcomm Adreno, e.g. 610 (budget) … 740 (flagship)
+  const adreno = s.match(/adreno[^0-9]*(\d{3})/)
+  if (adreno) {
+    const n = Number(adreno[1])
+    const series = Math.floor(n / 100)
+    const tier = n % 100
+    if (series <= 5) return 0
+    if (series === 6) return tier >= 40 ? 2 : tier >= 18 ? 1 : 0
+    return tier >= 30 ? 2 : 1
+  }
+  // Android: Arm Mali / Immortalis
+  if (s.includes('immortalis')) return 2
+  const mali = s.match(/mali-?\s*([gt])(\d+)/)
+  if (mali) {
+    if (mali[1] === 't') return 0
+    const n = Number(mali[2])
+    if (n >= 100) return n >= 700 ? 2 : 1 // G610, G710 …
+    return n >= 68 ? 1 : 0 // G52/G57 budget, G76/G78 good
+  }
+  if (/powervr|img /.test(s)) return 0
+  // computers
+  if (/apple m\d|nvidia|geforce|radeon|amd /.test(s)) return 2
+  if (s.includes('intel')) return 1
+  return null
+}
+
+let chosenLevel: 0 | 1 | 2 | null = null
+/** A first guess from the device (processor, memory, screen and graphics chip); picked once per visit. */
 function startLevel(): 0 | 1 | 2 {
+  if (chosenLevel !== null) return chosenLevel
   // ?quality=0|1|2 forces a level (handy for checking how each looks)
   const forced = new URLSearchParams(window.location.search).get('quality')
-  if (forced === '0' || forced === '1' || forced === '2') return Number(forced) as 0 | 1 | 2
+  if (forced === '0' || forced === '1' || forced === '2') return (chosenLevel = Number(forced) as 0 | 1 | 2)
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } }
   const cores = nav.hardwareConcurrency || 4
   const memory = nav.deviceMemory ?? 8
   const coarse = window.matchMedia('(pointer: coarse)').matches
   const small = window.matchMedia('(max-width: 760px)').matches
-  if (nav.connection?.saveData || cores <= 4 || memory <= 3) return 0
-  if (coarse || small || cores < 8) return 1
-  return 2
+  let level: 0 | 1 | 2 = 2
+  if (nav.connection?.saveData || cores <= 4 || memory <= 3) level = 0
+  else if (coarse || small || cores < 8) level = 1
+  const gpu = gpuLevel(gpuName())
+  if (gpu !== null && gpu < level) level = gpu
+  return (chosenLevel = level)
 }
+
+/** Phones and tablets: draw fewer frames while nothing is scrolling (see FrameLimiter). */
+const isTouch = () => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
 
 const QualityContext = createContext<Quality>(LEVELS[1])
 const useQ = () => useContext(QualityContext)
@@ -111,14 +170,71 @@ function canvas(w: number, h: number) {
   return [c, c.getContext('2d', { willReadFrequently: false })!] as const
 }
 
-function toTexture(c: HTMLCanvasElement, srgb = true, repeatY = false) {
-  const tex = new THREE.CanvasTexture(c)
+function toTexture(c: HTMLCanvasElement | HTMLImageElement, srgb = true, repeatY = false) {
+  const tex = new THREE.Texture(c)
+  tex.needsUpdate = true
   if (srgb) tex.colorSpace = THREE.SRGBColorSpace
   tex.anisotropy = 4
   tex.wrapS = THREE.RepeatWrapping
   if (repeatY) tex.wrapT = THREE.RepeatWrapping
   return tex
 }
+
+/* ------------------------------------------------------------------ */
+/* Pre-made textures                                                   */
+/* ------------------------------------------------------------------ */
+/*
+ * The surface patterns (paper fibre, kraft lid, the labels and prints, the iced cup's droplets)
+ * are painted once ahead of time and saved in /public/hero-tex, so phones load them as small
+ * pictures instead of painting them on every visit. Same patterns: the prints and droplet maps
+ * are pixel-for-pixel, the fine noise ones are within about 1/255 (invisible once lit).
+ * To repaint them after changing a pattern: open the site with ?bake=1 and run
+ * `node scripts/bake-hero-textures.mjs` (see the script for details).
+ */
+const TEX_DIR = '/hero-tex'
+const BAKING = typeof window !== 'undefined' && /[?&]bake=1/.test(window.location.search)
+const bakedImages = new Map<string, HTMLImageElement>()
+/** file name for a texture; size-dependent ones carry their scale, e.g. "cup-print@0.75" */
+const texName = (name: string, scale?: number) => (scale === undefined ? name : `${name}@${scale}`)
+
+function loadBaked(name: string): Promise<HTMLImageElement | null> {
+  const have = bakedImages.get(name)
+  if (have) return Promise.resolve(have)
+  if (BAKING) return Promise.resolve(null)
+  return new Promise((resolve) => {
+    const img = new Image()
+    img.decoding = 'async'
+    img.src = `${TEX_DIR}/${name}.webp`
+    img
+      .decode()
+      .then(() => {
+        bakedImages.set(name, img)
+        resolve(img)
+      })
+      .catch(() => resolve(null))
+  })
+}
+
+let preloading: Promise<unknown> | null = null
+/** The textures needed before the scene is first shown (the droplets come a moment later). */
+function preloadTextures(scale: number) {
+  preloading ??= Promise.all(
+    [texName('cup-print', scale), 'cup-fibre', 'bump', 'kraft', texName('iced-print', scale), texName('honey-label', scale), 'knurl'].map(loadBaked),
+  )
+  return preloading
+}
+
+/** A pre-made texture when there is one, otherwise paint it now (and keep the painting when baking). */
+function made(name: string, paintIt: () => HTMLCanvasElement, srgb = true, repeatY = false) {
+  const img = bakedImages.get(name)
+  if (img) return toTexture(img, srgb, repeatY)
+  const c = paintIt()
+  if (BAKING) ((window as unknown as { __bake?: Record<string, HTMLCanvasElement> }).__bake ??= {})[name] = c
+  return toTexture(c, srgb, repeatY)
+}
+
+// Start fetching the pre-made textures as soon as this file loads, alongside everything else
+if (typeof window !== 'undefined' && !BAKING) preloadTextures(LEVELS[startLevel()].tex)
 
 const hexRgb = (hex: string) => {
   const n = parseInt(hex.slice(1), 16)
@@ -165,15 +281,21 @@ function speckled(w: number, h: number, base: string, seed: number, dark = 0.12,
 }
 
 /** Grey-scale noise used as a bump map (bamboo fibre, plastic lid, knurled metal). */
-function noiseTexture(size: number, seed: number, stripes = 0) {
-  const rand = rng(seed)
-  const [c] = paint(size, size, (x, _y, o) => {
-    let v = 128 + (rand() - 0.5) * 70
-    if (stripes) v += Math.sin((x / size) * stripes * Math.PI * 2) * 55
-    o[0] = o[1] = o[2] = v
-    o[3] = 255
-  })
-  return toTexture(c, false, true)
+function noiseTexture(name: string, size: number, seed: number, stripes = 0) {
+  return made(
+    name,
+    () => {
+      const rand = rng(seed)
+      return paint(size, size, (x, _y, o) => {
+        let v = 128 + (rand() - 0.5) * 70
+        if (stripes) v += Math.sin((x / size) * stripes * Math.PI * 2) * 55
+        o[0] = o[1] = o[2] = v
+        o[3] = 255
+      })[0]
+    },
+    false,
+    true,
+  )
 }
 
 /** A soft round droplet drawn once, then stamped many times. */
@@ -532,16 +654,18 @@ function HotCup({ steam, still }: { steam: string; still: boolean }) {
     [q.segments],
   )
   const tex = useMemo(() => {
-    const [c, ctx] = canvas(2048 * q.tex, 400 * q.tex)
-    // front (middle of the texture) and back (split across the seam)
-    for (const x of [0, 0.5, 1]) drawMark(ctx, c.width * x, c.height / 2, c.height * 0.82, '#5a3730')
-    const print = toTexture(c)
-    const fibre = toTexture(speckled(512, 512, BAMBOO, 7)[0], true, true)
+    const print = made(texName('cup-print', q.tex), () => {
+      const [c, ctx] = canvas(2048 * q.tex, 400 * q.tex)
+      // front (middle of the texture) and back (split across the seam)
+      for (const x of [0, 0.5, 1]) drawMark(ctx, c.width * x, c.height / 2, c.height * 0.82, '#5a3730')
+      return c
+    })
+    const fibre = made('cup-fibre', () => speckled(512, 512, BAMBOO, 7)[0], true, true)
     fibre.repeat.set(6, 4)
-    const bump = noiseTexture(256, 11)
+    const bump = noiseTexture('bump', 256, 11)
     bump.repeat.set(8, 6)
     // kraft lid: matte, flecked plant fibre
-    const kraft = toTexture(speckled(512, 512, LID, 23, 0.07, 0.05)[0], true, true)
+    const kraft = made('kraft', () => speckled(512, 512, LID, 23, 0.07, 0.05)[0], true, true)
     kraft.repeat.set(5, 3)
     return { print, fibre, bump, kraft }
   }, [q.tex])
@@ -639,8 +763,6 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
     const frostBack = frost.clone()
     frostBack.side = THREE.BackSide
     frostBack.opacity = 0.6
-    const [pc, pctx] = canvas(2048 * q.tex, 420 * q.tex)
-    for (const x of [0, 0.5, 1]) drawMark(pctx, pc.width * x, pc.height / 2, pc.height * 0.86, BROWN)
     const clearTint = (opacity: number) =>
       new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.12, transparent: true, opacity, depthWrite: false, side: THREE.DoubleSide })
     return {
@@ -650,7 +772,11 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
       tint: clearTint(0.08),
       lidTint: clearTint(0.14),
       lidGloss: glossMaterial(q, undefined, 2.2),
-      print: toTexture(pc),
+      print: made(texName('iced-print', q.tex), () => {
+        const [pc, pctx] = canvas(2048 * q.tex, 420 * q.tex)
+        for (const x of [0, 0.5, 1]) drawMark(pctx, pc.width * x, pc.height / 2, pc.height * 0.86, BROWN)
+        return pc
+      }),
       straw: new THREE.MeshStandardMaterial({ color: '#fbf8f2', roughness: 0.35, transparent: true, opacity: 0.5, depthWrite: false, side: THREE.DoubleSide }),
       ice: q.transmission
         ? new THREE.MeshPhysicalMaterial({
@@ -672,7 +798,19 @@ function IcedCup({ matcha, still, mist }: { matcha: { current: number }; still: 
   useEffect(() => {
     let off = false
     const run = async () => {
-      const cond = await condensation(1024 * q.tex, 600 * q.tex, 3, () => off)
+      const fogName = texName('cond-fog', q.tex)
+      const normalName = texName('cond-normal', q.tex)
+      const [fogImg, normalImg] = await Promise.all([loadBaked(fogName), loadBaked(normalName)])
+      let cond: { fog: THREE.Texture; normal: THREE.Texture } | null
+      if (fogImg && normalImg) cond = { fog: toTexture(fogImg, false, true), normal: toTexture(normalImg, false, true) }
+      else {
+        cond = await condensation(1024 * q.tex, 600 * q.tex, 3, () => off)
+        if (cond && BAKING) {
+          const out = ((window as unknown as { __bake?: Record<string, HTMLCanvasElement> }).__bake ??= {})
+          out[fogName] = cond.fog.image as HTMLCanvasElement
+          out[normalName] = cond.normal.image as HTMLCanvasElement
+        }
+      }
       if (!cond || off) {
         cond?.fog.dispose()
         cond?.normal.dispose()
@@ -917,25 +1055,28 @@ function HoneyJar() {
   }, [q.segments])
 
   const tex = useMemo(() => {
-    const W = 2048 * q.tex
-    const H = 524 * q.tex
-    const [c, ctx] = speckled(W, H, '#efe5d3', 17, 0.08, 0.05)
-    const cx = W / 2
-    const serif = '"Times New Roman", Times, "Liberation Serif", Georgia, serif'
-    ctx.fillStyle = BROWN
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'alphabetic'
-    ctx.font = `${Math.round(H * 0.17)}px ${serif}`
-    ctx.fillText('Pure Honey', cx, H * 0.22)
-    drawMark(ctx, cx, H * 0.45, H * 0.3, BROWN)
-    ctx.font = `${Math.round(H * 0.06)}px ${serif}`
-    ctx.fillText('Produced as a collaboration with', cx, H * 0.69)
-    ctx.fillText('Tythe Bees in England’s Vale of Belvoir', cx, H * 0.77)
-    ctx.font = `${Math.round(H * 0.095)}px ${serif}`
-    ctx.fillText('340g', cx, H * 0.92)
-    const knurl = noiseTexture(256, 3, 48)
+    const label = made(texName('honey-label', q.tex), () => {
+      const W = 2048 * q.tex
+      const H = 524 * q.tex
+      const [c, ctx] = speckled(W, H, '#efe5d3', 17, 0.08, 0.05)
+      const cx = W / 2
+      const serif = '"Times New Roman", Times, "Liberation Serif", Georgia, serif'
+      ctx.fillStyle = BROWN
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
+      ctx.font = `${Math.round(H * 0.17)}px ${serif}`
+      ctx.fillText('Pure Honey', cx, H * 0.22)
+      drawMark(ctx, cx, H * 0.45, H * 0.3, BROWN)
+      ctx.font = `${Math.round(H * 0.06)}px ${serif}`
+      ctx.fillText('Produced as a collaboration with', cx, H * 0.69)
+      ctx.fillText('Tythe Bees in England’s Vale of Belvoir', cx, H * 0.77)
+      ctx.font = `${Math.round(H * 0.095)}px ${serif}`
+      ctx.fillText('340g', cx, H * 0.92)
+      return c
+    })
+    const knurl = noiseTexture('knurl', 256, 3, 48)
     knurl.repeat.set(6, 1)
-    return { label: toTexture(c), knurl }
+    return { label, knurl }
   }, [q.tex])
 
   const mats = useMemo(
@@ -1296,6 +1437,42 @@ function Lights() {
   )
 }
 
+/**
+ * Phones and tablets: the beans and steam drift slowly, so while nobody is scrolling the scene
+ * is drawn 30 times a second instead of 60 (it looks the same and saves half the work). Any
+ * scroll or touch brings it straight back to every frame, as does the first couple of seconds.
+ */
+function FrameLimiter({ progress }: { progress: Progress }) {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    let raf = 0
+    let n = 0
+    let last = progress.current
+    let busyUntil = performance.now() + 2500
+    const wake = () => {
+      busyUntil = performance.now() + 700
+    }
+    const tick = (t: number) => {
+      raf = requestAnimationFrame(tick)
+      if (progress.current !== last) {
+        last = progress.current
+        busyUntil = t + 700
+      }
+      n = (n + 1) % 2
+      if (t < busyUntil || n === 0) invalidate()
+    }
+    raf = requestAnimationFrame(tick)
+    window.addEventListener('scroll', wake, { passive: true })
+    window.addEventListener('touchstart', wake, { passive: true })
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('scroll', wake)
+      window.removeEventListener('touchstart', wake)
+    }
+  }, [invalidate, progress])
+  return null
+}
+
 /** If a frame is ever drawn empty (e.g. while resizing) it shows the backdrop colour, not black. */
 function ClearColor({ tone }: { tone: HeroTone }) {
   const gl = useThree((s) => s.gl)
@@ -1370,6 +1547,25 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
   // last resort on a struggling device: render at 1x
   const [lowRes, setLowRes] = useState(false)
   const [ready, setReady] = useState(false)
+  // the pre-made textures (usually already downloaded by now); painted on the spot if they fail
+  const [texReady, setTexReady] = useState(BAKING)
+  // phones and tablets draw fewer frames while nothing is scrolling
+  const [limit] = useState(isTouch)
+
+  useEffect(() => {
+    if (texReady) return
+    let done = false
+    const go = () => {
+      if (!done) setTexReady(true)
+      done = true
+    }
+    preloadTextures(LEVELS[level].tex).then(go, go)
+    const t = window.setTimeout(go, 4000)
+    return () => {
+      done = true
+      window.clearTimeout(t)
+    }
+  }, [level, texReady])
 
   useEffect(() => {
     // Only render frames while the scene is on screen
@@ -1391,11 +1587,13 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
 
   const q = LEVELS[level]
 
+  if (!texReady) return <div ref={wrap} className="cup-scene" style={{ position: 'absolute', inset: 0 }} />
+
   return (
     <div ref={wrap} className="cup-scene" data-ready={ready || undefined} style={{ position: 'absolute', inset: 0 }}>
       <QualityContext.Provider value={q}>
         <Canvas
-          frameloop={still ? 'demand' : visible ? 'always' : 'never'}
+          frameloop={still || (limit && visible) ? 'demand' : visible ? 'always' : 'never'}
           dpr={Math.min(lowRes ? 1 : q.dpr, window.devicePixelRatio || 1)}
           shadows="percentage"
           camera={{ fov: 32, position: [0, 0.45, 8.6], near: 2, far: 40 }}
@@ -1410,8 +1608,15 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
                 jump and the bean shadows vanish mid-scroll). Only if frames keep dropping does it
                 drop to 1x resolution, once. */}
             {ready && !still && !lowRes && !/[?&]quality=/.test(window.location.search) ? (
-              <PerformanceMonitor iterations={10} flipflops={2} bounds={(r) => (r > 90 ? [45, 90] : [30, 60])} onFallback={() => setLowRes(true)} />
+              <PerformanceMonitor
+                iterations={10}
+                flipflops={2}
+                // with the frame limiter, 30 frames a second when idle is expected, not a sign of struggling
+                bounds={(r) => (limit ? [22, 55] : r > 90 ? [45, 90] : [30, 60])}
+                onFallback={() => setLowRes(true)}
+              />
             ) : null}
+            {limit && visible && !still ? <FrameLimiter progress={progress} /> : null}
             <ShadowThrottle still={still} />
             <ClearColor tone={tone} />
             {/* What the shiny things reflect: a big softbox left, a strip right, a ceiling panel */}
