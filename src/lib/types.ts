@@ -76,6 +76,8 @@ export type AboutData = {
   teamHeading?: string
   teamIntro?: string
   team?: TeamMember[]
+  visitHeading?: string
+  visitText?: string
   seo?: Seo
 } | null
 

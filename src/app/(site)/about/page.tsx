@@ -126,8 +126,12 @@ export default async function AboutPage() {
       <section className="section about-cta">
         <Reveal className="container about-cta-inner">
           <BeeMark className="about-cta-bee" />
-          <h2>Come and say hello</h2>
-          {settings?.address ? <p>{settings.address.split('\n').join(', ')}</p> : null}
+          <h2>{page?.visitHeading || 'Come and say hello'}</h2>
+          {page?.visitText ? (
+            <p>{page.visitText}</p>
+          ) : settings?.address ? (
+            <p>{settings.address.split('\n').join(', ')}</p>
+          ) : null}
           <div className="hero-actions">
             <a className="btn btn-light" href={mapsLink(settings?.mapQuery)} target="_blank" rel="noopener noreferrer">
               Get directions <ArrowRight />

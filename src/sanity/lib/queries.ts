@@ -90,6 +90,7 @@ export const ABOUT_QUERY = `*[_id == "aboutPage"][0]{
   values[]{ _key, title, text },
   teamHeading, teamIntro,
   team[]{ _key, name, role, photo ${image}, bio, favourite },
+  visitHeading, visitText,
   seo { title, description, image ${image}, noIndex }
 }`
 
