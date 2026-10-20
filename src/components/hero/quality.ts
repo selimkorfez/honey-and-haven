@@ -117,8 +117,9 @@ export const BAKING = typeof document !== 'undefined' && /[?&]bake=1/.test(windo
 
 /**
  * Can the scene be drawn in a background worker? Needs a canvas that can be handed over
- * (OffscreenCanvas) and WebGL there. Safari / every iPhone browser (all WebKit) stays on the page
- * for now; ?worker=1 tries the worker anyway, ?worker=0 turns it off.
+ * (OffscreenCanvas) and WebGL there. Safari and every iPhone browser (all WebKit) only have WebGL
+ * in workers from version 17, so older ones stay on the page. ?worker=0 turns the worker off,
+ * ?worker=1 tries it anyway. (If it still fails to start, the page draws the scene instead.)
  */
 export function workerSupported() {
   if (typeof window === 'undefined' || BAKING) return false
@@ -132,5 +133,8 @@ export function workerSupported() {
   if (asked === '1') return true
   const ua = navigator.userAgent
   const webkit = /AppleWebKit/.test(ua) && !/Chrome|Chromium|Edg|OPR|SamsungBrowser/.test(ua)
-  return !webkit
+  if (!webkit) return true
+  // Safari says "Version/17.x"; other iPhone browsers only give the system, "OS 17_x"
+  const v = ua.match(/Version\/(\d+)/) ?? ua.match(/ OS (\d+)_/)
+  return v ? Number(v[1]) >= 17 : false
 }
