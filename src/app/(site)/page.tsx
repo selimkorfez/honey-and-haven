@@ -29,7 +29,7 @@ async function getData() {
   const featured = data?.featured?.length ? data.featured : data?.page ? [] : FALLBACK_HOME.featured
   // Pinned products (example products only before the Studio is connected)
   const pinned: Product[] = isConfigured ? (data?.shop ?? []) : FALLBACK_PRODUCTS.filter((p) => p.featured)
-  const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 520px) 100vw, 16vw'))
+  const shop = pinned.map((p, i) => toCard(p, shopSettings.lowStockAt, i, '(max-width: 760px) 100vw, (max-width: 1180px) 50vw, 33vw'))
   // The Gallery section (starter photos until the café publishes its own)
   const gallery = data?.gallery ?? FALLBACK_GALLERY
   return { settings: settings ?? FALLBACK_SETTINGS, page, featured, shop, gallery }

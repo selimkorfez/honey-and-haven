@@ -39,8 +39,9 @@ export function toCard(p: Product, lowAt: number, index = 0, sizes = '(max-width
     was: onSale ? gbp(p.compareAtPrice!) : null,
     badge: stock.soldOut ? 'Sold out' : stock.low ? `Only ${stock.left} left` : onSale ? 'Sale' : null,
     soldOut: stock.soldOut,
-    image: imgProps(p.images?.[0], 640, 800, sizes, p.images?.[0]?.alt || p.name),
-    image2: imgProps(p.images?.[1], 640, 800, sizes, p.images?.[1]?.alt || p.name),
+    // whole photos at their own shape: the card frame shows them uncropped (see .pcard-media img)
+    image: imgProps(p.images?.[0], 640, undefined, sizes, p.images?.[0]?.alt || p.name),
+    image2: imgProps(p.images?.[1], 640, undefined, sizes, p.images?.[1]?.alt || p.name),
     quickAdd:
       hasVariants || stock.soldOut
         ? null

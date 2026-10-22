@@ -1719,7 +1719,7 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 .shop-media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .shop-mark {
@@ -2413,7 +2413,8 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* whole photo (4:5 photos fill the frame exactly; others get a soft blur of themselves around them) */
+  object-fit: contain;
   transition:
     transform 0.9s var(--ease),
     opacity 0.5s;
@@ -2721,7 +2722,15 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* the whole photo, never cropped (photos with words on, square ones…); any space around a
+     differently shaped photo is filled with a soft blur of the photo itself (its lqip backdrop) */
+  object-fit: contain;
+}
+
+/* (photos of another shape: the frame behind them takes the photo's own edge colours, see
+   ProductGallery; until those are known the blurred preview fills in) */
+.pgallery-frame[style] .pgallery-photo {
+  background-image: none !important;
 }
 
 .pgallery-empty {
@@ -3188,11 +3197,19 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   }
 }
 
-@media (min-width: 521px) {
-  .shop .shop-item .shop-media {
-    aspect-ratio: auto;
-    min-height: 280px;
-  }
+/* Home cards: the photo on top at the photos' own 4:5 shape (a tall strip beside the words
+   cropped them), the words underneath */
+.shop .shop-item {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+}
+
+.shop .shop-item .shop-media {
+  aspect-ratio: 4 / 5;
+}
+
+.shop .shop-body {
+  align-content: start;
 }
 
 /* ======================================================================

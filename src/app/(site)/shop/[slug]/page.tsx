@@ -46,7 +46,7 @@ export default async function ProductPage({ params }: Params) {
   if (!product) notFound()
 
   const cfg = toCheckoutConfig(settings)
-  const images = (product.images ?? []).map((img) => imgProps(img, 900, 900, '(max-width: 860px) 100vw, 50vw', img.alt || product.name)).filter((x) => x !== null)
+  const images = (product.images ?? []).map((img) => imgProps(img, 900, undefined, '(max-width: 860px) 100vw, 50vw', img.alt || product.name)).filter((x) => x !== null)
   const thumbs = (product.images ?? []).map((img) => imgProps(img, 120, 120, '80px', '')).filter((x) => x !== null)
   const stock = productStock(product, settings.lowStockAt)
 
