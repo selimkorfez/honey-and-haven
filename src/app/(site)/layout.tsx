@@ -78,10 +78,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads
     <html lang="en-GB" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-      </head>
       <body>
+        {/* Sets light/dark before anything paints. First thing in <body> rather than in <head>: a script
+            React draws inside <head> sometimes threw a hydration error (#418) on page load. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <MotionProvider>
           <BasketProvider config={checkout}>
             <Header name={name} announcement={settings?.announcement} announcementHref={announcementHref(settings?.announcementLink)} directions={mapsLink(settings?.mapQuery)} hasBlog={hasBlog} />
