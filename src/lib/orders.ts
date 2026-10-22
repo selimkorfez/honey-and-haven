@@ -1,5 +1,5 @@
 import { getWriteClient } from '@/sanity/lib/write'
-import { getCheckout, transactionCode, type SumUpStatus } from './sumup'
+import { getCheckout, isSandboxCheckout, transactionCode, type SumUpStatus } from './sumup'
 import type { CustomerDetails, Fulfilment } from './basket'
 
 export type OrderSummary = {
@@ -25,6 +25,8 @@ export type PendingCheckout = {
   sumupId: string
   createdAt: string
   status: 'open' | 'recorded'
+  /** test payments only: what was chosen on the pretend payment page */
+  sandboxStatus?: SumUpStatus
   fulfilment: Fulfilment
   customer: CustomerDetails
   lines: {
@@ -107,6 +109,8 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     { ids: [...productIds, ...productIds.map((p) => `drafts.${p}`)] },
   )
 
+  // a test purchase: saved like any order, marked as a test, and it doesn't touch stock or codes
+  const test = isSandboxCheckout(pending.sumupId)
   const c = pending.customer
   const tx = write.transaction().create({
     _id: id,
@@ -133,13 +137,14 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     discount: pending.discount,
     discountCode: pending.discountCode,
     total: pending.total,
-    paymentProvider: 'SumUp',
+    paymentProvider: test ? 'Test payment (no money taken)' : 'SumUp',
+    testOrder: test || undefined,
     transactionCode: transactionCode(checkout),
     sumupCheckoutId: checkout.id,
   })
 
   // Take sold items off stock (on the published product and any unpublished edits of it)
-  for (const l of pending.lines) {
+  for (const l of test ? [] : pending.lines) {
     for (const doc of docs.filter((d) => d._id === l.productId || d._id === `drafts.${l.productId}`)) {
       if (l.variantKey) {
         const v = doc.variants?.find((x) => x._key === l.variantKey)
@@ -150,7 +155,7 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     }
   }
   // Count the discount code as used
-  if (pending.discountId && (await write.getDocument(pending.discountId))) {
+  if (!test && pending.discountId && (await write.getDocument(pending.discountId))) {
     tx.patch(pending.discountId, (p) => p.setIfMissing({ uses: 0 }).inc({ uses: 1 }))
   }
   tx.patch(pending._id, (p) => p.set({ status: 'recorded' }))

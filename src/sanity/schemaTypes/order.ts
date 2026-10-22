@@ -27,6 +27,14 @@ export const order = defineType({
       initialValue: 'new',
       description: 'Change this as you go, then press Publish.',
     }),
+    defineField({
+      name: 'testOrder',
+      title: 'Test order',
+      type: 'boolean',
+      readOnly: true,
+      hidden: ({ document }) => !document?.testOrder,
+      description: 'A test purchase: no money was taken and no stock was used. Safe to delete.',
+    }),
     defineField({ name: 'staffNotes', title: 'Staff notes', type: 'text', rows: 2, description: 'Only visible here, e.g. “Royal Mail tracking AB123456789GB”.' }),
     defineField({ name: 'orderNumber', title: 'Order number', type: 'string', readOnly: true }),
     defineField({ name: 'placedAt', title: 'Placed', type: 'datetime', readOnly: true }),
@@ -84,12 +92,12 @@ export const order = defineType({
   ],
   orderings: [{ title: 'Newest first', name: 'placedDesc', by: [{ field: 'placedAt', direction: 'desc' }] }],
   preview: {
-    select: { number: 'orderNumber', name: 'customerName', total: 'total', status: 'status', fulfilment: 'fulfilment', placedAt: 'placedAt' },
-    prepare: ({ number, name, total, status, fulfilment, placedAt }) => {
+    select: { number: 'orderNumber', name: 'customerName', total: 'total', status: 'status', fulfilment: 'fulfilment', placedAt: 'placedAt', test: 'testOrder' },
+    prepare: ({ number, name, total, status, fulfilment, placedAt, test }) => {
       const s = ORDER_STATUSES.find((x) => x.value === status)?.title ?? 'New'
       const when = placedAt ? new Date(placedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''
       return {
-        title: `${number ?? 'Order'} · ${name ?? ''}`,
+        title: `${test ? 'TEST · ' : ''}${number ?? 'Order'} · ${name ?? ''}`,
         subtitle: [s, fulfilment === 'delivery' ? 'Delivery' : 'Collect', typeof total === 'number' ? `£${total.toFixed(2)}` : null, when].filter(Boolean).join(' · '),
       }
     },
