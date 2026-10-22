@@ -6,6 +6,7 @@ import { SETTINGS_QUERY } from '@/sanity/lib/queries'
 import type { Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { announcementHref, mapsLink, siteUrl } from '@/lib/format'
+import { activeSeason } from '@/lib/seasons'
 import { Header } from '@/components/Header'
 import { THEME_SCRIPT } from '@/components/ThemeSwitch'
 import { Footer } from '@/components/Footer'
@@ -84,7 +85,14 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <MotionProvider>
           <BasketProvider config={checkout}>
-            <Header name={name} announcement={settings?.announcement} announcementHref={announcementHref(settings?.announcementLink)} directions={mapsLink(settings?.mapQuery)} hasBlog={hasBlog} />
+            <Header
+              name={name}
+              announcement={settings?.announcement}
+              announcementHref={announcementHref(settings?.announcementLink)}
+              directions={mapsLink(settings?.mapQuery)}
+              hasBlog={hasBlog}
+              season={activeSeason(settings?.season, settings?.announcement)}
+            />
             <main>{children}</main>
             {showLetter ? <NewsletterBand settings={letter} /> : null}
             <Footer settings={settings} />

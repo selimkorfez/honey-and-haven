@@ -8,6 +8,8 @@ import { useGSAP } from '@gsap/react'
 import type { ImgProps } from '../SanityImg'
 import { LogoMark } from '../LogoMark'
 import type { HeroTone } from './CupScene'
+import { SeasonFX } from '../season/SeasonFX'
+import type { SeasonId } from '@/lib/seasons'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
 
@@ -38,9 +40,12 @@ export function HeroScroll({
   steps,
   fallbackImage,
   tone = 'studio',
+  season,
   children,
 }: {
   tone?: HeroTone
+  /** seasonal theme on "Full": snow, petals, leaves… drifting across the opening */
+  season?: SeasonId
   heading: string
   text?: string
   steps: Step[]
@@ -129,6 +134,7 @@ export function HeroScroll({
             )
           ) : null}
         </div>
+        {season ? <SeasonFX id={season} /> : null}
 
         <div className="container hero3d-copy">
           <div className="hero3d-panel is-first">

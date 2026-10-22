@@ -1,4 +1,5 @@
 import type { PortableTextBlock } from 'next-sanity'
+import type { SeasonSettings } from './seasons'
 
 export type SanityImage = {
   _type?: 'image'
@@ -18,6 +19,8 @@ export type Settings = {
   tagline?: string
   announcement?: string
   announcementLink?: { page?: string; url?: string; section?: string } | null
+  /** Site settings → Seasonal theme */
+  season?: SeasonSettings
   address?: string
   mapQuery?: string
   phone?: string

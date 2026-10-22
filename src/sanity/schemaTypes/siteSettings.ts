@@ -10,6 +10,7 @@ export const siteSettings = defineType({
     { name: 'general', title: 'General', default: true },
     { name: 'visit', title: 'Address & hours' },
     { name: 'social', title: 'Social media' },
+    { name: 'season', title: 'Seasonal theme' },
     { name: 'bee', title: 'The bee' },
     { name: 'reviews', title: 'Reviews' },
     { name: 'newsletter', title: 'Newsletter' },
@@ -82,6 +83,95 @@ export const siteSettings = defineType({
               if (parent?.page !== 'custom') return true
               if (!v) return 'Add the web address'
               return /^(\/|https?:\/\/|mailto:|tel:)/.test(v) || 'Start with / for a page on this site, or https:// for another website'
+            }),
+        }),
+      ],
+    }),
+    defineField({
+      name: 'season',
+      title: 'Seasonal theme',
+      type: 'object',
+      group: 'season',
+      options: { collapsible: false },
+      description:
+        'Dress the website up for the season: the top bar takes the season’s colours and little drawings, a garland can hang under the header on the home page, and snow, petals or leaves can drift across the opening.',
+      fields: [
+        defineField({
+          name: 'theme',
+          title: 'Theme',
+          type: 'string',
+          initialValue: 'off',
+          options: {
+            list: [
+              { title: 'Off', value: 'off' },
+              { title: 'Winter', value: 'winter' },
+              { title: 'Spring', value: 'spring' },
+              { title: 'Summer', value: 'summer' },
+              { title: 'Autumn', value: 'autumn' },
+              { title: 'Valentine’s', value: 'valentines' },
+              { title: 'Ramadan', value: 'ramadan' },
+              { title: 'Easter', value: 'easter' },
+              { title: 'Christmas', value: 'christmas' },
+            ],
+          },
+        }),
+        defineField({
+          name: 'decoration',
+          title: 'How much decoration',
+          type: 'string',
+          initialValue: 'garland',
+          options: {
+            layout: 'radio',
+            list: [
+              { title: 'Ribbon: just the top bar', value: 'ribbon' },
+              { title: 'Garland: top bar + a garland under the header on the home page', value: 'garland' },
+              { title: 'Full: garland + gentle falling snow, petals, leaves… on the home page', value: 'full' },
+            ],
+          },
+          hidden: ({ parent }) => !parent?.theme || parent.theme === 'off',
+        }),
+        defineField({
+          name: 'barStyle',
+          title: 'Top bar style',
+          type: 'string',
+          initialValue: 'plain',
+          options: {
+            layout: 'radio',
+            direction: 'horizontal',
+            list: [
+              { title: 'Icons either side', value: 'plain' },
+              { title: 'Patterned', value: 'pattern' },
+            ],
+          },
+          hidden: ({ parent }) => !parent?.theme || parent.theme === 'off',
+        }),
+        defineField({
+          name: 'message',
+          title: 'Top bar message (optional)',
+          type: 'string',
+          description:
+            'Shown in the top bar while the theme is on, e.g. “Merry Christmas: festive drinks & gifts are here”. Leave empty to keep the usual announcement (General tab); if that’s empty too, a greeting for the season is shown. Tapping it goes where the announcement link points.',
+          hidden: ({ parent }) => !parent?.theme || parent.theme === 'off',
+        }),
+        defineField({
+          name: 'start',
+          title: 'Show from (optional)',
+          type: 'date',
+          description: 'Switches the theme on by itself on this day. Leave empty to show it straight away.',
+          options: { dateFormat: 'D MMMM YYYY' },
+          hidden: ({ parent }) => !parent?.theme || parent.theme === 'off',
+        }),
+        defineField({
+          name: 'end',
+          title: 'Show until (optional)',
+          type: 'date',
+          description: 'Switches it off by itself after this day. Leave empty to keep it on until you change it.',
+          options: { dateFormat: 'D MMMM YYYY' },
+          hidden: ({ parent }) => !parent?.theme || parent.theme === 'off',
+          validation: (r) =>
+            r.custom((end, ctx) => {
+              const start = (ctx.parent as { start?: string } | undefined)?.start
+              return !end || !start || String(end) >= start || 'The end date is before the start date'
             }),
         }),
       ],

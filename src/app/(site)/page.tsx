@@ -15,6 +15,7 @@ import { isConfigured } from '@/sanity/env'
 import { getShopSettings } from '@/lib/shop'
 import { toCard, type ProductCardView } from '@/lib/productView'
 import { formatDays, specialText, upcomingSpecialHours } from '@/lib/hours'
+import { activeSeason } from '@/lib/seasons'
 import { Img } from '@/components/Img'
 import { QuickAdd } from '@/components/shop/QuickAdd'
 import { InstaFeed, type FeedTile } from '@/components/home/InstaFeed'
@@ -98,6 +99,10 @@ export default async function HomePage() {
         steps={page?.heroSteps ?? []}
         fallbackImage={imgProps(page?.heroImage, 1440, 1200, '55vw')}
         tone={page?.heroTone === 'cream' ? 'cream' : 'studio'}
+        season={(() => {
+          const s = activeSeason(settings?.season, settings?.announcement)
+          return s?.decoration === 'full' ? s.id : undefined
+        })()}
       />
 
       {/* ---------- Story ---------- */}

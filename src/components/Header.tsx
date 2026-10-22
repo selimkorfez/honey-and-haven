@@ -4,6 +4,8 @@ import { FoldingWordmark } from './Wordmark'
 import { BasketButton } from './shop/BasketButton'
 import { ThemeSwitch } from './ThemeSwitch'
 import { MobileMenu } from './MobileMenu'
+import { SeasonGarland } from './season/SeasonGarland'
+import { SEASONS, barPattern, svgIcon, type ActiveSeason } from '@/lib/seasons'
 
 /** "HONEY & HAVEN" folds into "HH" on scroll, then becomes the bee monogram. */
 export function Header({
@@ -12,6 +14,7 @@ export function Header({
   announcementHref,
   directions,
   hasBlog = false,
+  season,
 }: {
   name: string
   announcement?: string
@@ -20,24 +23,61 @@ export function Header({
   /** Google Maps link for the phone menu's "Get directions" */
   directions?: string
   hasBlog?: boolean
+  /** a seasonal theme switched on in the Studio (colours the top bar, adds the garland) */
+  season?: ActiveSeason | null
 }) {
+  const look = season ? SEASONS[season.id] : null
+  const message = season ? season.message : announcement
+  const icon = look ? <i className="season-icon" aria-hidden="true" dangerouslySetInnerHTML={{ __html: svgIcon(look.icon) }} /> : null
+  // with a season on, the words sit between two little drawings
+  const words = (text: React.ReactNode) =>
+    look ? (
+      <>
+        {icon}
+        <em className="announce-text">{text}</em>
+        {icon}
+      </>
+    ) : (
+      text
+    )
   const external = announcementHref ? /^(https?:|mailto:|tel:)/.test(announcementHref) : false
   return (
     <header className="site-header">
-      {announcement ? (
-        <div className="announce">
+      {message ? (
+        <div
+          className="announce"
+          data-season={look?.id}
+          data-bar={season?.barStyle}
+          style={
+            look
+              ? ({
+                  '--season-bar': look.bar,
+                  '--season-text': look.text,
+                  '--season-pattern': season?.barStyle === 'pattern' ? barPattern(look) : undefined,
+                } as React.CSSProperties)
+              : undefined
+          }
+        >
           {announcementHref ? (
             external ? (
               <a href={announcementHref} target={announcementHref.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer">
-                {announcement} <span aria-hidden="true">→</span>
+                {words(
+                  <>
+                    {message} <span aria-hidden="true">→</span>
+                  </>,
+                )}
               </a>
             ) : (
               <Link href={announcementHref}>
-                {announcement} <span aria-hidden="true">→</span>
+                {words(
+                  <>
+                    {message} <span aria-hidden="true">→</span>
+                  </>,
+                )}
               </Link>
             )
           ) : (
-            announcement
+            words(message)
           )}
         </div>
       ) : null}
@@ -70,6 +110,7 @@ export function Header({
           <MobileMenu hasBlog={hasBlog} directions={directions} />
         </nav>
       </div>
+      {season && season.decoration !== 'ribbon' ? <SeasonGarland id={season.id} /> : null}
     </header>
   )
 }
