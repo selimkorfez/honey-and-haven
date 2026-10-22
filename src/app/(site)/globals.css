@@ -2542,6 +2542,24 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   color: var(--white);
 }
 
+/* "Coming soon" (products and menu items not available yet) */
+.pcard-badge[data-kind='soon'],
+.tag.tag-soon {
+  background: var(--honey);
+  border-color: var(--honey);
+  color: var(--espresso);
+}
+
+.menu-line h3 .tag-soon {
+  margin-left: 10px;
+  vertical-align: 4px;
+  font-family: var(--sans);
+}
+
+.menu-item[data-soon] .price {
+  opacity: 0.6;
+}
+
 .pcard-body {
   display: flex;
   justify-content: space-between;

@@ -81,16 +81,18 @@ export const SEASONS: Record<SeasonId, Season> = {
     fx: { type: 'snow', colors: ['#ffffff', '#e4eef4'], count: 70 },
   },
   spring: {
-    id: 'spring', name: 'Spring', bar: '#f1d5da', text: '#5a2e36', icon: DRAW.blossom('#d9899a', '#f7e9a8'),
+    // cherry blossom: rich blossom pink, white flowers with deep pink hearts on a dark branch
+    id: 'spring', name: 'Spring', bar: '#f0a6bb', text: '#4a1f2c', icon: DRAW.blossom('#ffffff', '#c94f73'),
     message: 'Spring is here: blossom specials are on the menu',
-    garland: { kind: 'vine', items: ['blossom', 'leaf'], colors: ['#f4c4ce', '#e8a3b3', '#f9e2e6'], leaf: '#8aa676', string: '#7f9b6b' },
-    fx: { type: 'petal', colors: ['#f6c9d2', '#f2b3c1', '#fbe4e9'], count: 34 },
+    garland: { kind: 'vine', items: ['blossom'], colors: ['#ffffff', '#f7c6d4', '#f0a6bb'], leaf: '#8aa676', string: '#5a3a2e' },
+    fx: { type: 'petal', colors: ['#f7c6d4', '#ffffff', '#f0a6bb'], count: 34 },
   },
   summer: {
-    id: 'summer', name: 'Summer', bar: '#e9b23b', text: '#3a2410', icon: DRAW.sun('#fff2c4'),
+    // watermelon: coral bar, cream sun, watermelon bunting
+    id: 'summer', name: 'Summer', bar: '#e8705a', text: '#fff6ee', icon: DRAW.sun('#ffe1a8'),
     message: 'Summer is here: iced drinks & refreshers all day',
-    garland: { kind: 'bunting', colors: ['#f2c14e', '#fff4d6', '#f08a3c', '#e9d68f'], string: 'rgba(255,240,210,.7)' },
-    fx: { type: 'spark', colors: ['#ffe8a3', '#fff6d8'], count: 40 },
+    garland: { kind: 'bunting', colors: ['#f28b78', '#ffffff', '#8fcf8a', '#ffd1a1'], string: 'rgba(255,240,230,.75)' },
+    fx: { type: 'spark', colors: ['#ffe1a8', '#fff6ee'], count: 40 },
   },
   autumn: {
     id: 'autumn', name: 'Autumn', bar: '#8a3f1d', text: '#fbe9d6', icon: DRAW.maple('#e8a24c'),
@@ -107,7 +109,7 @@ export const SEASONS: Record<SeasonId, Season> = {
   ramadan: {
     id: 'ramadan', name: 'Ramadan', bar: '#1f2347', text: '#f3e7c4', icon: DRAW.crescent('#d9b25f'),
     message: 'Ramadan Mubarak from all of us at Honey & Haven',
-    garland: { kind: 'lanterns', colors: ['#d9b25f', '#c99a3e'], glow: '#ffe3a1', string: 'rgba(217,178,95,.6)' },
+    garland: { kind: 'lanterns', colors: ['#d9b25f', '#c99a3e'], glow: '#ffe3a1', string: 'rgba(226,190,112,.9)' },
     fx: { type: 'star', colors: ['#f3e7c4', '#d9b25f'], count: 46 },
   },
   easter: {
@@ -170,7 +172,7 @@ export function garlandSvg(season: Season, width: number) {
   const g = season.garland
   const r = seeded(7)
   const phone = width < 600
-  const H = phone ? 70 : 96
+  const H = phone ? 84 : 112
   const n = Math.max(3, Math.round(width / (phone ? 78 : 128)))
   const step = width / n
   const dip = phone ? 12 : 16
@@ -182,11 +184,10 @@ export function garlandSvg(season: Season, width: number) {
     return 2 + dip * 4 * k * (1 - k)
   }
   let s = ''
-  if (g.kind !== 'lanterns') {
-    let d = 'M0 2'
-    for (let i = 0; i < n; i++) d += ` Q${(i * step + step / 2).toFixed(1)} ${2 + dip * 2} ${((i + 1) * step).toFixed(1)} 2`
-    s += `<path d="${d}" stroke="${g.string}" stroke-width="${phone ? 1.4 : 1.8}" fill="none"/>`
-  }
+  let d = 'M0 2'
+  for (let i = 0; i < n; i++) d += ` Q${(i * step + step / 2).toFixed(1)} ${2 + dip * 2} ${((i + 1) * step).toFixed(1)} 2`
+  const cord = g.kind === 'lanterns' ? (phone ? 1.6 : 2) : g.kind === 'vine' ? (phone ? 2.2 : 3) : phone ? 1.4 : 1.8
+  s += `<path d="${d}" stroke="${g.string}" stroke-width="${cord}" stroke-linecap="round" fill="none"/>`
   if (g.kind === 'hang') {
     for (let i = 0; i < n * 2; i++) {
       const x = (i + 0.5) * (step / 2)
@@ -215,9 +216,12 @@ export function garlandSvg(season: Season, width: number) {
       const x = (i + 0.5) * (width / count) + (r() - 0.5) * 20
       const len = 8 + r() * (phone ? 26 : 46)
       const size = (phone ? 22 : 32) + r() * 8
-      s += `<path d="M${x.toFixed(1)} 0v${len.toFixed(1)}" stroke="${g.string}" stroke-width="1"/>`
-      s += `<circle cx="${x.toFixed(1)}" cy="${(len + size * 0.5).toFixed(1)}" r="${(size * 0.55).toFixed(1)}" fill="${g.glow}" opacity=".16"/>`
-      s += place(DRAW.lantern(g.colors[i % 2], g.glow), x, len - 1, size)
+      // each lantern hangs on its own cord from the swag across the top
+      const y0 = sag(x)
+      const drop = y0 + len
+      s += `<path d="M${x.toFixed(1)} ${y0.toFixed(1)}V${drop.toFixed(1)}" stroke="${g.string}" stroke-width="1.4"/>`
+      s += `<circle cx="${x.toFixed(1)}" cy="${(drop + size * 0.5).toFixed(1)}" r="${(size * 0.55).toFixed(1)}" fill="${g.glow}" opacity=".16"/>`
+      s += place(DRAW.lantern(g.colors[i % 2], g.glow), x, drop - 1, size)
       if (i % 2 === 1) s += place(DRAW.star(g.colors[0]), x + width / count / 2, 6 + r() * 16, phone ? 9 : 12)
     }
   } else if (g.kind === 'holly') {

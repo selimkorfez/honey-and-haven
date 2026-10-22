@@ -61,6 +61,13 @@ export const menuItem = defineType({
       initialValue: true,
     }),
     defineField({
+      name: 'comingSoon',
+      title: 'Coming soon',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Shows the item on the menu with a “Coming soon” label (e.g. next season’s special). Switch off once it’s being served.',
+    }),
+    defineField({
       name: 'featured',
       title: 'Feature on home page',
       type: 'boolean',
@@ -71,10 +78,10 @@ export const menuItem = defineType({
   ],
   orderings: [orderRankOrdering],
   preview: {
-    select: { title: 'name', price: 'price', category: 'category.title', media: 'image', available: 'available', featured: 'featured' },
-    prepare: ({ title, price, category, media, available, featured }) => ({
+    select: { title: 'name', price: 'price', category: 'category.title', media: 'image', available: 'available', featured: 'featured', soon: 'comingSoon' },
+    prepare: ({ title, price, category, media, available, featured, soon }) => ({
       title: `${title}${featured ? ' ★' : ''}`,
-      subtitle: [category, typeof price === 'number' ? `£${price.toFixed(2)}` : null, available === false ? 'HIDDEN' : null]
+      subtitle: [category, typeof price === 'number' ? `£${price.toFixed(2)}` : null, soon ? 'COMING SOON' : null, available === false ? 'HIDDEN' : null]
         .filter(Boolean)
         .join(' · '),
       media,

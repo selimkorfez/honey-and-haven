@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: Params) {
       '@type': 'Offer',
       price: product.price.toFixed(2),
       priceCurrency: 'GBP',
-      availability: stock.soldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      availability: product.comingSoon ? 'https://schema.org/PreOrder' : stock.soldOut ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
       url: `${siteUrl()}/shop/${product.slug}`,
     },
   }
@@ -101,6 +101,7 @@ export default async function ProductPage({ params }: Params) {
               lowAt={settings.lowStockAt}
               ordersOpen={cfg.ordersOpen}
               closedMessage={settings.closedMessage}
+              comingSoon={Boolean(product.comingSoon)}
             />
             <ul className="product-fulfil">
               {settings.collectionEnabled ? (

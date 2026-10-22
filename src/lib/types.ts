@@ -93,6 +93,8 @@ export type MenuItem = {
   dietary?: string[]
   image?: SanityImage
   category?: string
+  /** on the menu but not served yet */
+  comingSoon?: boolean | null
 }
 
 export type HomeData = {
@@ -141,6 +143,8 @@ export type Product = {
   optionName?: string | null
   variants?: ProductVariant[] | null
   featured?: boolean | null
+  /** in the shop but not for sale yet */
+  comingSoon?: boolean | null
 }
 
 export type ShopSettings = {

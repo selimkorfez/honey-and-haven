@@ -13,6 +13,8 @@ export type ProductCardView = {
   was?: string | null
   badge?: string | null
   soldOut: boolean
+  /** shown, but can't be bought yet */
+  comingSoon: boolean
   image: ImgProps | null
   image2: ImgProps | null
   /** Set for simple products that can go straight into the basket. */
@@ -37,13 +39,14 @@ export function toCard(p: Product, lowAt: number, index = 0, sizes = '(max-width
     summary: p.summary,
     price: priceLabel(p),
     was: onSale ? gbp(p.compareAtPrice!) : null,
-    badge: stock.soldOut ? 'Sold out' : stock.low ? `Only ${stock.left} left` : onSale ? 'Sale' : null,
+    badge: p.comingSoon ? 'Coming soon' : stock.soldOut ? 'Sold out' : stock.low ? `Only ${stock.left} left` : onSale ? 'Sale' : null,
     soldOut: stock.soldOut,
+    comingSoon: Boolean(p.comingSoon),
     // whole photos at their own shape: the card frame shows them uncropped (see .pcard-media img)
     image: imgProps(p.images?.[0], 640, undefined, sizes, p.images?.[0]?.alt || p.name),
     image2: imgProps(p.images?.[1], 640, undefined, sizes, p.images?.[1]?.alt || p.name),
     quickAdd:
-      hasVariants || stock.soldOut
+      hasVariants || stock.soldOut || p.comingSoon
         ? null
         : {
             productId: p._id,

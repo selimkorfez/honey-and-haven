@@ -17,6 +17,7 @@ type CheckoutProduct = {
   _id: string
   name: string
   available?: boolean
+  comingSoon?: boolean
   price?: number
   stock?: number | null
   collectionOnly?: boolean
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
   for (const line of body.lines) {
     const id = lineId(line.productId, line.variantKey)
     const p = products.find((x) => x._id === line.productId)
-    if (!p || p.available === false || typeof p.price !== 'number') {
+    if (!p || p.available === false || p.comingSoon || typeof p.price !== 'number') {
       problems.push(`Sorry, ${p?.name ?? 'one item'} is no longer available.`)
       fix.push({ id, max: 0 })
       continue

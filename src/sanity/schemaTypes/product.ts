@@ -110,6 +110,14 @@ export const product = defineType({
     }),
 
     defineField({ name: 'available', title: 'Show in shop', type: 'boolean', group: 'display', initialValue: true, description: 'Turn off to hide the product without deleting it.' }),
+    defineField({
+      name: 'comingSoon',
+      title: 'Coming soon',
+      type: 'boolean',
+      group: 'display',
+      initialValue: false,
+      description: 'Shows the product with a “Coming soon” label, but it can’t be bought yet. Switch off when it’s ready to sell.',
+    }),
     defineField({ name: 'featured', title: 'Pin to home page', type: 'boolean', group: 'display', initialValue: false, description: 'Pinned products appear in the shop section of the home page, three to a row (up to 6).' }),
     orderRankField({ type: 'product', newItemPosition: 'before', hidden: true }),
   ],
@@ -118,8 +126,8 @@ export const product = defineType({
     { title: 'Stock (lowest first)', name: 'stockAsc', by: [{ field: 'stock', direction: 'asc' }] },
   ],
   preview: {
-    select: { title: 'name', price: 'price', stock: 'stock', media: 'images.0', available: 'available', featured: 'featured', variants: 'variants' },
-    prepare: ({ title, price, stock, media, available, featured, variants }) => {
+    select: { title: 'name', price: 'price', stock: 'stock', media: 'images.0', available: 'available', featured: 'featured', variants: 'variants', soon: 'comingSoon' },
+    prepare: ({ title, price, stock, media, available, featured, variants, soon }) => {
       const vs = (variants as { stock?: number }[] | undefined) ?? []
       const stockText = vs.length
         ? `${vs.length} options${vs.some((v) => v.stock === 0) ? ' · some sold out' : ''}`
@@ -130,7 +138,7 @@ export const product = defineType({
           : null
       return {
         title: title ?? 'New product',
-        subtitle: [typeof price === 'number' ? `£${price.toFixed(2)}` : 'No price', stockText, featured ? 'Pinned' : null, available === false ? 'HIDDEN' : null].filter(Boolean).join(' · '),
+        subtitle: [typeof price === 'number' ? `£${price.toFixed(2)}` : 'No price', soon ? 'COMING SOON' : stockText, featured ? 'Pinned' : null, available === false ? 'HIDDEN' : null].filter(Boolean).join(' · '),
         media,
       }
     },

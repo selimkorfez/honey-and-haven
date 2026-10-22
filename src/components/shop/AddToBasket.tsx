@@ -24,9 +24,11 @@ type Props = {
   lowAt: number
   ordersOpen: boolean
   closedMessage?: string
+  /** shown in the shop but not for sale yet */
+  comingSoon?: boolean
 }
 
-export function AddToBasket({ product, lowAt, ordersOpen, closedMessage }: Props) {
+export function AddToBasket({ product, lowAt, ordersOpen, closedMessage, comingSoon = false }: Props) {
   const { add, lines } = useBasket()
   const hasVariants = product.variants.length > 0
   const [variantKey, setVariantKey] = useState<string | null>(hasVariants && product.variants.length === 1 ? product.variants[0]._key : null)
@@ -128,7 +130,9 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage }: Props
       ) : null}
 
       <p className="atb-stock" aria-live="polite">
-        {allSoldOut
+        {comingSoon
+          ? 'Coming soon. It isn’t in the shop just yet, so check back soon or ask in store.'
+          : allSoldOut
           ? 'Sold out for now. Check back soon or ask in store.'
           : stock.soldOut
             ? `This ${optionLabel} is sold out.`
@@ -141,7 +145,7 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage }: Props
                   : 'In stock'}
       </p>
 
-      {!ordersOpen ? (
+      {comingSoon ? null : !ordersOpen ? (
         <p className="atb-closed">{closedMessage}</p>
       ) : allSoldOut ? null : (
         <div className="atb-row">

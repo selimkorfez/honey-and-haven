@@ -4,7 +4,7 @@ const image = `{ ..., "alt": coalesce(alt, ""), asset->{ _id, url, metadata { lq
 const PRODUCT_BASE = `
   _id, name, "slug": slug.current, "category": category->title,
   summary, price, compareAtPrice, stock, collectionOnly, optionName,
-  variants[]{ _key, name, price, stock }, featured
+  variants[]{ _key, name, price, stock }, featured, comingSoon
 `
 const PRODUCT_CARD = `${PRODUCT_BASE}, "images": images[0...2] ${image}`
 
@@ -42,7 +42,7 @@ export const HOME_QUERY = `{
   },
   "gallery": *[_id == "galleryPage"][0]{ heading, text, show, photos[] ${image} },
   "featured": *[_type == "menuItem" && featured == true && available != false] | order(orderRank asc)[0...6]{
-    _id, name, description, price, priceNote, dietary, image ${image}, "category": category->title
+    _id, name, description, price, priceNote, dietary, comingSoon, image ${image}, "category": category->title
   },
   "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(orderRank asc)[0...6]{ ${PRODUCT_CARD} }
 }`
@@ -52,7 +52,7 @@ export const MENU_QUERY = `{
   "categories": *[_type == "menuCategory"] | order(orderRank asc){
     _id, title, description, showMilks,
     "items": *[_type == "menuItem" && references(^._id) && available != false] | order(orderRank asc){
-      _id, name, description, price, priceNote, dietary, image ${image}
+      _id, name, description, price, priceNote, dietary, comingSoon, image ${image}
     }
   }[count(items) > 0]
 }`
@@ -76,7 +76,7 @@ export const PRODUCT_SLUGS_QUERY = `*[_type == "product" && available != false &
 
 /** Used at checkout: always fresh (no CDN), never trusted from the browser. */
 export const CHECKOUT_PRODUCTS_QUERY = `*[_type == "product" && _id in $ids]{
-  _id, name, available, price, stock, collectionOnly,
+  _id, name, available, comingSoon, price, stock, collectionOnly,
   variants[]{ _key, name, price, stock },
   "imageUrl": images[0].asset->url
 }`

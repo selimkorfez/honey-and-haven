@@ -87,7 +87,10 @@ export default async function HomePage() {
     name: item.name,
     price: formatPrice(item.price, item.priceNote),
     description: item.description,
-    tags: (item.dietary ?? []).map((d) => DIETARY_LABELS[d] ?? { short: d, long: d }),
+    tags: [
+      ...(item.comingSoon ? [{ short: 'Coming soon', long: 'Coming soon: not on sale yet' }] : []),
+      ...(item.dietary ?? []).map((d) => DIETARY_LABELS[d] ?? { short: d, long: d }),
+    ],
     image: imgProps(item.image, 720, 720, '(max-width: 860px) 100vw, 45vw', item.image?.alt || item.name),
   }))
 
@@ -279,7 +282,7 @@ function Shop({ heading, text, items }: { heading?: string; text?: string; items
                     <LogoMark />
                   </div>
                 )}
-                {item.badge ? <span className="pcard-badge" data-kind={item.soldOut ? 'out' : item.badge === 'Sale' ? 'sale' : 'low'}>{item.badge}</span> : null}
+                {item.badge ? <span className="pcard-badge" data-kind={item.comingSoon ? 'soon' : item.soldOut ? 'out' : item.badge === 'Sale' ? 'sale' : 'low'}>{item.badge}</span> : null}
               </div>
               <div className="shop-body">
                 <div className="shop-line">
@@ -302,7 +305,7 @@ function Shop({ heading, text, items }: { heading?: string; text?: string; items
                 <div className="shop-actions">
                   {item.quickAdd ? <QuickAdd item={item.quickAdd} label="Add to basket" /> : null}
                   <span className="shop-more" aria-hidden="true">
-                    {item.soldOut ? 'Sold out' : item.quickAdd ? 'Details' : 'Choose options'} <ArrowUpRight />
+                    {item.comingSoon ? 'Coming soon' : item.soldOut ? 'Sold out' : item.quickAdd ? 'Details' : 'Choose options'} <ArrowUpRight />
                   </span>
                 </div>
               </div>

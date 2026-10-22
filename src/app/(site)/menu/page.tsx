@@ -85,7 +85,7 @@ export default async function MenuPage() {
             </div>
             <ul className="menu-list">
               {cat.items.map((item) => (
-                <li key={item._id} className={`menu-item${item.image?.asset ? '' : ' no-image'}`}>
+                <li key={item._id} className={`menu-item${item.image?.asset ? '' : ' no-image'}`} data-soon={item.comingSoon || undefined}>
                   {item.image?.asset ? (
                     <div className="menu-thumb">
                       <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt || item.name} />
@@ -93,7 +93,10 @@ export default async function MenuPage() {
                   ) : null}
                   <div>
                     <div className="menu-line">
-                      <h3>{item.name}</h3>
+                      <h3>
+                        {item.name}
+                        {item.comingSoon ? <span className="tag tag-soon">Coming soon</span> : null}
+                      </h3>
                       {formatPrice(item.price, item.priceNote) ? (
                         <>
                           <span className="dots" aria-hidden="true" />
