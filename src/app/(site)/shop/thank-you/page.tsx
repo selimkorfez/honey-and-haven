@@ -86,7 +86,7 @@ export default async function ThankYouPage({ searchParams }: { searchParams: Pro
               <span className="price">{order.delivery ? gbp(order.delivery) : 'Free'}</span>
             </li>
             <li className="thanks-total">
-              <span>Total paid</span>
+              <span>{order.total === 0 ? 'Total (covered by your code)' : 'Total paid'}</span>
               <span className="price">{gbp(order.total)}</span>
             </li>
           </ul>

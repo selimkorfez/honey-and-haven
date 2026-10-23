@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { isConfigured } from '@/sanity/env'
 import { freshClient, getWriteClient } from '@/sanity/lib/write'
 import { CHECKOUT_PRODUCTS_QUERY, SHOP_SETTINGS_QUERY } from '@/sanity/lib/queries'
@@ -7,7 +8,7 @@ import { checkoutLive, withShopDefaults } from '@/lib/shop'
 import { deliveryCost } from '@/lib/money'
 import { MAX_PER_LINE, checkDetails, lineId, type CheckoutRequest, type CustomerDetails } from '@/lib/basket'
 import { DISCOUNT_QUERY, checkDiscount, discountAmount, normaliseCode, type DiscountDoc } from '@/lib/discounts'
-import { newOrderRef, pendingId, type PendingCheckout } from '@/lib/orders'
+import { freeCheckoutId, newOrderRef, pendingId, recordOrder, type PendingCheckout } from '@/lib/orders'
 import type { ShopSettings } from '@/lib/types'
 import { siteUrl } from '@/lib/format'
 
@@ -154,10 +155,44 @@ export async function POST(req: NextRequest) {
   }
   const delivery = isDelivery && !freeDelivery ? deliveryCost(settings, subtotal) : 0
   const total = Math.round((subtotal - discount + delivery) * 100) / 100
-  if (total < 0.5) return fail('Orders need to be at least 50p to pay online. Please pop in to the café instead.', 400)
+  // A code that covers the whole order: nothing to pay, so no SumUp (see below)
+  const free = total === 0 && discount > 0
+  if (!free && total < 0.5) return fail('Orders need to be at least 50p to pay online. Please pop in to the café instead.', 400)
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL ? siteUrl() : req.nextUrl.origin
   const ref = newOrderRef()
+  const pendingBase = {
+    _id: pendingId(ref),
+    _type: 'pendingCheckout' as const,
+    ref,
+    createdAt: new Date().toISOString(),
+    status: 'open' as const,
+    fulfilment: body.fulfilment,
+    customer: body.customer,
+    lines,
+    subtotal,
+    delivery,
+    discount,
+    discountCode: discountDoc?.code,
+    discountId: discountDoc?._id,
+    total,
+  }
+
+  if (free) {
+    // Saved as an order straight away (stock and the code's uses are updated as for a paid
+    // order); the customer goes to the thank-you page, which is their receipt
+    try {
+      await write.create({ ...pendingBase, sumupId: freeCheckoutId(ref) } satisfies PendingCheckout)
+      const order = await recordOrder(ref)
+      if (!order?.recorded) throw new Error('free order was not recorded')
+      revalidateTag('sanity', 'max')
+      return NextResponse.json({ url: `${origin}/shop/thank-you?order=${ref}` })
+    } catch (err) {
+      console.error('[checkout] free order error', err)
+      return fail('We couldn’t place your order just now. Please try again in a moment.', 502)
+    }
+  }
+
   try {
     const checkout = await createCheckout({
       reference: ref,
@@ -168,23 +203,7 @@ export async function POST(req: NextRequest) {
     })
     if (!checkout.hosted_checkout_url) throw new Error('SumUp did not return a payment page')
 
-    const pending: PendingCheckout = {
-      _id: pendingId(ref),
-      _type: 'pendingCheckout',
-      ref,
-      sumupId: checkout.id,
-      createdAt: new Date().toISOString(),
-      status: 'open',
-      fulfilment: body.fulfilment,
-      customer: body.customer,
-      lines,
-      subtotal,
-      delivery,
-      discount,
-      discountCode: discountDoc?.code,
-      discountId: discountDoc?._id,
-      total,
-    }
+    const pending: PendingCheckout = { ...pendingBase, sumupId: checkout.id }
     // Private (the "checkouts." prefix): only the server and signed-in staff can read it
     await write.create(pending)
     return NextResponse.json({ url: checkout.hosted_checkout_url })

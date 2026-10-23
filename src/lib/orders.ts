@@ -1,5 +1,5 @@
 import { getWriteClient } from '@/sanity/lib/write'
-import { getCheckout, isSandboxCheckout, transactionCode, type SumUpStatus } from './sumup'
+import { getCheckout, isSandboxCheckout, transactionCode, type SumUpCheckout, type SumUpStatus } from './sumup'
 import type { CustomerDetails, Fulfilment } from './basket'
 
 export type OrderSummary = {
@@ -48,6 +48,14 @@ export type PendingCheckout = {
 }
 
 export const pendingId = (ref: string) => `checkouts.${ref}`
+
+/**
+ * Orders a discount code covers in full (total £0): nothing to pay, so they skip SumUp and are
+ * saved straight away. Their pending checkout gets an id starting "free_" instead of a SumUp one.
+ */
+const FREE = 'free_'
+export const freeCheckoutId = (ref: string) => `${FREE}${ref}`
+export const isFreeCheckout = (id: string) => id.startsWith(FREE)
 export const isOrderRef = (ref: string) => /^HH-[A-Z0-9]{6,20}$/.test(ref)
 
 /** "HH-" plus a short, unguessable code: the order number customers and staff see. */
@@ -73,7 +81,11 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
   const pending = await write.getDocument<PendingCheckout>(pendingId(ref))
   if (!pending?.sumupId) return null
 
-  const checkout = await getCheckout(pending.sumupId)
+  const free = isFreeCheckout(pending.sumupId)
+  // nothing to pay: "paid" as long as the saved total really is £0
+  const checkout: SumUpCheckout = free
+    ? { id: pending.sumupId, status: pending.total === 0 ? 'PAID' : 'FAILED', amount: 0, currency: 'GBP', checkout_reference: ref }
+    : await getCheckout(pending.sumupId)
   // Paid, for exactly the amount we asked for, for this order
   const paid =
     checkout.status === 'PAID' &&
@@ -137,10 +149,10 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     discount: pending.discount,
     discountCode: pending.discountCode,
     total: pending.total,
-    paymentProvider: test ? 'Test payment (no money taken)' : 'SumUp',
+    paymentProvider: test ? 'Test payment (no money taken)' : free ? `No payment: covered by code ${pending.discountCode ?? ''}`.trim() : 'SumUp',
     testOrder: test || undefined,
     transactionCode: transactionCode(checkout),
-    sumupCheckoutId: checkout.id,
+    sumupCheckoutId: free ? undefined : checkout.id,
   })
 
   // Take sold items off stock (on the published product and any unpublished edits of it)

@@ -50,6 +50,8 @@ export function BasketDrawer() {
   const freeDelivery = Boolean(applied?.rule.freeDelivery) && !belowMin
   const delivery = fulfilment === 'delivery' && !freeDelivery ? deliveryCost(config, b.subtotal) : 0
   const total = Math.round((b.subtotal - discount + delivery) * 100) / 100
+  // a code covers the whole order: no payment step (see /api/checkout)
+  const freeOrder = total === 0 && discount > 0
   const toFree =
     fulfilment === 'delivery' && !freeDelivery && typeof config.freeDeliveryOver === 'number' && config.freeDeliveryOver > 0 && delivery > 0
       ? config.freeDeliveryOver - b.subtotal
@@ -499,10 +501,12 @@ export function BasketDrawer() {
                     </p>
                   ) : null}
                   <button type="submit" className="btn btn-primary basket-checkout" disabled={busy} aria-busy={busy}>
-                    {busy ? 'Opening secure payment…' : `Pay ${gbp(total)}`}
-                    {busy ? null : <Lock />}
+                    {freeOrder ? (busy ? 'Placing your order…' : 'Place order') : busy ? 'Opening secure payment…' : `Pay ${gbp(total)}`}
+                    {busy || freeOrder ? null : <Lock />}
                   </button>
-                  <p className="basket-secure">You’ll pay on SumUp’s secure page, then come back here.</p>
+                  <p className="basket-secure">
+                    {freeOrder ? 'Nothing to pay: your code covers it. Your receipt is on the next page.' : 'You’ll pay on SumUp’s secure page, then come back here.'}
+                  </p>
                 </div>
               </form>
             )}
