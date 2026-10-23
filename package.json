@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/patch-next.mjs && next build",
+    "postinstall": "node scripts/patch-next.mjs",
     "start": "next start",
     "deploy-schema": "sanity schema deploy"
   },

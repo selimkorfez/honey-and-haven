@@ -9,6 +9,7 @@ import { announcementHref, mapsLink, siteUrl } from '@/lib/format'
 import { activeSeason } from '@/lib/seasons'
 import { Header } from '@/components/Header'
 import { THEME_SCRIPT } from '@/components/ThemeSwitch'
+import { LATE_JS_SCRIPT } from '@/lib/lateJs'
 import { Footer } from '@/components/Footer'
 import { ScrollFX } from '@/components/ScrollFX'
 import { MotionProvider } from '@/components/MotionProvider'
@@ -82,11 +83,13 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads
-    <html lang="en-GB" className={`${serif.variable} ${serifItalic.variable} ${sans.variable}`} suppressHydrationWarning>
+    // data-late-js: the page's scripts load just after the first paint (LATE_JS_SCRIPT, scripts/patch-next.mjs)
+    <html lang="en-GB" className={`${serif.variable} ${serifItalic.variable} ${sans.variable}`} data-late-js="" suppressHydrationWarning>
       <body>
         {/* Sets light/dark before anything paints. First thing in <body> rather than in <head>: a script
             React draws inside <head> sometimes threw a hydration error (#418) on page load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: LATE_JS_SCRIPT }} />
         <WordmarkSprite />
         <MotionProvider>
           <BasketProvider config={checkout}>

@@ -88,7 +88,8 @@ export default async function MenuPage() {
                 <li key={item._id} className={`menu-item${item.image?.asset ? '' : ' no-image'}`} data-soon={item.comingSoon || undefined}>
                   {item.image?.asset ? (
                     <div className="menu-thumb">
-                      <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt || item.name} />
+                      {/* the item's name is right next to it, so the photo only needs its own description (if any) */}
+                      <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt && item.image.alt !== item.name ? item.image.alt : ''} />
                     </div>
                   ) : null}
                   <div>
