@@ -1,6 +1,7 @@
 'use client'
 
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import { Bag } from '../Icons'
 import { useBasket } from './BasketProvider'
 
@@ -16,7 +17,7 @@ export function BasketButton() {
       <Bag />
       <AnimatePresence>
         {count ? (
-          <motion.span
+          <m.span
             key={count}
             className="basket-badge"
             initial={{ scale: 0.4, opacity: 0 }}
@@ -26,7 +27,7 @@ export function BasketButton() {
             aria-hidden="true"
           >
             {count}
-          </motion.span>
+          </m.span>
         ) : null}
       </AnimatePresence>
     </button>

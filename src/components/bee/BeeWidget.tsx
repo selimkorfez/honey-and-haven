@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, useReducedMotion } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { BeePick } from '@/lib/types'
 import { BeeMark } from './BeeMark'
 import { ArrowRight, ArrowUpRight, Close } from '../Icons'
@@ -116,7 +117,7 @@ export function BeeWidget({ greeting, picks }: { greeting?: string; picks: BeePi
     <div className="bee" data-open={open || undefined}>
       <AnimatePresence>
         {hello && !open ? (
-          <motion.div
+          <m.div
             className="bee-hello"
             initial={{ opacity: 0, y: 10, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -129,13 +130,13 @@ export function BeeWidget({ greeting, picks }: { greeting?: string; picks: BeePi
             <button type="button" className="bee-hello-close" aria-label="Dismiss" onClick={() => setHello(false)}>
               <Close width={14} height={14} />
             </button>
-          </motion.div>
+          </m.div>
         ) : null}
       </AnimatePresence>
 
       <AnimatePresence>
         {open ? (
-          <motion.div
+          <m.div
             ref={panel}
             id={`${ids}-panel`}
             className="bee-panel"
@@ -171,7 +172,7 @@ export function BeeWidget({ greeting, picks }: { greeting?: string; picks: BeePi
             <div className="bee-body" role="tabpanel">
               {tab === 'picks' && picks.length ? <Picks picks={picks} onGo={() => setOpen(false)} /> : <Tell pathname={pathname} />}
             </div>
-          </motion.div>
+          </m.div>
         ) : null}
       </AnimatePresence>
 
@@ -208,7 +209,7 @@ function Picks({ picks, onGo }: { picks: BeePick[]; onGo: () => void }) {
           </>
         )
         return (
-          <motion.li key={p._key} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i, duration: 0.4, ease }}>
+          <m.li key={p._key} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i, duration: 0.4, ease }}>
             {p.link ? (
               external ? (
                 <a href={p.link} target="_blank" rel="noopener noreferrer" className="bee-pick">
@@ -222,7 +223,7 @@ function Picks({ picks, onGo }: { picks: BeePick[]; onGo: () => void }) {
             ) : (
               <div className="bee-pick">{inner}</div>
             )}
-          </motion.li>
+          </m.li>
         )
       })}
     </ul>
@@ -271,14 +272,14 @@ function Tell({ pathname }: { pathname: string }) {
   if (state === 'sent') {
     return (
       <div className="bee-sent" role="status">
-        <motion.span
+        <m.span
           className="bee-sent-mark"
           initial={{ x: -40, y: 30, rotate: -20, opacity: 0 }}
           animate={{ x: 0, y: 0, rotate: 0, opacity: 1 }}
           transition={{ duration: 0.9, ease }}
         >
           <BeeMark />
-        </motion.span>
+        </m.span>
         <h3>Thank you!</h3>
         <p>The bee is buzzing your note over to the team{name ? `, ${name.split(' ')[0]}` : ''}.{email ? ' If it needs a reply, we’ll email you.' : ''}</p>
         <button

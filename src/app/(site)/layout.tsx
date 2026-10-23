@@ -22,9 +22,13 @@ import { PreviewBridgeLazy } from '@/components/preview/PreviewBridgeLazy'
 import { newsletterSettings } from '@/lib/newsletter'
 import { brevoConfigured } from '@/lib/brevo'
 import { NewsletterBand } from '@/components/newsletter/NewsletterBand'
-import { NewsletterPopup } from '@/components/newsletter/NewsletterPopup'
+import { NewsletterPopupLoader } from '@/components/newsletter/NewsletterPopupLoader'
+import { WordmarkSprite } from '@/components/Wordmark'
 
-const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['SOFT', 'opsz'], style: ['normal', 'italic'] })
+const serif = Fraunces({ subsets: ['latin'], variable: '--font-serif', axes: ['opsz'], style: 'normal' })
+// The italic is only used in a few notes (mostly on the menu page), so it isn't preloaded on every page:
+// it shares the "Fraunces" family name, so the browser fetches it only where italic text appears.
+const serifItalic = Fraunces({ subsets: ['latin'], variable: '--font-serif-italic', axes: ['opsz'], style: 'italic', preload: false })
 const sans = Manrope({ subsets: ['latin'], variable: '--font-sans' })
 
 export const revalidate = 60
@@ -78,11 +82,12 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     // suppressHydrationWarning: the theme script sets data-theme on <html> before React loads
-    <html lang="en-GB" className={`${serif.variable} ${sans.variable}`} suppressHydrationWarning>
+    <html lang="en-GB" className={`${serif.variable} ${serifItalic.variable} ${sans.variable}`} suppressHydrationWarning>
       <body>
         {/* Sets light/dark before anything paints. First thing in <body> rather than in <head>: a script
             React draws inside <head> sometimes threw a hydration error (#418) on page load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <WordmarkSprite />
         <MotionProvider>
           <BasketProvider config={checkout}>
             <Header
@@ -97,7 +102,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             {showLetter ? <NewsletterBand settings={letter} /> : null}
             <Footer settings={settings} />
             {settings?.beeEnabled !== false ? <BeeWidget greeting={settings?.beeGreeting} picks={settings?.beePicks ?? []} /> : null}
-            {showLetter && letter.popup ? <NewsletterPopup settings={letter} /> : null}
+            {showLetter && letter.popup ? <NewsletterPopupLoader settings={letter} /> : null}
           </BasketProvider>
         </MotionProvider>
         <ScrollFX />

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, LayoutGroup, useReducedMotion } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { ProductCardView } from '@/lib/productView'
 import { ProductCard } from './ProductCard'
 
@@ -18,7 +19,7 @@ export function ShopGrid({ products, categories }: { products: ProductCardView[]
         <div className="shop-filters" role="group" aria-label="Filter by category">
           {[null, ...categories].map((c) => (
             <button key={c ?? 'all'} type="button" aria-pressed={active === c} onClick={() => setActive(c)}>
-              {active === c ? <motion.span layoutId="shop-filter" className="shop-filter-pill" transition={{ duration: 0.45, ease }} /> : null}
+              {active === c ? <m.span layoutId="shop-filter" className="shop-filter-pill" transition={{ duration: 0.45, ease }} /> : null}
               <span>{c ?? 'Everything'}</span>
             </button>
           ))}
@@ -27,7 +28,7 @@ export function ShopGrid({ products, categories }: { products: ProductCardView[]
       <ul className="pgrid">
         <AnimatePresence mode="popLayout" initial={false}>
           {shown.map((p) => (
-            <motion.li
+            <m.li
               key={p.id}
               layout={!reduce}
               initial={{ opacity: 0, scale: 0.96 }}
@@ -36,7 +37,7 @@ export function ShopGrid({ products, categories }: { products: ProductCardView[]
               transition={{ duration: 0.45, ease }}
             >
               <ProductCard p={p} />
-            </motion.li>
+            </m.li>
           ))}
         </AnimatePresence>
       </ul>

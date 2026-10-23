@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { ImgProps } from './SanityImg'
 
 export type BoardItem = {
@@ -32,7 +33,7 @@ export function MenuBoard({ items }: { items: BoardItem[] }) {
       <div className="board-photo">
         <AnimatePresence initial={false} mode="popLayout">
           {photo?.image ? (
-            <motion.img
+            <m.img
               key={photo.id}
               src={photo.image.src}
               srcSet={photo.image.srcSet}
@@ -61,7 +62,7 @@ export function MenuBoard({ items }: { items: BoardItem[] }) {
               onClick={() => select(i)}
             >
               {active === i ? (
-                <motion.span
+                <m.span
                   layoutId="board-highlight"
                   className="board-highlight"
                   aria-hidden="true"

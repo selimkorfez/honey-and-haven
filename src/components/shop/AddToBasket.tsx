@@ -1,7 +1,8 @@
 'use client'
 
 import { useId, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { BasketItemInput } from '@/lib/basket'
 import { gbp, stockInfo } from '@/lib/money'
 import type { ProductVariant } from '@/lib/types'
@@ -74,7 +75,7 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage, comingS
     <div className="atb">
       <p className="atb-price">
         <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
+          <m.span
             key={price}
             className="price"
             initial={{ opacity: 0, y: 8 }}
@@ -83,7 +84,7 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage, comingS
             transition={{ duration: 0.3 }}
           >
             {gbp(price)}
-          </motion.span>
+          </m.span>
         </AnimatePresence>
         {onSale ? (
           <s className="price">
@@ -160,7 +161,7 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage, comingS
           </div>
           <button type="button" className="btn btn-primary atb-btn" onClick={submit} disabled={Boolean(variant && stock.soldOut) || (maxQty === 0 && (!hasVariants || Boolean(variant)))}>
             <AnimatePresence mode="wait" initial={false}>
-              <motion.span
+              <m.span
                 key={added ? 'added' : 'add'}
                 className="atb-btn-label"
                 initial={{ opacity: 0, y: 10 }}
@@ -177,7 +178,7 @@ export function AddToBasket({ product, lowAt, ordersOpen, closedMessage, comingS
                 ) : (
                   <>Add to basket · {gbp(Math.round(price * qty * 100) / 100)}</>
                 )}
-              </motion.span>
+              </m.span>
             </AnimatePresence>
           </button>
         </div>

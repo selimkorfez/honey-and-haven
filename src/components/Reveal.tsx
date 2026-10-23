@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'motion/react'
+import * as m from 'motion/react-m'
 
 const ease = [0.16, 1, 0.3, 1] as const
 
@@ -18,7 +18,7 @@ export function Reveal({
   y?: number
   as?: 'div' | 'li' | 'section' | 'figure'
 }) {
-  const M = motion[as]
+  const M = m[as]
   return (
     <M
       className={className}

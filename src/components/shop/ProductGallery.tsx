@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { ImgProps } from '../SanityImg'
 import { Img } from '../Img'
 import { LogoMark } from '../LogoMark'
@@ -78,7 +79,7 @@ export function ProductGallery({ images, thumbs, name }: { images: ImgProps[]; t
     <div className="pgallery">
       <div className="pgallery-main">
         <AnimatePresence initial={false}>
-          <motion.div
+          <m.div
             key={i}
             className="pgallery-frame"
             style={edges[i] ? { background: edges[i]! } : undefined}
@@ -88,7 +89,7 @@ export function ProductGallery({ images, thumbs, name }: { images: ImgProps[]; t
             transition={{ duration: 0.4 }}
           >
             <Img img={images[i]} priority={i === 0} className="pgallery-photo" />
-          </motion.div>
+          </m.div>
         </AnimatePresence>
       </div>
       {images.length > 1 ? (

@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, useReducedMotion } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { NewsletterSettings } from '@/lib/types'
 import { readLetter, writeLetter } from '@/lib/newsletter'
 import { BeeMark } from '../bee/BeeMark'
@@ -89,7 +90,7 @@ export function NewsletterPopup({ settings }: { settings: NewsletterSettings }) 
   return (
     <AnimatePresence>
       {open ? (
-        <motion.div
+        <m.div
           ref={card}
           className="letter-pop"
           role="dialog"
@@ -133,7 +134,7 @@ export function NewsletterPopup({ settings }: { settings: NewsletterSettings }) 
               <NewsletterForm settings={settings} variant="pop" source="popup" onDone={() => setDone(true)} />
             </>
           )}
-        </motion.div>
+        </m.div>
       ) : null}
     </AnimatePresence>
   )

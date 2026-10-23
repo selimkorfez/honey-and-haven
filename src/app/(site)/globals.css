@@ -1553,7 +1553,6 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 
 .hero3d-word {
   display: inline-block;
-  overflow: hidden;
   vertical-align: top;
   padding-bottom: 0.06em;
 }
@@ -1563,10 +1562,12 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 }
 
 /* Headline arrival. Plain CSS (not JavaScript) so the browser runs it on its own
-   compositor thread: it stays smooth even while the 3D scene is being built. */
+   compositor thread: it stays smooth even while the 3D scene is being built.
+   The words rise into place from faintly visible (never fully hidden), so the headline counts
+   as painted straight away: that's the page's "largest contentful paint" for Google. */
 .hero3d-word > span {
-  animation: heroWordIn 1.15s var(--ease) both;
-  animation-delay: calc(0.15s + var(--i, 0) * 0.06s);
+  animation: heroWordIn 1s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 0.06s);
 }
 
 .hero3d-panel.is-first .hero3d-after {
@@ -1576,7 +1577,8 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 
 @keyframes heroWordIn {
   from {
-    transform: translateY(108%);
+    opacity: 0.12;
+    transform: translateY(0.4em);
   }
 }
 

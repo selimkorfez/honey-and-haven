@@ -1,7 +1,8 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import { useReducedMotion, useScroll, useTransform } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { ImgProps } from '../SanityImg'
 
 type Vars = React.CSSProperties & Record<`--${string}`, string | number>
@@ -21,12 +22,12 @@ export function AboutHero({ heading, intro, image, children }: { heading: string
   return (
     <section ref={ref} className="about-hero" aria-labelledby="about-title">
       {image ? (
-        <motion.div className="about-hero-art" style={reduce ? undefined : { scale, y }}>
+        <m.div className="about-hero-art" style={reduce ? undefined : { scale, y }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={image.src} srcSet={image.srcSet} sizes="(max-width: 860px) 160vw, 100vw" width={image.width} height={image.height} alt={image.alt} fetchPriority="high" />
-        </motion.div>
+        </m.div>
       ) : null}
-      <motion.div className="container about-hero-copy" style={reduce ? undefined : { y: copyY }}>
+      <m.div className="container about-hero-copy" style={reduce ? undefined : { y: copyY }}>
         <p className="eyebrow about-in" style={arrive(0, 12, 0.8)}>
           About us
         </p>
@@ -51,7 +52,7 @@ export function AboutHero({ heading, intro, image, children }: { heading: string
             {children}
           </div>
         ) : null}
-      </motion.div>
+      </m.div>
     </section>
   )
 }

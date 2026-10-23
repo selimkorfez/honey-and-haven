@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import * as m from 'motion/react-m'
 import type { Review } from '@/lib/reviews'
 import { Reveal } from '../Reveal'
 import { BeeMark } from '../bee/BeeMark'
@@ -102,7 +102,7 @@ export function Reviews({
           <div className="reviews-rail-wrap">
             <ul className="reviews-rail" ref={rail} onScroll={update} tabIndex={0} aria-label="Reviews">
               {reviews.map((r, i) => (
-                <motion.li
+                <m.li
                   key={r.id}
                   className="review-card"
                   initial={{ opacity: 0, y: 32 }}
@@ -144,7 +144,7 @@ export function Reviews({
                       </small>
                     </span>
                   </footer>
-                </motion.li>
+                </m.li>
               ))}
             </ul>
             {reviews.length > 2 ? (

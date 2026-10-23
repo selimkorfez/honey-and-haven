@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from 'react'
 import Link from 'next/link'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, useReducedMotion } from 'motion/react'
+import * as m from 'motion/react-m'
 import { checkDetails, type CheckoutRequest, type CheckoutResponse, type CustomerDetails, type Fulfilment } from '@/lib/basket'
 import { discountAmount, type DiscountRule } from '@/lib/discounts'
 import { deliveryCost, gbp } from '@/lib/money'
@@ -225,7 +226,7 @@ export function BasketDrawer() {
     <AnimatePresence>
       {open ? (
         <div className="basket-layer" key="basket">
-          <motion.div
+          <m.div
             className="basket-scrim"
             onClick={() => setOpen(false)}
             initial={{ opacity: 0 }}
@@ -233,7 +234,7 @@ export function BasketDrawer() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           />
-          <motion.div
+          <m.div
             ref={panel}
             className="basket"
             role="dialog"
@@ -277,7 +278,7 @@ export function BasketDrawer() {
                 <ul className="basket-lines">
                   <AnimatePresence initial={false}>
                     {lines.map((l) => (
-                      <motion.li
+                      <m.li
                         key={l.id}
                         className="basket-line"
                         layout={!reduce}
@@ -324,7 +325,7 @@ export function BasketDrawer() {
                           </div>
                           {l.max !== null && l.qty >= l.max ? <p className="basket-line-note">That’s all we have left.</p> : null}
                         </div>
-                      </motion.li>
+                      </m.li>
                     ))}
                   </AnimatePresence>
                 </ul>
@@ -505,7 +506,7 @@ export function BasketDrawer() {
                 </div>
               </form>
             )}
-          </motion.div>
+          </m.div>
         </div>
       ) : null}
     </AnimatePresence>

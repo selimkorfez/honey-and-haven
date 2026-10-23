@@ -16,10 +16,30 @@ const SEGS: Seg[] = [
 
 const FOLD = new Set(['ONEY', 'AMP', 'AVEN'])
 
+/*
+ * The letter shapes are written into the page once (WordmarkSprite, in the site layout) and the
+ * header and footer point at them with <use>, instead of each carrying its own copy: the outlines
+ * are large, and this keeps the page's HTML much lighter. They still take the text colour.
+ */
+const symbolId = (id: Seg['id']) => `wm-${id}`
+
+/** The wordmark's letter shapes, once per page (hidden). Rendered by the site layout. */
+export function WordmarkSprite() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute', overflow: 'hidden' }} aria-hidden="true" focusable="false">
+      {SEGS.map((s) => (
+        <symbol key={s.id} id={symbolId(s.id)} viewBox={`0 0 ${s.w} ${H}`}>
+          <path d={s.d} transform={`translate(0,${H}) scale(1,-1)`} fill="currentColor" />
+        </symbol>
+      ))}
+    </svg>
+  )
+}
+
 function Piece({ seg }: { seg: Seg }) {
   return (
     <svg viewBox={`0 0 ${seg.w} ${H}`} className="wm-svg" style={{ aspectRatio: `${seg.w} / ${H}` }} aria-hidden="true" focusable="false">
-      <path d={seg.d} transform={`translate(0,${H}) scale(1,-1)`} fill="currentColor" />
+      <use href={`#${symbolId(seg.id)}`} width={seg.w} height={H} />
     </svg>
   )
 }
@@ -52,9 +72,7 @@ export function Wordmark({ className, title }: { className?: string; title?: str
   return (
     <svg viewBox={`0 0 ${total} ${H}`} className={className} role={title ? 'img' : undefined} aria-label={title} aria-hidden={title ? undefined : true}>
       {SEGS.map((s) => {
-        const g = (
-          <path key={s.id} d={s.d} transform={`translate(${x},${H}) scale(1,-1)`} fill="currentColor" />
-        )
+        const g = <use key={s.id} href={`#${symbolId(s.id)}`} x={x} width={s.w} height={H} />
         x += s.w
         return g
       })}

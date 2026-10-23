@@ -3,7 +3,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { MAX_PER_LINE, lineId, type BasketItemInput, type BasketLine, type Fulfilment } from '@/lib/basket'
 import type { CheckoutConfig } from '@/lib/types'
-import { BasketDrawer } from './BasketDrawer'
+import dynamic from 'next/dynamic'
+
+// The drawer shows nothing until the basket is opened, so its code is fetched just after the page loads
+const BasketDrawer = dynamic(() => import('./BasketDrawer').then((mod) => mod.BasketDrawer), { ssr: false })
 
 type BasketCtx = {
   config: CheckoutConfig

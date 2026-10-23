@@ -2,9 +2,6 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import gsap from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
 import type { ImgProps } from '../SanityImg'
 import { LogoMark } from '../LogoMark'
 import type { HeroTone } from './CupScene'
@@ -12,12 +9,31 @@ import { SeasonFX } from '../season/SeasonFX'
 import { supportsWebGL, workerSupported } from './quality'
 import type { SeasonId } from '@/lib/seasons'
 
-gsap.registerPlugin(ScrollTrigger, useGSAP)
-
 const loadScene = () => import('./CupScene')
 const CupScene = dynamic(loadScene, { ssr: false })
-// start downloading the 3D scene as soon as this file runs in the browser, not after hydration
-if (typeof window !== 'undefined') loadScene().catch(() => {})
+
+/**
+ * Runs `fn` once the page has finished loading and the browser has a quiet moment, so the 3D scene
+ * (three.js, textures) and the scroll choreography never compete with the headline for the
+ * network or the main thread. On a fast connection this is a fraction of a second.
+ */
+function afterLoad(fn: () => void) {
+  let idle = 0
+  let timer = 0
+  const go = () => {
+    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }
+    if (w.requestIdleCallback) idle = w.requestIdleCallback(fn, { timeout: 1500 })
+    else timer = window.setTimeout(fn, 200)
+  }
+  if (document.readyState === 'complete') go()
+  else window.addEventListener('load', go, { once: true })
+  return () => {
+    window.removeEventListener('load', go)
+    const w = window as Window & { cancelIdleCallback?: (id: number) => void }
+    if (idle && w.cancelIdleCallback) w.cancelIdleCallback(idle)
+    if (timer) clearTimeout(timer)
+  }
+}
 
 type Step = { _key: string; title: string; text?: string }
 
@@ -59,51 +75,66 @@ export function HeroScroll({
   }, [])
   const shownTone: HeroTone = night ? 'studio' : tone
 
-  useEffect(() => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    // With the background worker, the worker finds out about WebGL itself (checking here opens a
-    // WebGL context, which holds the page up); if it can't draw, CupScene falls back (onNoWebGL).
-    const gl = (!reduce && workerSupported()) || supportsWebGL()
-    setMode(!gl ? 'flat' : reduce ? 'still' : '3d')
-  }, [])
+  useEffect(
+    () =>
+      afterLoad(() => {
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        // With the background worker, the worker finds out about WebGL itself (checking here opens a
+        // WebGL context, which holds the page up); if it can't draw, CupScene falls back (onNoWebGL).
+        const gl = (!reduce && workerSupported()) || supportsWebGL()
+        setMode(!gl ? 'flat' : reduce ? 'still' : '3d')
+      }),
+    [],
+  )
 
   const animated = mode === '3d'
   const words = heading.split(' ')
 
-  useGSAP(
-    () => {
-      // (the headline's arrival is a CSS animation, see .hero3d-word in globals.css)
-      if (!animated) return
-
-      const panels = gsap.utils.toArray<HTMLElement>('.hero3d-panel')
-      const dots = gsap.utils.toArray<HTMLElement>('.hero3d-dot')
-      const tl = gsap.timeline({
-        defaults: { ease: 'power2.inOut' },
-        scrollTrigger: {
-          trigger: root.current,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 0.8,
-          onUpdate: (self) => {
-            progress.current = self.progress
-            const active = Math.min(panels.length - 1, Math.floor(self.progress * panels.length * 0.999))
-            dots.forEach((d, i) => d.toggleAttribute('data-active', i === active))
-          },
-        },
+  useEffect(() => {
+    // (the headline's arrival is a CSS animation, see .hero3d-word in globals.css)
+    if (!animated) return
+    let cancelled = false
+    let ctx: { revert: () => void } | null = null
+    // GSAP is only needed for the scroll choreography, so it's fetched once the 3D hero starts
+    Promise.all([import('gsap'), import('gsap/ScrollTrigger')])
+      .then(([{ default: gsap }, { ScrollTrigger }]) => {
+        if (cancelled || !root.current) return
+        gsap.registerPlugin(ScrollTrigger)
+        ctx = gsap.context(() => {
+          const panels = gsap.utils.toArray<HTMLElement>('.hero3d-panel')
+          const dots = gsap.utils.toArray<HTMLElement>('.hero3d-dot')
+          const tl = gsap.timeline({
+            defaults: { ease: 'power2.inOut' },
+            scrollTrigger: {
+              trigger: root.current,
+              start: 'top top',
+              end: 'bottom bottom',
+              scrub: 0.8,
+              onUpdate: (self) => {
+                progress.current = self.progress
+                const active = Math.min(panels.length - 1, Math.floor(self.progress * panels.length * 0.999))
+                dots.forEach((d, i) => d.toggleAttribute('data-active', i === active))
+              },
+            },
+          })
+          panels.forEach((panel, i) => {
+            if (i === 0) return
+            tl.to(panels[i - 1], { autoAlpha: 0, y: -48, duration: 0.45 }, i - 0.55).fromTo(
+              panel,
+              { autoAlpha: 0, y: 48 },
+              { autoAlpha: 1, y: 0, duration: 0.45 },
+              i - 0.3,
+            )
+          })
+          tl.to({}, { duration: 0.45 })
+        }, root)
       })
-      panels.forEach((panel, i) => {
-        if (i === 0) return
-        tl.to(panels[i - 1], { autoAlpha: 0, y: -48, duration: 0.45 }, i - 0.55).fromTo(
-          panel,
-          { autoAlpha: 0, y: 48 },
-          { autoAlpha: 1, y: 0, duration: 0.45 },
-          i - 0.3,
-        )
-      })
-      tl.to({}, { duration: 0.45 })
-    },
-    { scope: root, dependencies: [mode, steps.length] },
-  )
+      .catch(() => {})
+    return () => {
+      cancelled = true
+      ctx?.revert()
+    }
+  }, [animated, steps.length])
 
   return (
     <section
