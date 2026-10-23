@@ -18,7 +18,7 @@ import { getShopSettings, toCheckoutConfig } from '@/lib/shop'
 import { BasketProvider } from '@/components/shop/BasketProvider'
 import { BeeWidget } from '@/components/bee/BeeWidget'
 import { draftMode } from 'next/headers'
-import { PreviewBridge } from '@/components/preview/PreviewBridge'
+import { PreviewBridgeLazy } from '@/components/preview/PreviewBridgeLazy'
 import { newsletterSettings } from '@/lib/newsletter'
 import { brevoConfigured } from '@/lib/brevo'
 import { NewsletterBand } from '@/components/newsletter/NewsletterBand'
@@ -101,7 +101,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           </BasketProvider>
         </MotionProvider>
         <ScrollFX />
-        {preview ? <PreviewBridge /> : null}
+        {preview ? <PreviewBridgeLazy /> : null}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </body>
     </html>

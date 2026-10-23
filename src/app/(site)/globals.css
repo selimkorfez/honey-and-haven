@@ -3856,6 +3856,26 @@ html:has(.basket-layer) .bee {
   margin-bottom: 22px;
 }
 
+/* About opening: plain CSS (like the home headline) so the words are there on the first paint,
+   not hidden until the page's JavaScript has loaded */
+.about-in {
+  animation: aboutIn var(--dur, 0.9s) var(--ease) both;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes aboutIn {
+  from {
+    opacity: 0;
+    transform: translateY(var(--from, 16px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-in {
+    animation: none;
+  }
+}
+
 .about-intro {
   font-size: clamp(17px, 1.5vw, 19px);
   color: var(--muted);

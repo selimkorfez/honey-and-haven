@@ -9,6 +9,7 @@ import type { ImgProps } from '../SanityImg'
 import { LogoMark } from '../LogoMark'
 import type { HeroTone } from './CupScene'
 import { SeasonFX } from '../season/SeasonFX'
+import { supportsWebGL, workerSupported } from './quality'
 import type { SeasonId } from '@/lib/seasons'
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
@@ -19,15 +20,6 @@ const CupScene = dynamic(loadScene, { ssr: false })
 if (typeof window !== 'undefined') loadScene().catch(() => {})
 
 type Step = { _key: string; title: string; text?: string }
-
-function supportsWebGL() {
-  try {
-    const c = document.createElement('canvas')
-    return !!(c.getContext('webgl2') || c.getContext('webgl'))
-  } catch {
-    return false
-  }
-}
 
 /**
  * The home page's opening: a takeaway cup, an iced bottle and a honey jar
@@ -69,7 +61,9 @@ export function HeroScroll({
 
   useEffect(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const gl = supportsWebGL()
+    // With the background worker, the worker finds out about WebGL itself (checking here opens a
+    // WebGL context, which holds the page up); if it can't draw, CupScene falls back (onNoWebGL).
+    const gl = (!reduce && workerSupported()) || supportsWebGL()
     setMode(!gl ? 'flat' : reduce ? 'still' : '3d')
   }, [])
 
@@ -124,7 +118,7 @@ export function HeroScroll({
         <div className="hero3d-glow" aria-hidden="true" />
         <div className="hero3d-canvas" aria-hidden="true">
           {mode === '3d' || mode === 'still' ? (
-            <CupScene progress={progress} still={mode === 'still'} tone={shownTone} />
+            <CupScene progress={progress} still={mode === 'still'} tone={shownTone} onNoWebGL={() => setMode('flat')} />
           ) : mode === 'flat' ? (
             fallbackImage ? (
               // eslint-disable-next-line @next/next/no-img-element

@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import { workerSupported } from './quality'
+import { supportsWebGL, workerSupported } from './quality'
 import WorkerScene from './WorkerScene'
 
 export type { HeroTone } from './quality'
@@ -21,7 +21,18 @@ if (typeof window !== 'undefined' && !workerSupported()) loadInline().catch(() =
 
 type Progress = { current: number }
 
-export default function CupScene({ progress, still = false, tone = 'studio' }: { progress: Progress; still?: boolean; tone?: HeroTone }) {
+export default function CupScene({
+  progress,
+  still = false,
+  tone = 'studio',
+  onNoWebGL,
+}: {
+  progress: Progress
+  still?: boolean
+  tone?: HeroTone
+  /** the worker couldn't draw and the page can't either (no WebGL): show the flat picture */
+  onNoWebGL?: () => void
+}) {
   const wrap = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(true)
   const [ready, setReady] = useState(false)
@@ -56,7 +67,8 @@ export default function CupScene({ progress, still = false, tone = 'studio' }: {
           onReady={() => setReady(true)}
           onFail={() => {
             setReady(false)
-            setInWorker(false)
+            if (supportsWebGL()) setInWorker(false)
+            else onNoWebGL?.()
           }}
         />
       ) : (

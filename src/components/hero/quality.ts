@@ -35,11 +35,15 @@ export const LEVELS: Quality[] = [
   { level: 2, dpr: 2, shadowSize: 1024, shadowEvery: 1, beanShadows: true, beans: 46, transmission: true, rich: true, wisps: 3, octaves: 5, runners: true, tex: 1, segments: 96 },
 ]
 
-/** The graphics chip's name as the browser reports it (e.g. "Adreno (TM) 740", "Apple M2"), or "". */
-function gpuName() {
+/**
+ * The graphics chip's name as the browser reports it (e.g. "Adreno (TM) 740", "Apple M2"), or "".
+ * Opening a WebGL context to ask is slow (it starts up the graphics side of the browser and holds
+ * up the page for a moment), so with the background worker this runs in the worker, not on the page.
+ */
+export function gpuName() {
   try {
-    const c = document.createElement('canvas')
-    const gl = c.getContext('webgl')
+    const c = typeof document !== 'undefined' ? document.createElement('canvas') : new OffscreenCanvas(1, 1)
+    const gl = c.getContext('webgl') as WebGLRenderingContext | null
     if (!gl) return ''
     const info = gl.getExtension('WEBGL_debug_renderer_info')
     const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || '')
@@ -47,6 +51,16 @@ function gpuName() {
     return name
   } catch {
     return ''
+  }
+}
+
+/** Can this browser draw WebGL on the page at all? (Also opens a context, so only used when needed.) */
+export function supportsWebGL() {
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl2') || c.getContext('webgl'))
+  } catch {
+    return false
   }
 }
 
@@ -85,13 +99,15 @@ export function gpuLevel(name: string): 0 | 1 | 2 | null {
   return null
 }
 
-let chosenLevel: 0 | 1 | 2 | null = null
-/** A first guess from the device (processor, memory, screen and graphics chip); picked once per visit. */
-export function startLevel(): 0 | 1 | 2 {
-  if (chosenLevel !== null) return chosenLevel
-  // ?quality=0|1|2 forces a level (handy for checking how each looks)
+let deviceGuess: 0 | 1 | 2 | null = null
+/**
+ * A first guess from the device alone (processor, memory, screen), without asking the graphics
+ * chip; picked once per visit. ?quality=0|1|2 forces a level (handy for checking how each looks).
+ */
+export function deviceLevel(): 0 | 1 | 2 {
+  if (deviceGuess !== null) return deviceGuess
   const forced = new URLSearchParams(window.location.search).get('quality')
-  if (forced === '0' || forced === '1' || forced === '2') return (chosenLevel = Number(forced) as 0 | 1 | 2)
+  if (forced === '0' || forced === '1' || forced === '2') return (deviceGuess = Number(forced) as 0 | 1 | 2)
   const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } }
   const cores = nav.hardwareConcurrency || 4
   const memory = nav.deviceMemory ?? 8
@@ -100,9 +116,21 @@ export function startLevel(): 0 | 1 | 2 {
   let level: 0 | 1 | 2 = 2
   if (nav.connection?.saveData || cores <= 4 || memory <= 3) level = 0
   else if (coarse || small || cores < 8) level = 1
+  return (deviceGuess = level)
+}
+
+/** The device's guess, stepped down if the graphics chip is a weak one (it only ever steps down). */
+export function capByGpu(level: 0 | 1 | 2): 0 | 1 | 2 {
   const gpu = gpuLevel(gpuName())
-  if (gpu !== null && gpu < level) level = gpu
-  return (chosenLevel = level)
+  return gpu !== null && gpu < level ? gpu : level
+}
+
+let chosenLevel: 0 | 1 | 2 | null = null
+/** The level for drawing on the page: the device's guess and the graphics chip (picked once per visit). */
+export function startLevel(): 0 | 1 | 2 {
+  if (chosenLevel !== null) return chosenLevel
+  const level = deviceLevel()
+  return (chosenLevel = qualityForced() ? level : capByGpu(level))
 }
 
 /** ?quality=… on the address: the level is fixed, so the scene shouldn't adapt it. */

@@ -23,7 +23,8 @@ export function QuickAdd({ item, label = 'Add' }: { item: BasketItemInput; label
         add(item)
         setDone(true)
       }}
-      aria-label={`Add ${item.name} to basket`}
+      // the spoken name starts with the words on the button ("Add to basket: Tote bag")
+      aria-label={label === 'Add' ? `Add ${item.name} to basket` : `${label}: ${item.name}`}
     >
       {done ? <Check /> : <Plus />}
       <span>{done ? 'Added' : label}</span>

@@ -1,15 +1,15 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { LEVELS, isTouch, qualityForced, startLevel, workerSupported, type HeroTone } from './quality'
+import { useEffect, useRef, useState } from 'react'
+import { LEVELS, deviceLevel, isTouch, qualityForced, workerSupported, type HeroTone } from './quality'
 
 /*
  * The hero scene drawn by a background worker (scene.worker.tsx). The page keeps only a plain
  * <canvas>, hands it over, and sends small messages; the 3D code never loads on the page, so
  * scrolling and taps stay smooth while the cups turn, and phones have less to start up.
  *
- * To the worker: preload {level} · init {canvas, level, limit, still, adaptive, stats, tone, visible,
- * width, height, dpr} · p {v} progress · m {x, y} mouse · wake · tone · visible · size.
+ * To the worker: preload {level} · init {canvas, level, gpuCheck, limit, still, adaptive, stats,
+ * tone, visible, width, height, dpr} · p {v} progress · m {x, y} mouse · wake · tone · visible · size.
  * From the worker: started · ready (first frame drawn, fade in) · error (draw on the page
  * instead) · frames {n} (?herostats=1).
  */
@@ -27,7 +27,8 @@ if (typeof window !== 'undefined' && workerSupported()) {
   try {
     early = newWorker()
     early.addEventListener('error', () => (earlyBroken = true))
-    early.postMessage({ type: 'preload', level: startLevel() })
+    // (the level is the device's guess; the worker checks the graphics chip itself, off the page)
+    early.postMessage({ type: 'preload', level: deviceLevel() })
   } catch {
     early = null
   }
@@ -36,6 +37,46 @@ if (typeof window !== 'undefined' && workerSupported()) {
 /** One worker per canvas (React's development double-mount would otherwise hand it over twice). */
 type Session = { worker: Worker; kill?: number }
 const sessions = new WeakMap<HTMLCanvasElement, Session>()
+
+/**
+ * Runs `go` once the page's first content is on screen. Starting the 3D drawing (WebGL) keeps the
+ * browser's graphics side busy for a moment, so the headline and page show first, then the scene.
+ */
+function afterFirstPaint(go: () => void) {
+  let done = false
+  let timer = 0
+  let po: PerformanceObserver | null = null
+  const run = () => {
+    if (done) return
+    done = true
+    po?.disconnect()
+    window.clearTimeout(timer)
+    go()
+  }
+  // a moment after it, so that first frame has reached the screen
+  const soon = () => {
+    window.clearTimeout(timer)
+    timer = window.setTimeout(run, 50)
+  }
+  if (performance.getEntriesByName('first-contentful-paint').length) soon()
+  else {
+    try {
+      po = new PerformanceObserver((list) => {
+        if (list.getEntries().some((e) => e.name === 'first-contentful-paint')) soon()
+      })
+      po.observe({ type: 'paint', buffered: true })
+    } catch {
+      po = null
+    }
+    // browsers that don't report it, or a page opened in the background
+    timer = window.setTimeout(run, 1500)
+  }
+  return () => {
+    done = true
+    po?.disconnect()
+    window.clearTimeout(timer)
+  }
+}
 
 const maxDpr = (level: 0 | 1 | 2) => Math.min(LEVELS[level].dpr, window.devicePixelRatio || 1)
 
@@ -62,11 +103,15 @@ export default function WorkerScene({
   cb.current = { onReady, onFail }
   // latest values for the hand-over (later changes are sent by the effects below)
   const initial = useRef({ tone, visible })
+  initial.current = { tone, visible }
+  // the hand-over waits for the page's first paint (see afterFirstPaint)
+  const [painted, setPainted] = useState(false)
+  useEffect(() => afterFirstPaint(() => setPainted(true)), [])
 
   useEffect(() => {
     const canvas = ref.current
-    if (!canvas) return
-    const level = startLevel()
+    if (!canvas || !painted) return
+    const level = deviceLevel()
     let s = sessions.get(canvas)
     if (s) window.clearTimeout(s.kill)
     else {
@@ -81,6 +126,7 @@ export default function WorkerScene({
             type: 'init',
             canvas: off,
             level,
+            gpuCheck: !qualityForced(),
             limit: isTouch(),
             still,
             adaptive: !qualityForced(),
@@ -182,7 +228,7 @@ export default function WorkerScene({
     }
     // the canvas is handed over once; everything else is sent as it changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [painted])
 
   useEffect(() => {
     session.current?.worker.postMessage({ type: 'tone', tone })

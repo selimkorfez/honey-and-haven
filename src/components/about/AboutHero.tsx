@@ -4,7 +4,9 @@ import { useRef } from 'react'
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import type { ImgProps } from '../SanityImg'
 
-const ease = [0.16, 1, 0.3, 1] as const
+type Vars = React.CSSProperties & Record<`--${string}`, string | number>
+/** CSS arrival (see .about-in): shows on first paint without waiting for the page's JavaScript */
+const arrive = (delay: number, from: number, duration = 0.9): Vars => ({ '--d': `${delay}s`, '--from': `${from}px`, '--dur': `${duration}s` })
 
 /** Wide illustration with the heading on its quiet left side; drifts gently as you scroll. */
 export function AboutHero({ heading, intro, image, children }: { heading: string; intro?: string; image: ImgProps | null; children?: React.ReactNode }) {
@@ -25,30 +27,29 @@ export function AboutHero({ heading, intro, image, children }: { heading: string
         </motion.div>
       ) : null}
       <motion.div className="container about-hero-copy" style={reduce ? undefined : { y: copyY }}>
-        <motion.p className="eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}>
+        <p className="eyebrow about-in" style={arrive(0, 12, 0.8)}>
           About us
-        </motion.p>
+        </p>
         <h1 id="about-title">
           {words.map((w, i) => (
             <span key={i}>
-              <span className="hero3d-word">
-                <motion.span initial={{ y: '108%' }} animate={{ y: 0 }} transition={{ duration: 1.1, ease, delay: 0.1 + i * 0.06 }}>
-                  {w}
-                </motion.span>
+              {/* same CSS word-by-word arrival as the home page's headline (.hero3d-word) */}
+              <span className="hero3d-word" style={{ '--i': i } as Vars}>
+                <span>{w}</span>
               </span>
               {i < words.length - 1 ? ' ' : null}
             </span>
           ))}
         </h1>
         {intro ? (
-          <motion.p className="about-intro" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease, delay: 0.55 }}>
+          <p className="about-intro about-in" style={arrive(0.55, 16)}>
             {intro}
-          </motion.p>
+          </p>
         ) : null}
         {children ? (
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, ease, delay: 0.7 }}>
+          <div className="about-in" style={arrive(0.7, 16)}>
             {children}
-          </motion.div>
+          </div>
         ) : null}
       </motion.div>
     </section>

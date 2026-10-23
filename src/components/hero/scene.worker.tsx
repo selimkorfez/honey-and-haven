@@ -8,7 +8,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import { createRoot, extend, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { CAMERA, GL_OPTIONS, SceneContents, frameCount, mouse, preloadTextures, setupRenderer, type OnWake } from './scene'
-import { LEVELS, type HeroTone } from './quality'
+import { LEVELS, capByGpu, type HeroTone } from './quality'
 
 type Scope = {
   postMessage(m: unknown): void
@@ -57,6 +57,8 @@ type Init = {
   type: 'init'
   canvas: OffscreenCanvas
   level: 0 | 1 | 2
+  /** step the level down for a weak graphics chip (off when ?quality= fixes it) */
+  gpuCheck: boolean
   limit: boolean
   still: boolean
   adaptive: boolean
@@ -102,12 +104,26 @@ function App({ init }: { init: Init }) {
   )
 }
 
+/*
+ * The page only guesses the level from the device; asking the graphics chip means opening a WebGL
+ * context, which is slow, so it's done here (once) instead of holding up the page.
+ */
+let finalLevel: 0 | 1 | 2 | null = null
+const levelFor = (asked: 0 | 1 | 2, gpuCheck: boolean) => {
+  if (finalLevel === null) finalLevel = gpuCheck ? capByGpu(asked) : asked
+  return finalLevel
+}
+/** the page's sharpness, kept within what the chosen level allows */
+const clampDpr = (dpr: number) => (finalLevel === null ? dpr : Math.min(dpr, LEVELS[finalLevel].dpr))
+
 let started = false
-async function start(init: Init) {
+async function start(asked: Init) {
   if (started) return
   started = true
+  const init: Init = { ...asked, level: levelFor(asked.level, asked.gpuCheck) }
   const { canvas, level, limit, still, type: _t, ...rest } = init
   void _t
+  rest.dpr = clampDpr(rest.dpr)
   setView({ tone: rest.tone, visible: rest.visible, width: rest.width, height: rest.height, dpr: rest.dpr })
   // the pre-made textures first, as on the page (painted on the spot if they don't arrive)
   await Promise.race([preloadTextures(LEVELS[level].tex), new Promise((r) => setTimeout(r, 4000))])
@@ -134,6 +150,7 @@ scope.addEventListener('message', (e) => {
   const m = e.data
   switch (m?.type) {
     case 'preload':
+      // (by the page's guess: the graphics chip is only asked once drawing starts, see levelFor)
       preloadTextures(LEVELS[m.level as 0 | 1 | 2].tex)
       break
     case 'init':
@@ -156,7 +173,7 @@ scope.addEventListener('message', (e) => {
       setView({ visible: m.visible })
       break
     case 'size':
-      setView({ width: m.width, height: m.height, dpr: m.dpr })
+      setView({ width: m.width, height: m.height, dpr: clampDpr(m.dpr) })
       break
   }
 })
