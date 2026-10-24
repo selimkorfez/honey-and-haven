@@ -166,7 +166,7 @@ export async function receiptPdf(order: OrderDoc, cafe: CafeDetails): Promise<Ui
   }
 
   // Footer
-  text(page, 'Thank you for supporting a little local café.', left, 70, serif, 13)
+  text(page, 'Thank you for supporting us!', left, 70, serif, 13)
   text(page, `Keep this receipt with your order number ${order.orderNumber}.`, left, 52, sans, 9, MUTED)
   return pdf.save()
 }
