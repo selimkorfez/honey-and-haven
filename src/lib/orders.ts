@@ -1,4 +1,6 @@
+import { after } from 'next/server'
 import { getWriteClient } from '@/sanity/lib/write'
+import { sendOrderPlacedEmails } from './orderEmails'
 import { getCheckout, isSandboxCheckout, transactionCode, type SumUpCheckout, type SumUpStatus } from './sumup'
 import type { CustomerDetails, Fulfilment } from './basket'
 
@@ -15,6 +17,8 @@ export type OrderSummary = {
   delivery: number
   discount: number
   total: number
+  /** for the receipt link (once the order is saved) */
+  receiptKey?: string
 }
 
 /** Saved (privately) before the customer is sent to SumUp, so we know what they're paying for. */
@@ -65,6 +69,8 @@ export function newOrderRef() {
   return `HH-${t}${r}`
 }
 
+const randomKey = () => Array.from(crypto.getRandomValues(new Uint8Array(18)), (b) => b.toString(16).padStart(2, '0')).join('')
+
 function formatAddress(c: CustomerDetails) {
   return [c.name, c.line1, c.line2, c.city, c.postcode?.toUpperCase(), 'United Kingdom'].filter(Boolean).join('\n')
 }
@@ -113,7 +119,8 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
 
   // Orders live under "orders." so they are private: only signed-in staff can see them
   const id = `orders.${ref}`
-  if (await write.getDocument(id)) return { ...summary, recorded: true }
+  const existing = await write.getDocument<{ receiptKey?: string }>(id)
+  if (existing) return { ...summary, recorded: true, receiptKey: existing.receiptKey }
 
   const productIds = [...new Set(pending.lines.map((l) => l.productId))]
   const docs = await write.fetch<{ _id: string; stock?: number; variants?: { _key: string; stock?: number }[] }[]>(
@@ -123,6 +130,7 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
 
   // a test purchase: saved like any order, marked as a test, and it doesn't touch stock or codes
   const test = isSandboxCheckout(pending.sumupId)
+  const receiptKey = randomKey()
   const c = pending.customer
   const tx = write.transaction().create({
     _id: id,
@@ -153,6 +161,8 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     testOrder: test || undefined,
     transactionCode: transactionCode(checkout),
     sumupCheckoutId: free ? undefined : checkout.id,
+    // unguessable part of the receipt link (emails, thank-you page, the Studio)
+    receiptKey,
   })
 
   // Take sold items off stock (on the published product and any unpublished edits of it)
@@ -176,8 +186,19 @@ export async function recordOrder(ref: string): Promise<OrderSummary | null> {
     await tx.commit({ visibility: 'sync' })
   } catch (err) {
     // Another request recorded it first: that's fine
-    if ((err as { statusCode?: number }).statusCode === 409) return { ...summary, recorded: true }
+    if ((err as { statusCode?: number }).statusCode === 409) {
+      const saved = await write.getDocument<{ receiptKey?: string }>(id)
+      return { ...summary, recorded: true, receiptKey: saved?.receiptKey }
+    }
     throw err
   }
-  return { ...summary, recorded: true }
+  // Confirmation to the customer and a "new order" email to the café, after the response
+  // (so the thank-you page doesn't wait for them)
+  const send = () => sendOrderPlacedEmails(id).catch((err) => console.error('[orders] emails failed', ref, err))
+  try {
+    after(send)
+  } catch {
+    await send()
+  }
+  return { ...summary, recorded: true, receiptKey }
 }

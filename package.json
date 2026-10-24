@@ -20,6 +20,8 @@
     "motion": "^14.1.0",
     "next": "16.4.2",
     "next-sanity": "^13.3.4",
+    "nodemailer": "^7.0.13",
+    "pdf-lib": "^1.17.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "sanity": "^6.18.0",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "@types/nodemailer": "^7.0.12",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",

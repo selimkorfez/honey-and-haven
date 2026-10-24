@@ -1,3 +1,4 @@
+import { ReceiptLink } from '../components/ReceiptLink'
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { PackageIcon } from '@sanity/icons/Package'
 
@@ -35,7 +36,38 @@ export const order = defineType({
       hidden: ({ document }) => !document?.testOrder,
       description: 'A test purchase: no money was taken and no stock was used. Safe to delete.',
     }),
-    defineField({ name: 'staffNotes', title: 'Staff notes', type: 'text', rows: 2, description: 'Only visible here, e.g. “Royal Mail tracking AB123456789GB”.' }),
+    defineField({
+      name: 'trackingNumber',
+      title: 'Royal Mail tracking number',
+      type: 'string',
+      hidden: ({ document }) => document?.fulfilment !== 'delivery',
+      description: 'Optional. Add it before setting the order to Posted and the customer’s email will include a tracking link.',
+    }),
+    defineField({
+      name: 'emailUpdates',
+      title: 'Email the customer when the status changes',
+      type: 'boolean',
+      initialValue: true,
+      description: 'On: Ready to collect, Posted and Refunded / cancelled each send the customer a short email when you press Publish (once each).',
+    }),
+    defineField({ name: 'staffNotes', title: 'Staff notes', type: 'text', rows: 2, description: 'Only visible here.' }),
+    defineField({
+      name: 'receiptLink',
+      title: 'Receipt',
+      type: 'string',
+      readOnly: true,
+      components: { input: ReceiptLink },
+    }),
+    defineField({
+      name: 'emailsSent',
+      title: 'Emails sent',
+      type: 'array',
+      of: [{ type: 'string' }],
+      readOnly: true,
+      hidden: ({ value }) => !value?.length,
+      description: 'Sent automatically by the website.',
+    }),
+    defineField({ name: 'receiptKey', title: 'Receipt key', type: 'string', readOnly: true, hidden: true }),
     defineField({ name: 'orderNumber', title: 'Order number', type: 'string', readOnly: true }),
     defineField({ name: 'placedAt', title: 'Placed', type: 'datetime', readOnly: true }),
     defineField({

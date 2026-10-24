@@ -3121,6 +3121,18 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   margin: 0 auto;
 }
 
+.thanks-receipt {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin: 4px 0 6px;
+}
+
+.thanks-emailed {
+  font-size: 14px;
+  color: var(--muted);
+}
+
 .thanks-card {
   width: 100%;
   margin: 16px 0;

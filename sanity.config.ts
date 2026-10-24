@@ -7,6 +7,7 @@ import { apiVersion, dataset, projectId } from './src/sanity/env'
 import { ownerOnlyTypes, schemaTypes, singletonTypes, systemTypes } from './src/sanity/schemaTypes'
 import { isOwner, structure } from './src/sanity/structure'
 import { resolve } from './src/sanity/presentation/resolve'
+import { withOrderNotify } from './src/sanity/actions/publishOrder'
 
 export default defineConfig({
   name: 'default',
@@ -25,6 +26,8 @@ export default defineConfig({
       if (ownerOnlyTypes.has(context.schemaType) && !isOwner(context.currentUser)) return []
       // Singletons can't be duplicated or deleted, only edited & published
       if (singletonTypes.has(context.schemaType)) return input.filter(({ action }) => action && ['publish', 'discardChanges', 'restore'].includes(action))
+      // Orders: publishing a new status (ready / posted / cancelled) emails the customer
+      if (context.schemaType === 'order') input = input.map((a) => (a.action === 'publish' ? withOrderNotify(a) : a))
       if (systemTypes.has(context.schemaType)) return input.filter(({ action }) => action !== 'duplicate')
       return input
     },

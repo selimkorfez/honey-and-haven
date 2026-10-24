@@ -6,6 +6,7 @@ import { gbp } from '@/lib/money'
 import { LogoMark } from '@/components/LogoMark'
 import { ClearBasket } from '@/components/shop/ClearBasket'
 import { ArrowRight } from '@/components/Icons'
+import { emailConfigured } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Thank you · Honey & Haven', robots: { index: false, follow: false } }
@@ -91,6 +92,18 @@ export default async function ThankYouPage({ searchParams }: { searchParams: Pro
             </li>
           </ul>
         </div>
+        {order.receiptKey ? (
+          <p className="thanks-receipt">
+            <a href={`/api/receipt/${order.orderNumber}?k=${order.receiptKey}&download=1`} className="btn btn-ghost">
+              Download your receipt (PDF)
+            </a>
+            {emailConfigured() && order.email ? (
+              <span className="thanks-emailed">
+                We’ve also emailed it to <strong>{order.email}</strong>.
+              </span>
+            ) : null}
+          </p>
+        ) : null}
         <Link href="/" className="text-link">
           Back to the home page <ArrowRight />
         </Link>
