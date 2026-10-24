@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { LogoMark } from './LogoMark'
+import { HomeLink } from './HomeLink'
 import { FoldingWordmark } from './Wordmark'
 import { BasketButton } from './shop/BasketButton'
 import { ThemeSwitch } from './ThemeSwitch'
@@ -82,10 +83,10 @@ export function Header({
         </div>
       ) : null}
       <div className="container header-inner">
-        <Link href="/" className="logo" aria-label={`${name} home`}>
+        <HomeLink className="logo" label={`${name} home`}>
           <FoldingWordmark />
           <LogoMark className="logo-mark" />
-        </Link>
+        </HomeLink>
         <nav className="nav" aria-label="Main">
           {/* on phones these move into the side menu */}
           <Link href="/menu" className="nav-link">
