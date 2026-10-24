@@ -85,6 +85,11 @@ The bee in the corner of every page lets visitors send feedback, ideas and recom
 | `CRON_SECRET` | Optional: protects the weekly Instagram token refresh |
 | `GOOGLE_PLACES_API_KEY` | Optional: Google rating and reviews (server only) |
 | `GOOGLE_PLACE_ID` | Optional: alternative to the Place ID in Site settings |
+| `SMTP_HOST` | Outgoing email server (`smtp.ionos.co.uk` for IONOS UK) |
+| `SMTP_PORT` | Outgoing email port (`587` for IONOS STARTTLS) |
+| `SMTP_USER` | Mailbox address used to send customer and order emails |
+| `SMTP_PASSWORD` | Mailbox password (server-only secret) |
+| `ORDER_NOTIFY_EMAIL` | Optional: order-alert recipients; defaults to `SMTP_USER` |
 
 ## Local development
 ```

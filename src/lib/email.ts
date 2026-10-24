@@ -1,11 +1,14 @@
 /**
  * Sending email (order confirmations, new-order alerts, status updates, the daily summary).
  *
- * Sent through the café's Gmail account, so no extra service is needed:
- *   GMAIL_USER          the café's Gmail address (emails come from here, replies go back to it)
- *   GMAIL_APP_PASSWORD  a Google "app password" for that account (not the normal password)
- *   ORDER_NOTIFY_EMAIL  optional: where Dil's order emails go (defaults to GMAIL_USER;
+ * Sent through the café's SMTP account:
+ *   SMTP_HOST           outgoing mail server (for IONOS UK: smtp.ionos.co.uk)
+ *   SMTP_PORT           outgoing mail port (for IONOS STARTTLS: 587)
+ *   SMTP_USER           the café's email address (emails come from here, replies go back to it)
+ *   SMTP_PASSWORD       the mailbox password
+ *   ORDER_NOTIFY_EMAIL  optional: where Dil's order emails go (defaults to SMTP_USER;
  *                       several addresses can be separated with commas)
+ * Legacy GMAIL_USER and GMAIL_APP_PASSWORD values remain supported.
  * Server only. Without these, emails are simply skipped and orders still work.
  *
  * On a computer running the site, EMAIL_DEV=1 writes the emails to files instead of sending them.
@@ -15,21 +18,31 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const devMode = () => process.env.EMAIL_DEV === '1' && !process.env.VERCEL
+const emailUser = () => process.env.SMTP_USER || process.env.GMAIL_USER || ''
+const emailPassword = () => process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD || ''
 
-export const emailConfigured = () => Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD) || devMode()
+export const emailConfigured = () => Boolean(emailUser() && emailPassword()) || devMode()
 
 /** Where Dil's order emails go. */
-export const ownerEmail = () => process.env.ORDER_NOTIFY_EMAIL || process.env.GMAIL_USER || (devMode() ? 'owner@example.com' : '')
+export const ownerEmail = () => process.env.ORDER_NOTIFY_EMAIL || emailUser() || (devMode() ? 'owner@example.com' : '')
 
 let transport: Transporter | null = null
 function getTransport() {
   if (transport) return transport
-  transport = devMode()
-    ? nodemailer.createTransport({ streamTransport: true, buffer: true, newline: 'unix' })
-    : nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: process.env.GMAIL_USER, pass: (process.env.GMAIL_APP_PASSWORD || '').replace(/\s+/g, '') },
-      })
+  if (devMode()) {
+    transport = nodemailer.createTransport({ streamTransport: true, buffer: true, newline: 'unix' })
+    return transport
+  }
+
+  const auth = { user: emailUser(), pass: emailPassword().replace(/\s+/g, '') }
+  const host = process.env.SMTP_HOST
+  if (host) {
+    const port = Number(process.env.SMTP_PORT || 587)
+    const secure = process.env.SMTP_SECURE === 'true' || port === 465
+    transport = nodemailer.createTransport({ host, port, secure, requireTLS: !secure, auth })
+  } else {
+    transport = nodemailer.createTransport({ service: 'gmail', auth })
+  }
   return transport
 }
 
@@ -45,7 +58,7 @@ export type Email = {
 /** Sends one email. Never throws: returns false (and logs) if it couldn't be sent. */
 export async function sendEmail(mail: Email): Promise<boolean> {
   if (!emailConfigured() || !mail.to) return false
-  const from = process.env.GMAIL_USER || 'cafe@example.com'
+  const from = process.env.EMAIL_FROM || emailUser() || 'cafe@example.com'
   try {
     const info = await getTransport().sendMail({
       from: { name: 'Honey & Haven', address: from },
