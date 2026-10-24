@@ -24,6 +24,9 @@ export function ProductCard({ p }: { p: ProductCardView }) {
               {p.name}
             </Link>
           </h3>
+        </div>
+        {/* price and the Add button share a row under the name, so long names get the full width */}
+        <div className="pcard-foot">
           <p className="pcard-price">
             <span className="price">{p.price}</span>
             {p.was ? (
@@ -33,8 +36,8 @@ export function ProductCard({ p }: { p: ProductCardView }) {
               </s>
             ) : null}
           </p>
+          {p.quickAdd ? <QuickAdd item={p.quickAdd} /> : !p.soldOut && !p.comingSoon ? <span className="pcard-choose">Choose</span> : null}
         </div>
-        {p.quickAdd ? <QuickAdd item={p.quickAdd} /> : !p.soldOut && !p.comingSoon ? <span className="pcard-choose">Choose</span> : null}
       </div>
     </article>
   )

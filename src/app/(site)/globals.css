@@ -1766,6 +1766,13 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   gap: clamp(18px, 2.2vw, 32px);
 }
 
+/* exactly four pinned products: one row of four on wide screens, rather than three and a lone card */
+@media (min-width: 1181px) {
+  .shop-grid:has(> li:nth-child(4):last-child) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 1180px) {
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2563,9 +2570,15 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
 }
 
 .pcard-body {
+  display: grid;
+  align-content: space-between;
+  gap: 10px;
+}
+
+.pcard-foot {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 12px;
 }
 
@@ -2756,7 +2769,7 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .pcard-body {
+  .pcard-foot {
     flex-direction: column;
     align-items: stretch;
   }
@@ -3297,11 +3310,7 @@ html:is([data-scrolled='true'], [data-scrolled='hero']) .logo .logo-mark {
   grid-template-rows: auto 1fr;
 }
 
-@media (max-width: 560px) {
-  .pcard-body {
-    justify-content: space-between;
-  }
-}
+
 
 /* Home cards: the photo on top at the photos' own 4:5 shape (a tall strip beside the words
    cropped them), the words underneath */
