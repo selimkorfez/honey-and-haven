@@ -91,7 +91,17 @@ export function BasketProvider({ config, children }: { config: CheckoutConfig; c
   }, [])
 
   const remove = useCallback((id: string) => setLines((prev) => prev.filter((l) => l.id !== id)), [])
-  const clear = useCallback(() => setLines([]), [])
+  const clear = useCallback(() => {
+    setLines([])
+    // Empty the saved copy straight away too: on the thank-you page this runs before the saved
+    // basket is restored (just above), which would otherwise bring the paid-for items back
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || 'null')
+      localStorage.setItem(KEY, JSON.stringify({ ...(saved ?? {}), lines: [] }))
+    } catch {
+      /* storage unavailable */
+    }
+  }, [])
 
   const limit = useCallback((fix: { id: string; max: number }[]) => {
     setLines((prev) =>
