@@ -272,9 +272,6 @@ export const FALLBACK_ABOUT: NonNullable<AboutData> = {
     { _key: 'v2', title: 'Local at heart', text: 'Honey from the Vale of Belvoir, regulars from all over Oadby.' },
     { _key: 'v3', title: 'Always something new', text: 'Seasonal specials, and a secret menu for the favourites.' },
   ],
-  teamHeading: 'The faces behind the counter',
-  teamIntro: 'Say hello next time you’re in. Here’s who’ll be making your drink.',
-  team: [],
 }
 
 export const FALLBACK_GALLERY: NonNullable<GalleryData> = {

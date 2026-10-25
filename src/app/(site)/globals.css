@@ -3997,126 +3997,6 @@ html:has(.basket-layer) .bee {
   color: var(--muted);
 }
 
-.about-team {
-  background: var(--cream);
-}
-
-.about-team-head {
-  display: grid;
-  gap: 12px;
-  max-width: 640px;
-  margin-bottom: clamp(36px, 5vw, 64px);
-}
-
-.about-team-head h2 {
-  font-size: clamp(38px, 4.8vw, 60px);
-  line-height: 1.05;
-}
-
-.about-team-example {
-  margin: 0;
-  padding: 10px 14px;
-  border: 1px dashed rgba(122, 79, 44, 0.45);
-  border-radius: 12px;
-  font-size: 14px;
-  color: var(--oak-text);
-}
-
-.team-grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr));
-  gap: clamp(16px, 2.4vw, 28px);
-}
-
-.team-card {
-  display: grid;
-  gap: 18px;
-  align-content: start;
-}
-
-.team-card:nth-child(even) {
-  margin-top: clamp(0px, 4vw, 56px);
-}
-
-.team-photo {
-  aspect-ratio: 4 / 5;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--oak-wash);
-  display: grid;
-  place-items: center;
-}
-
-.team-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 1.2s var(--ease);
-}
-
-.team-card:hover .team-photo img {
-  transform: scale(1.04);
-}
-
-.team-photo[data-empty] {
-  background:
-    radial-gradient(60% 50% at 50% 45%, rgba(224, 180, 106, 0.35), transparent 70%),
-    var(--oak-wash);
-}
-
-.team-photo-bee {
-  width: 46%;
-  height: auto;
-  color: var(--brown);
-  opacity: 0.85;
-  transition: transform 0.8s var(--ease);
-}
-
-.team-card:hover .team-photo-bee {
-  transform: translateY(-6px) rotate(-6deg);
-}
-
-.team-body h3 {
-  font-size: 26px;
-  margin: 0;
-}
-
-.team-role {
-  margin: 2px 0 10px;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--oak-text);
-}
-
-.team-bio {
-  margin: 0 0 12px;
-  color: var(--muted);
-  font-size: 16px;
-}
-
-.team-fav {
-  margin: 0;
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  align-items: baseline;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.team-fav span {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 .about-cta {
   background: var(--espresso);
   color: var(--cream);
@@ -4194,10 +4074,6 @@ html:has(.basket-layer) .bee {
 
   .about-values {
     grid-template-columns: 1fr;
-  }
-
-  .team-card:nth-child(even) {
-    margin-top: 0;
   }
 }
 
@@ -4869,8 +4745,7 @@ html:where([data-theme='dark']):is([data-scrolled='true'], [data-scrolled='hero'
 
 :where(html[data-theme='dark']) .story-media,
 :where(html[data-theme='dark']) .gallery-item,
-:where(html[data-theme='dark']) .insta-tile,
-:where(html[data-theme='dark']) .team-photo {
+:where(html[data-theme='dark']) .insta-tile {
   box-shadow: none;
 }
 

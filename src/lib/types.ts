@@ -66,7 +66,6 @@ export type BeePick = { _key: string; title: string; text?: string; link?: strin
 
 export type HandpickedReview = { _key: string; quote: string; name: string; rating?: number; source?: string; link?: string }
 
-export type TeamMember = { _key: string; name: string; role?: string; photo?: SanityImage; bio?: string; favourite?: string }
 
 export type AboutData = {
   heading?: string
@@ -76,9 +75,6 @@ export type AboutData = {
   story?: PortableTextBlock[]
   storyImage?: SanityImage
   values?: { _key: string; title: string; text?: string }[]
-  teamHeading?: string
-  teamIntro?: string
-  team?: TeamMember[]
   visitHeading?: string
   visitText?: string
   seo?: Seo

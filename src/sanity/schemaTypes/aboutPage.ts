@@ -1,6 +1,5 @@
 import { defineArrayMember, defineField, defineType } from 'sanity'
 import { UsersIcon } from '@sanity/icons/Users'
-import { UserIcon } from '@sanity/icons/User'
 import { SparkleIcon } from '@sanity/icons/Sparkle'
 import { photoFields, richText } from './fields'
 
@@ -12,7 +11,6 @@ export const aboutPage = defineType({
   groups: [
     { name: 'top', title: 'Top banner', default: true },
     { name: 'story', title: 'Our story' },
-    { name: 'team', title: 'Team' },
     { name: 'visit', title: 'Come and say hello' },
     { name: 'seo', title: 'Google & sharing' },
   ],
@@ -56,37 +54,6 @@ export const aboutPage = defineType({
         }),
       ],
       validation: (r) => r.max(3),
-    }),
-    defineField({ name: 'teamHeading', title: 'Heading', type: 'string', group: 'team', initialValue: 'The faces behind the counter' }),
-    defineField({ name: 'teamIntro', title: 'Text', type: 'text', rows: 2, group: 'team' }),
-    defineField({
-      name: 'team',
-      title: 'Team members',
-      type: 'array',
-      group: 'team',
-      description: 'Drag to reorder. Leave empty to hide the team section.',
-      of: [
-        defineArrayMember({
-          type: 'object',
-          name: 'teamMember',
-          icon: UserIcon,
-          fields: [
-            defineField({ name: 'name', title: 'Name', type: 'string', validation: (r) => r.required() }),
-            defineField({ name: 'role', title: 'Role', type: 'string', description: 'e.g. Owner, Head barista' }),
-            defineField({
-              name: 'photo',
-              title: 'Photo',
-              type: 'image',
-              options: { hotspot: true },
-              fields: photoFields,
-              description: 'Portrait photos work best. Without one, the bee is shown instead.',
-            }),
-            defineField({ name: 'bio', title: 'A line or two about them', type: 'text', rows: 3 }),
-            defineField({ name: 'favourite', title: 'Their go-to order', type: 'string', description: 'e.g. Iced pistachio matcha' }),
-          ],
-          preview: { select: { title: 'name', subtitle: 'role', media: 'photo' } },
-        }),
-      ],
     }),
     defineField({
       name: 'visitHeading',

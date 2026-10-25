@@ -2,7 +2,7 @@
 
 Next.js site with an embedded Sanity Studio at `/studio`, an online shop paid through SumUp, hosted on Vercel.
 
-- **Everything on the site** (text, photos, About page and team, the bee, menu, products, prices, stock, opening hours, holiday hours, delivery fees, info pages, Google/sharing settings) is edited at `/studio`. No code needed.
+- **Everything on the site** (text, photos, About page, the bee, menu, products, prices, stock, opening hours, holiday hours, delivery fees, info pages, Google/sharing settings) is edited at `/studio`. No code needed.
 - **Orders** appear in `/studio → Orders` the moment someone pays. Stock goes down automatically.
 - **Payments and refunds** are in SumUp (the same account as the café's card reader). **Discount codes** are made in the Studio.
 - Until Sanity is connected, the site shows built-in starter content (`src/lib/fallback.ts`), and the example products can't be bought.
