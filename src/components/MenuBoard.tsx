@@ -18,35 +18,43 @@ const EXPO = [0.16, 1, 0.3, 1] as const
 
 /** Favourites as a menu board: point at a row and the photo changes to that item. */
 export function MenuBoard({ items }: { items: BoardItem[] }) {
-  const [active, setActive] = useState(0)
-  const firstWithImage = items.findIndex((i) => i.image)
-  // Items without a photo keep showing the last photo, so the frame is never empty
-  const [shown, setShown] = useState(firstWithImage)
-  const select = (i: number) => {
-    setActive(i)
-    if (items[i].image) setShown(i)
-  }
-  const photo = shown >= 0 ? items[shown] : null
+  // Open on the first item that has a photo
+  const [active, setActive] = useState(() => Math.max(0, items.findIndex((i) => i.image)))
+  const select = (i: number) => setActive(i)
+  const current = items[active]
 
   return (
     <div className="board">
       <div className="board-photo">
         <AnimatePresence initial={false} mode="popLayout">
-          {photo?.image ? (
+          {current?.image ? (
             <m.img
-              key={photo.id}
-              src={photo.image.src}
-              srcSet={photo.image.srcSet}
-              sizes={photo.image.sizes}
-              width={photo.image.width}
-              height={photo.image.height}
-              alt={photo.image.alt}
+              key={current.id}
+              src={current.image.src}
+              srcSet={current.image.srcSet}
+              sizes={current.image.sizes}
+              width={current.image.width}
+              height={current.image.height}
+              alt={current.image.alt}
               loading="lazy"
               initial={{ opacity: 0, scale: 1.04 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6, ease: EXPO }}
             />
+          ) : current ? (
+            // No photo yet: a themed "coming soon" tile, like the one on the menu page
+            <m.div
+              key={`soon-${current.id}`}
+              className="board-soon"
+              initial={{ opacity: 0, scale: 1.04 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.6, ease: EXPO }}
+            >
+              <span className="board-soon-label">Photo coming soon</span>
+              <span className="board-soon-name">{current.name}</span>
+            </m.div>
           ) : null}
         </AnimatePresence>
       </div>
