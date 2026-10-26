@@ -4143,6 +4143,13 @@ html:has(.basket-layer) .bee {
   gap: clamp(8px, 1.4vw, 18px);
 }
 
+/* 4 or 8 photos sit 4 to a row, so the last row is never left half empty */
+@media (min-width: 701px) {
+  .insta-grid:has(> li:nth-child(4n):last-child) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .insta-tile {
   position: relative;
   display: block;
@@ -4228,7 +4235,7 @@ html:has(.basket-layer) .bee {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .insta-grid > li:nth-child(n + 7) {
+  .insta-grid > li:nth-child(n + 9) {
     display: none;
   }
 }
