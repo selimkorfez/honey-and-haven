@@ -51,6 +51,16 @@ export const menuItem = defineType({
       title: 'Photo (optional)',
       type: 'image',
       options: { hotspot: true },
+      description: 'For drinks served hot or iced, put the hot one here and the iced one below.',
+      fields: [defineField({ name: 'alt', title: 'Describe the photo', type: 'string' })],
+    }),
+    defineField({
+      name: 'imageIced',
+      title: 'Iced photo (optional)',
+      type: 'image',
+      options: { hotspot: true },
+      description:
+        'The iced version of this drink. The menu has a Hot / Iced switch: iced photos show first in spring and summer, hot ones in autumn and winter.',
       fields: [defineField({ name: 'alt', title: 'Describe the photo', type: 'string' })],
     }),
     defineField({

@@ -42,7 +42,7 @@ export const HOME_QUERY = `{
   },
   "gallery": *[_id == "galleryPage"][0]{ heading, text, show, photos[] ${image} },
   "featured": *[_type == "menuItem" && featured == true && available != false] | order(orderRank asc)[0...6]{
-    _id, name, description, price, priceNote, dietary, comingSoon, image ${image}, "category": category->title
+    _id, name, description, price, priceNote, dietary, comingSoon, image ${image}, imageIced ${image}, "category": category->title
   },
   "shop": *[_type == "product" && featured == true && available != false && defined(slug.current)] | order(orderRank asc)[0...6]{ ${PRODUCT_CARD} }
 }`
@@ -52,7 +52,7 @@ export const MENU_QUERY = `{
   "categories": *[_type == "menuCategory"] | order(orderRank asc){
     _id, title, description, showMilks,
     "items": *[_type == "menuItem" && references(^._id) && available != false] | order(orderRank asc){
-      _id, name, description, price, priceNote, dietary, comingSoon, image ${image}
+      _id, name, description, price, priceNote, dietary, comingSoon, image ${image}, imageIced ${image}
     }
   }[count(items) > 0]
 }`

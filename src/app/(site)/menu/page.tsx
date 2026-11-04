@@ -6,6 +6,8 @@ import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, sectionId } from '@/lib/format'
 import { SanityImg } from '@/components/SanityImg'
 import { FALLBACK_MENU, FALLBACK_SETTINGS } from '@/lib/fallback'
+import { seasonTemp } from '@/lib/season'
+import { TempSwitch } from '@/components/TempSwitch'
 
 async function getMenu(): Promise<MenuData> {
   const data = await sanityFetch<MenuData>(MENU_QUERY)
@@ -33,6 +35,9 @@ export default async function MenuPage() {
     ...categories.flatMap((c) => c.items.flatMap((i) => i.dietary ?? [])),
     ...(milkLine ? milks.flatMap((m) => m.dietary ?? []) : []),
   ])
+  // Hot / Iced photos: iced first in spring and summer, hot in autumn and winter
+  const temp = seasonTemp()
+  const hasIced = categories.some((c) => c.items.some((i) => i.imageIced?.asset && i.image?.asset))
 
   return (
     <>
@@ -55,9 +60,14 @@ export default async function MenuPage() {
         </nav>
       ) : null}
 
-      {page?.drinksNote ? <p className="menu-note">{page.drinksNote}</p> : null}
+      {page?.drinksNote || hasIced ? (
+        <div className="menu-note-row">
+          {page?.drinksNote ? <p className="menu-note">{page.drinksNote}</p> : null}
+          {hasIced ? <TempSwitch initial={temp} target="menu-items" /> : null}
+        </div>
+      ) : null}
 
-      <div className="container">
+      <div className="container menu-temp" id="menu-items" data-temp={temp}>
         {categories.length === 0 ? <p className="empty">Our menu is being updated. Pop in to see what&rsquo;s on today.</p> : null}
 
         {categories.map((cat) => (
@@ -85,11 +95,24 @@ export default async function MenuPage() {
             </div>
             <ul className="menu-list">
               {cat.items.map((item) => (
-                <li key={item._id} className={`menu-item${item.image?.asset ? '' : ' no-image'}`} data-soon={item.comingSoon || undefined}>
-                  {item.image?.asset ? (
-                    <div className="menu-thumb">
-                      {/* the item's name is right next to it, so the photo only needs its own description (if any) */}
-                      <SanityImg image={item.image} width={160} height={160} sizes="80px" alt={item.image.alt && item.image.alt !== item.name ? item.image.alt : ''} />
+                <li key={item._id} className={`menu-item${item.image?.asset || item.imageIced?.asset ? '' : ' no-image'}`} data-soon={item.comingSoon || undefined}>
+                  {item.image?.asset || item.imageIced?.asset ? (
+                    // with both photos, the Hot / Iced switch decides which one shows
+                    <div className="menu-thumb" data-both={(item.image?.asset && item.imageIced?.asset) || undefined}>
+                      {/* the item's name is right next to it, so a photo only needs its own description (if any) */}
+                      {[item.image, item.imageIced].map((img, n) =>
+                        img?.asset ? (
+                          <SanityImg
+                            key={n}
+                            image={img}
+                            width={160}
+                            height={160}
+                            sizes="80px"
+                            className={n ? 'thumb-iced' : 'thumb-hot'}
+                            alt={img.alt && img.alt !== item.name ? img.alt : ''}
+                          />
+                        ) : null,
+                      )}
                     </div>
                   ) : null}
                   <div>

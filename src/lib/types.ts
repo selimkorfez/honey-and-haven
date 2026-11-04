@@ -88,6 +88,8 @@ export type MenuItem = {
   priceNote?: string
   dietary?: string[]
   image?: SanityImage
+  /** the iced version of a drink (shown with the menu's Iced switch) */
+  imageIced?: SanityImage
   category?: string
   /** on the menu but not served yet */
   comingSoon?: boolean | null

@@ -8,6 +8,7 @@ import { DIETARY_LABELS, formatPrice, mapsLink, paragraphs } from '@/lib/format'
 import { SanityImg, imgProps } from '@/components/SanityImg'
 import { HeroScroll } from '@/components/hero/HeroScroll'
 import { LogoMark } from '@/components/LogoMark'
+import { seasonTemp } from '@/lib/season'
 import { MenuBoard, type BoardItem } from '@/components/MenuBoard'
 import { ArrowRight, ArrowUpRight, Camera, HexMark, Video } from '@/components/Icons'
 import { FALLBACK_GALLERY, FALLBACK_HOME, FALLBACK_PRODUCTS, FALLBACK_SETTINGS } from '@/lib/fallback'
@@ -82,6 +83,7 @@ export default async function HomePage() {
   const addressLines = (settings?.address || '').split('\n').map((l) => l.trim()).filter(Boolean)
   const upcoming = upcomingSpecialHours(settings?.specialHours)
 
+  const season = seasonTemp()
   const board: BoardItem[] = featured.map((item) => ({
     id: item._id,
     name: item.name,
@@ -91,7 +93,11 @@ export default async function HomePage() {
       ...(item.comingSoon ? [{ short: 'Coming soon', long: 'Coming soon: not on sale yet' }] : []),
       ...(item.dietary ?? []).map((d) => DIETARY_LABELS[d] ?? { short: d, long: d }),
     ],
-    image: imgProps(item.image, 720, 720, '(max-width: 860px) 100vw, 45vw', item.image?.alt || item.name),
+    image: (() => {
+      // drinks with an iced photo show it in spring and summer
+      const img = (season === 'iced' ? item.imageIced?.asset && item.imageIced : null) || item.image || item.imageIced
+      return imgProps(img, 720, 720, '(max-width: 860px) 100vw, 45vw', img?.alt || item.name)
+    })(),
   }))
 
   return (
