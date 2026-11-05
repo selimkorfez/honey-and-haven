@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Fraunces, Manrope } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 import { sanityFetch } from '@/sanity/lib/client'
 import { SETTINGS_QUERY } from '@/sanity/lib/queries'
@@ -111,6 +112,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         <ScrollFX />
         {preview ? <PreviewBridgeLazy /> : null}
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <Analytics />
       </body>
     </html>
   )
