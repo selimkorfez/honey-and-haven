@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { sanityFetch } from '@/sanity/lib/client'
 import { MENU_QUERY, SETTINGS_QUERY } from '@/sanity/lib/queries'
-import type { MenuData, Settings } from '@/lib/types'
+import type { MenuData, SanityImage, Settings } from '@/lib/types'
 import { buildMetadata } from '@/lib/metadata'
 import { DIETARY_LABELS, formatPrice, sectionId } from '@/lib/format'
-import { SanityImg } from '@/components/SanityImg'
+import { SanityImg, imgProps } from '@/components/SanityImg'
+import { MenuLightbox } from '@/components/MenuLightbox'
 import { FALLBACK_MENU, FALLBACK_SETTINGS } from '@/lib/fallback'
 import { seasonTemp } from '@/lib/season'
 import { TempSwitch } from '@/components/TempSwitch'
@@ -24,6 +25,22 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const slug = sectionId
+
+/** The big version of a menu photo (and the iced one, if any), read by the lightbox when tapped. */
+function bigPhoto(name: string, hot?: SanityImage, iced?: SanityImage) {
+  const big = (img?: SanityImage) => imgProps(img, 1200, undefined, '640px', img?.alt || name)
+  const h = big(hot)
+  const i = big(iced)
+  return {
+    'data-name': name,
+    'data-hot-src': h?.src,
+    'data-hot-srcset': h?.srcSet,
+    'data-hot-alt': h?.alt,
+    'data-iced-src': i?.src,
+    'data-iced-srcset': i?.srcSet,
+    'data-iced-alt': i?.alt,
+  }
+}
 
 export default async function MenuPage() {
   const data = await getMenu()
@@ -97,8 +114,14 @@ export default async function MenuPage() {
               {cat.items.map((item) => (
                 <li key={item._id} className={`menu-item${item.image?.asset || item.imageIced?.asset ? '' : ' no-image'}`} data-soon={item.comingSoon || undefined}>
                   {item.image?.asset || item.imageIced?.asset ? (
-                    // with both photos, the Hot / Iced switch decides which one shows
-                    <div className="menu-thumb" data-both={(item.image?.asset && item.imageIced?.asset) || undefined}>
+                    // with both photos, the Hot / Iced switch decides which one shows; tapping opens it bigger
+                    <button
+                      type="button"
+                      className="menu-thumb"
+                      data-both={(item.image?.asset && item.imageIced?.asset) || undefined}
+                      aria-label={`View photo of ${item.name} bigger`}
+                      {...bigPhoto(item.name, item.image, item.imageIced)}
+                    >
                       {/* the item's name is right next to it, so a photo only needs its own description (if any) */}
                       {[item.image, item.imageIced].map((img, n) =>
                         img?.asset ? (
@@ -113,7 +136,7 @@ export default async function MenuPage() {
                           />
                         ) : null,
                       )}
-                    </div>
+                    </button>
                   ) : null}
                   <div>
                     <div className="menu-line">
@@ -145,6 +168,8 @@ export default async function MenuPage() {
           </section>
         ))}
       </div>
+
+      <MenuLightbox scope="menu-items" />
 
       <div className="container menu-footer">
         {usedTags.size ? (
