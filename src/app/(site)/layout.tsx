@@ -46,6 +46,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl()),
     ...buildMetadata(settings, null),
+    // Fixed addresses (not generated ones) so Google Search can keep showing the bee next to results
+    icons: {
+      icon: [
+        { url: '/favicon.ico', sizes: '48x48' },
+        { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+        { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      ],
+      apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+    },
   }
 }
 
